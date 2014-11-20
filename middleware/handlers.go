@@ -1,4 +1,4 @@
-package ie
+package middleware
 
 import (
 	"log"
@@ -6,8 +6,9 @@ import (
 
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
-	"gitlab.mitre.org/intervention-engine/fhir/models"
+	fhirmodels "gitlab.mitre.org/intervention-engine/fhir/models"
 	"gitlab.mitre.org/intervention-engine/fhir/server"
+	"gitlab.mitre.org/intervention-engine/ie/models"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -24,7 +25,7 @@ func PatientHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFu
 func FactHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	next(rw, r)
 
-	f := Fact{}
+	f := models.Fact{}
 
 	resourceType := context.Get(r, "Resource")
 	resource := context.Get(r, resourceType)
@@ -34,14 +35,14 @@ func FactHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
 		switch t := resource.(type) {
 		default:
 			log.Printf("type of resource is %T", t)
-		case *models.Patient:
-			f = FactFromPatient(resource.(*models.Patient))
-		case *models.Condition:
-			f = FactFromCondition(resource.(*models.Condition))
-		case *models.Encounter:
-			f = FactFromEncounter(resource.(*models.Encounter))
-		case *models.Observation:
-			f = FactFromObservation(resource.(*models.Observation))
+		case *fhirmodels.Patient:
+			f = models.FactFromPatient(resource.(*fhirmodels.Patient))
+		case *fhirmodels.Condition:
+			f = models.FactFromCondition(resource.(*fhirmodels.Condition))
+		case *fhirmodels.Encounter:
+			f = models.FactFromEncounter(resource.(*fhirmodels.Encounter))
+		case *fhirmodels.Observation:
+			f = models.FactFromObservation(resource.(*fhirmodels.Observation))
 		}
 		ManageFactStorage(f, actionType.(string), rw, r)
 	}
@@ -53,7 +54,7 @@ func isFactAction(actionType string) bool {
 	return actionType != "search" && actionType != "read"
 }
 
-func ManageFactStorage(f Fact, actionType string, rw http.ResponseWriter, r *http.Request) {
+func ManageFactStorage(f models.Fact, actionType string, rw http.ResponseWriter, r *http.Request) {
 
 	var err error
 	factCollection := server.Database.C("facts")
@@ -65,7 +66,7 @@ func ManageFactStorage(f Fact, actionType string, rw http.ResponseWriter, r *htt
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 	case "update":
-		tempFact := Fact{}
+		tempFact := models.Fact{}
 		err = factCollection.Find(bson.M{"targetid": f.TargetID}).One(&tempFact)
 
 		f.Id = tempFact.Id

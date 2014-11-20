@@ -1,4 +1,4 @@
-package ie
+package models
 
 import (
 	"gitlab.mitre.org/intervention-engine/fhir/models"
