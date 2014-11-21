@@ -8,8 +8,8 @@ import (
 
 func main() {
 	s := server.FHIRServer{DatabaseHost: "localhost", Middleware: make([]negroni.Handler, 0)}
-	s.AddMiddleware(negroni.HandlerFunc(middleware.PatientHandler))
 	s.AddMiddleware(negroni.HandlerFunc(middleware.FactHandler))
+	s.AddMiddleware(negroni.HandlerFunc(middleware.QueryExecutionHandler))
 
 	s.Run()
 }
