@@ -1,0 +1,20 @@
+{
+  "text": {
+    "status": "generated",
+    "div": "<div>[Put rendering here]</div>"
+  },
+  "parameter": [
+    {
+      "url": "http://interventionengine.org/patientgender",
+      "valueString": "M"
+    },
+    {
+      "url": "http://interventionengine.org/conditioncode",
+      "valueCodeableConcept" : { "coding" : [
+            {
+                "system" : "http://hl7.org/fhir/sid/icd-9",
+                "code" : "428.0"
+            }]}
+    }
+  ]
+}
