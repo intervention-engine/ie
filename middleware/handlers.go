@@ -44,10 +44,12 @@ func FactHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
 		case *fhirmodels.Observation:
 			f = models.FactFromObservation(resource.(*fhirmodels.Observation))
 		}
-		ManageFactStorage(f, actionType.(string), rw, r)
+		if f.Id != "" {
+			ManageFactStorage(f, actionType.(string), rw, r)
+			log.Println(isFactAction(actionType.(string)))
+			log.Println(f.Id)
+		}
 	}
-	log.Println(isFactAction(actionType.(string)))
-	log.Println(f.Id)
 }
 
 func isFactAction(actionType string) bool {
