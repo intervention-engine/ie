@@ -7,9 +7,9 @@ import (
 )
 
 func main() {
-	s := server.FHIRServer{DatabaseHost: "localhost", Middleware: make([]negroni.Handler, 0)}
-	s.AddMiddleware(negroni.HandlerFunc(middleware.FactHandler))
-	s.AddMiddleware(negroni.HandlerFunc(middleware.QueryExecutionHandler))
+	s := server.FHIRServer{DatabaseHost: "localhost", MiddlewareConfig: make(map[string][]negroni.Handler)}
+	//s.AddMiddleware("QueryCreate", negroni.HandlerFunc(middleware.FactHandler))
+	s.AddMiddleware("QueryCreate", negroni.HandlerFunc(middleware.QueryExecutionHandler))
 
 	s.Run()
 }
