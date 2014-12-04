@@ -70,6 +70,15 @@ func (f *FactSuite) TestCreatePersonPipeline(c *C) {
 	c.Assert(qr.Total, Equals, 5)
 }
 
+func (f *FactSuite) TestAgePipeline(c *C) {
+	pipeline := CreatePersonPipeline(LoadQueryFromFixture("../fixtures/age-query.json"))
+	qr := &QueryResult{}
+	factCollection := f.Session.DB("ie-test").C("facts")
+	err := factCollection.Pipe(pipeline).One(qr)
+	util.CheckErr(err)
+	c.Assert(qr.Total, Equals, 3)
+}
+
 func (f *FactSuite) TestEmptyQuery(c *C) {
 	qr := &QueryResult{}
 	factCollection := f.Session.DB("ie-test").C("facts")

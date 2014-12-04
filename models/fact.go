@@ -3,6 +3,7 @@ package models
 import (
 	"gitlab.mitre.org/intervention-engine/fhir/models"
 	"gopkg.in/mgo.v2/bson"
+	"time"
 )
 
 type Fact struct {
@@ -105,8 +106,8 @@ func startPipeline(q *models.Query) []bson.M {
 		case "http://interventionengine.org/patientgender":
 			pipeline = append(pipeline, bson.M{"$match": bson.M{"gender": extension.ValueString}})
 		case "http://interventionengine.org/patientage":
-
-			pipeline = append(pipeline, bson.M{"$match": bson.M{"birthdate": extension.ValueString}})
+			lowAgeDate, highAgeDate := ageRangeToTime(extension.ValueRange)
+			pipeline = append(pipeline, bson.M{"$match": bson.M{"birthdate.time": bson.M{"$gte": highAgeDate, "$lte": lowAgeDate}}})
 		case "http://interventionengine.org/conditioncode":
 			// Hack for now assuming that all codable concepts contain a single code
 			conditionCode := extension.ValueCodeableConcept.Coding[0].Code
@@ -116,4 +117,10 @@ func startPipeline(q *models.Query) []bson.M {
 	}
 
 	return pipeline
+}
+
+func ageRangeToTime(ageRange models.Range) (lowAgeDate, highAgeDate time.Time) {
+	lowAgeDate = time.Date(time.Now().Year()-int(ageRange.Low.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)
+	highAgeDate = time.Date(time.Now().Year()-int(ageRange.High.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)
+	return
 }
