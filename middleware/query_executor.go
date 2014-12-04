@@ -27,7 +27,7 @@ func QueryExecutionHandler(rw http.ResponseWriter, r *http.Request, next http.Ha
 }
 
 func QueryRunner(query *fhirmodels.Query) {
-	pipeline := models.CreateFactPipeline(query)
+	pipeline := models.CreatePersonPipeline(query)
 	factCollection := server.Database.C("facts")
 	qr := &QueryResult{}
 	err := factCollection.Pipe(pipeline).One(qr)

@@ -1,31 +1,81 @@
 package models
 
 import (
+	"bufio"
 	"encoding/json"
 	"github.com/pebbe/util"
 	"gitlab.mitre.org/intervention-engine/fhir/models"
 	. "gopkg.in/check.v1"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 	"os"
+	"strings"
 	"testing"
 )
 
 type FactSuite struct {
+	Session *mgo.Session
+	Query   *models.Query
+}
+
+type QueryResult struct {
+	Total int `json:"total", bson:"total"`
 }
 
 func Test(t *testing.T) { TestingT(t) }
 
 var _ = Suite(&FactSuite{})
 
-func (s *FactSuite) TestFactFromPatient(c *C) {
+func (f *FactSuite) SetUpSuite(c *C) {
+	file, err := os.Open("../fixtures/facts.json")
+	defer file.Close()
+	util.CheckErr(err)
+
+	// Setup the database
+	f.Session, err = mgo.Dial("localhost")
+	util.CheckErr(err)
+	factCollection := f.Session.DB("ie-test").C("facts")
+	factCollection.DropCollection()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		decoder := json.NewDecoder(strings.NewReader(scanner.Text()))
+		fact := &Fact{}
+		err = decoder.Decode(fact)
+		util.CheckErr(err)
+		i := bson.NewObjectId()
+		fact.Id = i.Hex()
+		factCollection.Insert(fact)
+	}
+	util.CheckErr(scanner.Err())
+	f.Query = LoadQueryFromFixture("../fixtures/sample-query.json")
+}
+
+func (f *FactSuite) TearDownSuite(c *C) {
+	f.Session.Close()
+}
+
+func (f *FactSuite) TestFactFromPatient(c *C) {
 	patient := LoadPatientFromFixture("../fixtures/patient-example-a.json")
 	fact := FactFromPatient(patient)
 	c.Assert(fact.Gender, Equals, "M")
 }
 
-func (s *FactSuite) TestCreateFactPipeline(c *C) {
-	query := LoadQueryFromFixture("../fixtures/sample-query.json")
-	pipeline := CreateFactPipeline(query)
+func (f *FactSuite) TestCreatePersonPipeline(c *C) {
+	pipeline := CreatePersonPipeline(f.Query)
 	c.Assert(4, Equals, len(pipeline))
+	qr := &QueryResult{}
+	factCollection := f.Session.DB("ie-test").C("facts")
+	err := factCollection.Pipe(pipeline).One(qr)
+	util.CheckErr(err)
+	c.Assert(qr.Total, Equals, 5)
+}
+
+func (f *FactSuite) TestEmptyQuery(c *C) {
+	qr := &QueryResult{}
+	factCollection := f.Session.DB("ie-test").C("facts")
+	err := factCollection.Pipe(CreatePersonPipeline(&models.Query{})).One(qr)
+	util.CheckErr(err)
+	c.Assert(qr.Total, Equals, 39)
 }
 
 func LoadPatientFromFixture(fileName string) *models.Patient {

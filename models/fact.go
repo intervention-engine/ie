@@ -72,12 +72,40 @@ func FactFromObservation(o *models.Observation) Fact {
 	return f
 }
 
-func CreateFactPipeline(q *models.Query) []bson.M {
-	pipeline := []bson.M{{"$group": bson.M{"_id": "$targetid", "gender": bson.M{"$max": "$gender"}, "birthdate": bson.M{"$max": "$birthdate"}, "entries": bson.M{"$addToSet": bson.M{"startdate": "$startdate", "enddate": "$enddate", "codes": "$codes", "type": "$type"}}}}}
+func CreatePersonPipeline(q *models.Query) []bson.M {
+	pipeline := startPipeline(q)
+
+	pipeline = append(pipeline, bson.M{"$group": bson.M{"_id": nil, "total": bson.M{"$sum": 1}}})
+	return pipeline
+}
+
+func CreateConditionPipeline(q *models.Query) []bson.M {
+	pipeline := startPipeline(q)
+
+	pipeline = append(pipeline, bson.M{"$unwind": "$entries"})
+	pipeline = append(pipeline, bson.M{"$match": bson.M{"entries.type": "Condition"}})
+	pipeline = append(pipeline, bson.M{"$group": bson.M{"_id": nil, "total": bson.M{"$sum": 1}}})
+	return pipeline
+}
+
+func CreateEncounterPipeline(q *models.Query) []bson.M {
+	pipeline := startPipeline(q)
+
+	pipeline = append(pipeline, bson.M{"$unwind": "$entries"})
+	pipeline = append(pipeline, bson.M{"$match": bson.M{"entries.type": "Encounter"}})
+	pipeline = append(pipeline, bson.M{"$group": bson.M{"_id": nil, "total": bson.M{"$sum": 1}}})
+	return pipeline
+}
+
+func startPipeline(q *models.Query) []bson.M {
+	pipeline := []bson.M{{"$group": bson.M{"_id": "$patientid", "gender": bson.M{"$max": "$gender"}, "birthdate": bson.M{"$max": "$birthdate"}, "entries": bson.M{"$push": bson.M{"startdate": "$startdate", "enddate": "$enddate", "codes": "$codes", "type": "$type"}}}}}
 	for _, extension := range q.Parameter {
 		switch extension.Url {
 		case "http://interventionengine.org/patientgender":
 			pipeline = append(pipeline, bson.M{"$match": bson.M{"gender": extension.ValueString}})
+		case "http://interventionengine.org/patientage":
+
+			pipeline = append(pipeline, bson.M{"$match": bson.M{"birthdate": extension.ValueString}})
 		case "http://interventionengine.org/conditioncode":
 			// Hack for now assuming that all codable concepts contain a single code
 			conditionCode := extension.ValueCodeableConcept.Coding[0].Code
@@ -86,6 +114,5 @@ func CreateFactPipeline(q *models.Query) []bson.M {
 		}
 	}
 
-	pipeline = append(pipeline, bson.M{"$group": bson.M{"_id": nil, "total": bson.M{"$sum": 1}}})
 	return pipeline
 }

@@ -24,32 +24,33 @@ func PatientHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFu
 
 func FactHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	next(rw, r)
+	resourceType, ok := context.GetOk(r, "Resource")
+	if ok {
+		f := models.Fact{}
+		resource := context.Get(r, resourceType)
 
-	f := models.Fact{}
-
-	resourceType := context.Get(r, "Resource")
-	resource := context.Get(r, resourceType)
-
-	actionType := context.Get(r, "Action")
-	if isFactAction(actionType.(string)) {
-		switch t := resource.(type) {
-		default:
-			log.Printf("type of resource is %T", t)
-		case *fhirmodels.Patient:
-			f = models.FactFromPatient(resource.(*fhirmodels.Patient))
-		case *fhirmodels.Condition:
-			f = models.FactFromCondition(resource.(*fhirmodels.Condition))
-		case *fhirmodels.Encounter:
-			f = models.FactFromEncounter(resource.(*fhirmodels.Encounter))
-		case *fhirmodels.Observation:
-			f = models.FactFromObservation(resource.(*fhirmodels.Observation))
-		}
-		if f.Id != "" {
-			ManageFactStorage(f, actionType.(string), rw, r)
-			log.Println(isFactAction(actionType.(string)))
-			log.Println(f.Id)
+		actionType := context.Get(r, "Action")
+		if isFactAction(actionType.(string)) {
+			switch t := resource.(type) {
+			default:
+				log.Printf("type of resource is %T", t)
+			case *fhirmodels.Patient:
+				f = models.FactFromPatient(resource.(*fhirmodels.Patient))
+			case *fhirmodels.Condition:
+				f = models.FactFromCondition(resource.(*fhirmodels.Condition))
+			case *fhirmodels.Encounter:
+				f = models.FactFromEncounter(resource.(*fhirmodels.Encounter))
+			case *fhirmodels.Observation:
+				f = models.FactFromObservation(resource.(*fhirmodels.Observation))
+			}
+			if f.Id != "" {
+				ManageFactStorage(f, actionType.(string), rw, r)
+				log.Println(isFactAction(actionType.(string)))
+				log.Println(f.Id)
+			}
 		}
 	}
+
 }
 
 func isFactAction(actionType string) bool {
