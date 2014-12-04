@@ -78,6 +78,24 @@ func (f *FactSuite) TestEmptyQuery(c *C) {
 	c.Assert(qr.Total, Equals, 39)
 }
 
+func (f *FactSuite) TestCreateConditionPipeline(c *C) {
+	pipeline := CreateConditionPipeline(f.Query)
+	qr := &QueryResult{}
+	factCollection := f.Session.DB("ie-test").C("facts")
+	err := factCollection.Pipe(pipeline).One(qr)
+	util.CheckErr(err)
+	c.Assert(qr.Total, Equals, 1)
+}
+
+func (f *FactSuite) TestCreateEncounterPipeline(c *C) {
+	pipeline := CreateEncounterPipeline(f.Query)
+	qr := &QueryResult{}
+	factCollection := f.Session.DB("ie-test").C("facts")
+	err := factCollection.Pipe(pipeline).One(qr)
+	util.CheckErr(err)
+	c.Assert(qr.Total, Equals, 12)
+}
+
 func LoadPatientFromFixture(fileName string) *models.Patient {
 	data, err := os.Open(fileName)
 	defer data.Close()

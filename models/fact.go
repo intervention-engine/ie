@@ -84,6 +84,7 @@ func CreateConditionPipeline(q *models.Query) []bson.M {
 
 	pipeline = append(pipeline, bson.M{"$unwind": "$entries"})
 	pipeline = append(pipeline, bson.M{"$match": bson.M{"entries.type": "Condition"}})
+	pipeline = append(pipeline, bson.M{"$group": bson.M{"_id": "entries.codes.coding.code", "total": bson.M{"$sum": 1}}})
 	pipeline = append(pipeline, bson.M{"$group": bson.M{"_id": nil, "total": bson.M{"$sum": 1}}})
 	return pipeline
 }
