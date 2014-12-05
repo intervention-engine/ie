@@ -12,16 +12,6 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func PatientHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	log.Println("start of the patient middleware")
-	next(rw, r)
-	log.Println("end of the patient middleware")
-	stuff := context.GetAll(r)
-	for k, v := range stuff {
-		log.Printf("Found a things of type %s, %s", k, v)
-	}
-}
-
 func FactHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	next(rw, r)
 	resourceType, ok := context.GetOk(r, "Resource")
@@ -45,8 +35,6 @@ func FactHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
 			}
 			if f.Id != "" {
 				ManageFactStorage(f, actionType.(string), rw, r)
-				log.Println(isFactAction(actionType.(string)))
-				log.Println(f.Id)
 			}
 		}
 	}
