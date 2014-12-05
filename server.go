@@ -9,6 +9,7 @@ import (
 
 func main() {
 	s := server.NewServer("localhost")
+
 	s.AddMiddleware("QueryCreate", negroni.HandlerFunc(middleware.QueryExecutionHandler))
 
 	s.AddMiddleware("PatientCreate", negroni.HandlerFunc(middleware.FactHandler))
