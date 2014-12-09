@@ -3,13 +3,14 @@ package controllers
 import (
 	"encoding/json"
 
+	"net/http"
+
 	"github.com/gorilla/mux"
 	fhirmodels "gitlab.mitre.org/intervention-engine/fhir/models"
 	"gitlab.mitre.org/intervention-engine/fhir/server"
 	"gitlab.mitre.org/intervention-engine/ie/middleware"
 	"gitlab.mitre.org/intervention-engine/ie/models"
 	"gopkg.in/mgo.v2/bson"
-	"net/http"
 )
 
 func ConditionTotalHandler(rw http.ResponseWriter, r *http.Request) {
