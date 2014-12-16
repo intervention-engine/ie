@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/gorilla/context"
-	fhirmodels "gitlab.mitre.org/intervention-engine/fhir/models"
-	"gitlab.mitre.org/intervention-engine/fhir/server"
-	"gitlab.mitre.org/intervention-engine/ie/models"
+	fhirmodels "github.com/intervention-engine/fhir/models"
+	"github.com/intervention-engine/fhir/server"
+	"github.com/intervention-engine/ie/models"
 	"gopkg.in/mgo.v2/bson"
 )
 

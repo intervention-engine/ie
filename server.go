@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/codegangsta/negroni"
-	"gitlab.mitre.org/intervention-engine/fhir/server"
-	"gitlab.mitre.org/intervention-engine/ie/controllers"
-	"gitlab.mitre.org/intervention-engine/ie/middleware"
+	"github.com/intervention-engine/fhir/server"
+	"github.com/intervention-engine/ie/controllers"
+	"github.com/intervention-engine/ie/middleware"
 )
 
 func main() {

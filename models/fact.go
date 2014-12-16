@@ -1,7 +1,7 @@
 package models
 
 import (
-	"gitlab.mitre.org/intervention-engine/fhir/models"
+	"github.com/intervention-engine/fhir/models"
 	"gopkg.in/mgo.v2/bson"
 	"time"
 )

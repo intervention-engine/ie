@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"github.com/pebbe/util"
-	"gitlab.mitre.org/intervention-engine/fhir/models"
+	"github.com/intervention-engine/fhir/models"
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"

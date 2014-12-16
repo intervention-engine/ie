@@ -1,7 +1,7 @@
 package models
 
 import (
-  fhirmodels "gitlab.mitre.org/intervention-engine/fhir/models"
+  fhirmodels "github.com/intervention-engine/fhir/models"
 )
 
 type Filter struct {

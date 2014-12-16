@@ -8,8 +8,8 @@ import (
 
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
-	"gitlab.mitre.org/intervention-engine/ie/models"
-  "gitlab.mitre.org/intervention-engine/fhir/server"
+	"github.com/intervention-engine/ie/models"
+  "github.com/intervention-engine/fhir/server"
 	"gopkg.in/mgo.v2/bson"
 )
 
