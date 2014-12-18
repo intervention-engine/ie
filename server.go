@@ -31,11 +31,11 @@ func main() {
 	s.Router.HandleFunc("/queryConditionTotal/{id}", controllers.ConditionTotalHandler)
 	s.Router.HandleFunc("/queryEncounterTotal/{id}", controllers.EncounterTotalHandler)
 
-	filterBase := s.Router.Path("/filter").Subrouter()
+	filterBase := s.Router.Path("/Filter").Subrouter()
 	filterBase.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterIndexHandler)))
 	filterBase.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterCreateHandler)))
 
-	filter := s.Router.Path("/filter/{id}").Subrouter()
+	filter := s.Router.Path("/Filter/{id}").Subrouter()
 	filter.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterShowHandler)))
 	filter.Methods("PUT").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterUpdateHandler)))
 	filter.Methods("DELETE").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterDeleteHandler)))

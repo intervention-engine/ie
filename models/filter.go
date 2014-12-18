@@ -20,8 +20,7 @@ type Pane struct {
 
 type EmberItem struct {
   id string `json:"-" bson:"_id"`
-  Url string `json:"url" bson:"url"`
-  Value string `json:"value" bson:"value"`
+  Parameter fhirmodels.Extension `json:"parameter" bson:"parameter"`
   Active *bool `json:"active" bson:"active"`
   FilterType string `json:"filtertype" bson:"filtertype"`
   Template string `json:"template" bson:"template"`
