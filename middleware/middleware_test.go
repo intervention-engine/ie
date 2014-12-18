@@ -33,6 +33,8 @@ func (m *MiddlewareSuite) SetUpSuite(c *C) {
 	m.Session, err = mgo.Dial("localhost")
 	util.CheckErr(err)
 	server.Database = m.Session.DB("ie-test")
+	factCollection := server.Database.C("facts")
+	factCollection.DropCollection()
 
 	//create test server
 	m.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -66,7 +68,7 @@ func (m *MiddlewareSuite) SetUpSuite(c *C) {
 }
 
 func (m *MiddlewareSuite) TearDownSuite(c *C) {
-	server.Database.DropDatabase()
+	server.Database.C("facts").DropCollection()
 	m.Session.Close()
 	m.Server.Close()
 }
