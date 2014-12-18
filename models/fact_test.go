@@ -51,6 +51,7 @@ func (f *FactSuite) SetUpSuite(c *C) {
 }
 
 func (f *FactSuite) TearDownSuite(c *C) {
+	f.Session.DB("ie-test").C("facts").DropCollection()
 	f.Session.Close()
 }
 
