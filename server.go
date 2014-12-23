@@ -5,10 +5,17 @@ import (
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/controllers"
 	"github.com/intervention-engine/ie/middleware"
+	"os"
 )
 
 func main() {
-	s := server.NewServer("localhost")
+	// Check for a linked MongoDB container if we are running in Docker
+	mongoHost := os.Getenv("MONGO_PORT_27017_TCP_ADDR")
+	if mongoHost == "" {
+		mongoHost = "localhost"
+	}
+
+	s := server.NewServer(mongoHost)
 
 	s.AddMiddleware("QueryCreate", negroni.HandlerFunc(middleware.QueryExecutionHandler))
 
