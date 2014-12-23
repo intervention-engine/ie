@@ -90,6 +90,8 @@ func FilterCreateHandler(rw http.ResponseWriter, r *http.Request, next http.Hand
 	}
 
 	rw.Header().Add("Location", "http://"+host+":3001/Filter/"+i.Hex())
+	json.NewEncoder(rw).Encode(filter)
+
 }
 
 func FilterUpdateHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {

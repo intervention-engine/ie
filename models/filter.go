@@ -5,7 +5,7 @@ import (
 )
 
 type Filter struct {
-  Id string `json:"-" bson:"_id"`
+  Id string `json:"id" bson:"_id"`
   Name string `json:"name" bson:"name"`
   Description string `json:"description" bson:"description"`
   Query fhirmodels.Query `json:"query" bson:"query"`
