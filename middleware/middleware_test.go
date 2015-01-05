@@ -1,14 +1,13 @@
 package middleware
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 
-	"github.com/gorilla/context"
-	fhirmodels "github.com/intervention-engine/fhir/models"
+	"github.com/codegangsta/negroni"
+	"github.com/gorilla/mux"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/models"
 	"github.com/pebbe/util"
@@ -18,9 +17,11 @@ import (
 )
 
 type MiddlewareSuite struct {
-	Session   *mgo.Session
-	Server    *httptest.Server
-	FixtureId string
+	Session          *mgo.Session
+	Server           *httptest.Server
+	Router           *mux.Router
+	MiddlewareConfig map[string][]negroni.Handler
+	FixtureId        string
 }
 
 func Test(t *testing.T) { TestingT(t) }
@@ -36,35 +37,20 @@ func (m *MiddlewareSuite) SetUpSuite(c *C) {
 	factCollection := server.Database.C("facts")
 	factCollection.DropCollection()
 
+	//register facthandler middleware
+	m.MiddlewareConfig = make(map[string][]negroni.Handler)
+	m.MiddlewareConfig["PatientCreate"] = append(m.MiddlewareConfig["PatientCreate"], negroni.HandlerFunc(FactHandler))
+	m.MiddlewareConfig["PatientUpdate"] = append(m.MiddlewareConfig["PatientUpdate"], negroni.HandlerFunc(FactHandler))
+	m.MiddlewareConfig["PatientDelete"] = append(m.MiddlewareConfig["PatientDelete"], negroni.HandlerFunc(FactHandler))
+
+	//set up routes and middleware
+	m.Router = mux.NewRouter()
+	m.Router.StrictSlash(true)
+	m.Router.KeepContext = true
+	server.RegisterRoutes(m.Router, m.MiddlewareConfig)
+
 	//create test server
-	m.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		patient := &fhirmodels.Patient{}
-		if r.Method != "DELETE" {
-			decoder := json.NewDecoder(r.Body)
-			err := decoder.Decode(patient)
-			util.CheckErr(err)
-			i := bson.NewObjectId()
-			patient.Id = i.Hex()
-		}
-
-		switch r.Method {
-		case "POST":
-			context.Set(r, "Patient", patient)
-			context.Set(r, "Resource", "Patient")
-			context.Set(r, "Action", "create")
-		case "PUT":
-			patient.Id = m.FixtureId
-			context.Set(r, "Patient", patient)
-			context.Set(r, "Resource", "Patient")
-			context.Set(r, "Action", "update")
-		case "DELETE":
-			context.Set(r, "Patient", r.Body)
-			context.Set(r, "Resource", "Patient")
-			context.Set(r, "Action", "delete")
-		}
-		FactHandler(w, r, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
-	}))
+	m.Server = httptest.NewServer(m.Router)
 }
 
 func (m *MiddlewareSuite) TearDownSuite(c *C) {
@@ -78,7 +64,7 @@ func (m *MiddlewareSuite) TestFactCreation(c *C) {
 	defer data.Close()
 	util.CheckErr(err)
 
-	_, err = http.Post(m.Server.URL, "application/json", data)
+	_, err = http.Post(m.Server.URL+"/Patient", "application/json", data)
 	util.CheckErr(err)
 
 	factCollection := server.Database.C("facts")
@@ -96,31 +82,31 @@ func (m *MiddlewareSuite) TestFactUpdate(c *C) {
 	i := bson.NewObjectId()
 	tempId := i.Hex()
 	m.FixtureId = tempId
-	factCollection.Insert(models.Fact{Gender:"M", TargetID: tempId})
+	factCollection.Insert(models.Fact{Gender: "M", TargetID: tempId})
 
 	client := &http.Client{}
-	req, err := http.NewRequest("PUT", m.Server.URL, data)
+	req, err := http.NewRequest("PUT", m.Server.URL+"/Patient/"+tempId, data)
 	util.CheckErr(err)
 	_, err = client.Do(req)
 
 	fact := models.Fact{}
 	err = factCollection.Find(bson.M{"targetid": tempId}).One(&fact)
 	util.CheckErr(err)
-
 	c.Assert(fact.Gender, Equals, "F")
 }
 
 // func (m *MiddlewareSuite) TestFactDelete(c *C) {
 // 	factCollection := server.Database.C("facts")
 // 	i := bson.NewObjectId()
-// 	tempId := i.Hex()
-// 	factCollection.Insert(models.Fact{Gender:"M", TargetID: tempId})
+// 	deleteId := i.Hex()
+// 	factCollection.Insert(models.Fact{Gender: "M", TargetID: deleteId})
 //
 // 	client := &http.Client{}
-// 	req, err := http.NewRequest("DELETE", m.Server.URL)
+// 	req, err := http.NewRequest("DELETE", m.Server.URL+"/Patient/"+deleteId, nil)
 // 	util.CheckErr(err)
 // 	_, err = client.Do(req)
 //
-// 	count, err = factCollection.Find(bson.M{"targetid": tempId}).Count()
+// 	fmt.Println("delete id after req:", deleteId)
+// 	count, err := factCollection.Find(bson.M{"targetid": deleteId}).Count()
 // 	c.Assert(count, Equals, 0)
 // }
