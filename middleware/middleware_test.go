@@ -8,6 +8,7 @@ import (
 
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
+	fhirmodels "github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/models"
 	"github.com/pebbe/util"
@@ -21,7 +22,8 @@ type MiddlewareSuite struct {
 	Server           *httptest.Server
 	Router           *mux.Router
 	MiddlewareConfig map[string][]negroni.Handler
-	FixtureId        string
+	FactCollection	 *mgo.Collection
+	PatientCollection *mgo.Collection
 }
 
 func Test(t *testing.T) { TestingT(t) }
@@ -34,8 +36,9 @@ func (m *MiddlewareSuite) SetUpSuite(c *C) {
 	m.Session, err = mgo.Dial("localhost")
 	util.CheckErr(err)
 	server.Database = m.Session.DB("ie-test")
-	factCollection := server.Database.C("facts")
-	factCollection.DropCollection()
+	m.FactCollection = server.Database.C("facts")
+	m.PatientCollection = server.Database.C("patients")
+	m.FactCollection.DropCollection()
 
 	//register facthandler middleware
 	m.MiddlewareConfig = make(map[string][]negroni.Handler)
@@ -60,53 +63,61 @@ func (m *MiddlewareSuite) TearDownSuite(c *C) {
 }
 
 func (m *MiddlewareSuite) TestFactCreation(c *C) {
+	//load fixture
 	data, err := os.Open("../fixtures/patient-example-a.json")
 	defer data.Close()
 	util.CheckErr(err)
 
-	_, err = http.Post(m.Server.URL+"/Patient", "application/json", data)
+	//post fixture
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", m.Server.URL+"/Patient", data)
 	util.CheckErr(err)
+	_, err = client.Do(req)
 
-	factCollection := server.Database.C("facts")
-
-	count, err := factCollection.Count()
+	//check for fact created
+	count, err := m.FactCollection.Count()
 	c.Assert(count, Equals, 1)
 }
 
+func (m *MiddlewareSuite) TestFactDelete(c *C) {
+	//create dummy fact and patient
+	i := bson.NewObjectId()
+	deleteId := i.Hex()
+	m.FactCollection.Insert(models.Fact{Gender: "M", TargetID: deleteId})
+	m.PatientCollection.Insert(fhirmodels.Patient{Id: deleteId})
+
+	//create and send http delete request
+	client := &http.Client{}
+	req, err := http.NewRequest("DELETE", m.Server.URL+"/Patient/"+deleteId, nil)
+	util.CheckErr(err)
+	_, err = client.Do(req)
+
+	//check that fact is gone
+	count, err := m.FactCollection.Find(bson.M{"targetid": deleteId}).Count()
+	c.Assert(count, Equals, 0)
+}
+
 func (m *MiddlewareSuite) TestFactUpdate(c *C) {
+	//load fixture
 	data, err := os.Open("../fixtures/patient-example-b.json")
 	defer data.Close()
 	util.CheckErr(err)
 
-	factCollection := server.Database.C("facts")
+	//create dummy fact and patient
 	i := bson.NewObjectId()
 	tempId := i.Hex()
-	m.FixtureId = tempId
-	factCollection.Insert(models.Fact{Gender: "M", TargetID: tempId})
+	m.FactCollection.Insert(models.Fact{Gender: "M", TargetID: tempId})
+	m.PatientCollection.Insert(fhirmodels.Patient{Id: tempId})
 
+	//create and send http put request
 	client := &http.Client{}
 	req, err := http.NewRequest("PUT", m.Server.URL+"/Patient/"+tempId, data)
 	util.CheckErr(err)
 	_, err = client.Do(req)
 
+	//check to see that dummy fact was updated from male to female
 	fact := models.Fact{}
-	err = factCollection.Find(bson.M{"targetid": tempId}).One(&fact)
+	err = m.FactCollection.Find(bson.M{"targetid": tempId}).One(&fact)
 	util.CheckErr(err)
 	c.Assert(fact.Gender, Equals, "F")
 }
-
-// func (m *MiddlewareSuite) TestFactDelete(c *C) {
-// 	factCollection := server.Database.C("facts")
-// 	i := bson.NewObjectId()
-// 	deleteId := i.Hex()
-// 	factCollection.Insert(models.Fact{Gender: "M", TargetID: deleteId})
-//
-// 	client := &http.Client{}
-// 	req, err := http.NewRequest("DELETE", m.Server.URL+"/Patient/"+deleteId, nil)
-// 	util.CheckErr(err)
-// 	_, err = client.Do(req)
-//
-// 	fmt.Println("delete id after req:", deleteId)
-// 	count, err := factCollection.Find(bson.M{"targetid": deleteId}).Count()
-// 	c.Assert(count, Equals, 0)
-// }
