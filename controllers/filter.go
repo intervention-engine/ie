@@ -8,8 +8,9 @@ import (
 
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
+	"github.com/intervention-engine/fhir/server"
+	"github.com/intervention-engine/ie/middleware"
 	"github.com/intervention-engine/ie/models"
-  "github.com/intervention-engine/fhir/server"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -67,13 +68,26 @@ func FilterCreateHandler(rw http.ResponseWriter, r *http.Request, next http.Hand
 	filter := &models.Filter{}
 	err := decoder.Decode(filter)
 	if err != nil {
-    log.Println("Error on decoding filter")
+		log.Println("Error on decoding filter")
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+
+	host, err := os.Hostname()
+	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 	}
 
 	c := server.Database.C("filters")
 	i := bson.NewObjectId()
 	filter.Id = i.Hex()
+	queryId, err := filter.CreateQuery()
+	if err == nil {
+		filter.Url = "http://" + host + ":3001/Query/" + queryId
+		query := filter.Query
+		query.Id = queryId
+		go middleware.QueryRunner(&query)
+	}
+
 	err = c.Insert(filter)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
@@ -83,11 +97,6 @@ func FilterCreateHandler(rw http.ResponseWriter, r *http.Request, next http.Hand
 	context.Set(r, "Filter", filter)
 	context.Set(r, "Resource", "Filter")
 	context.Set(r, "Action", "create")
-
-	host, err := os.Hostname()
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
 
 	rw.Header().Add("Location", "http://"+host+":3001/Filter/"+i.Hex())
 	json.NewEncoder(rw).Encode(filter)
