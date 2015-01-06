@@ -2,7 +2,7 @@ package models
 
 import (
 	fhirmodels "github.com/intervention-engine/fhir/models"
-	"github.com/intervention-engine/fhir/server"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -15,8 +15,8 @@ type Filter struct {
 	Url         string           `json:"url" bson:"url"`
 }
 
-func (f *Filter) CreateQuery() (string, error) {
-	c := server.Database.C("querys")
+func (f *Filter) CreateQuery(database *mgo.Database) (string, error) {
+	c := database.C("querys")
 	query := f.Query
 	i := bson.NewObjectId()
 	hex := i.Hex()

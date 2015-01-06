@@ -80,7 +80,7 @@ func FilterCreateHandler(rw http.ResponseWriter, r *http.Request, next http.Hand
 	c := server.Database.C("filters")
 	i := bson.NewObjectId()
 	filter.Id = i.Hex()
-	queryId, err := filter.CreateQuery()
+	queryId, err := filter.CreateQuery(server.Database)
 	if err == nil {
 		filter.Url = "http://" + host + ":3001/Query/" + queryId
 		query := filter.Query
