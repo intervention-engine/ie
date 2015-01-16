@@ -32,8 +32,8 @@ type Pane struct {
 }
 
 type EmberItem struct {
-	id         			string               `json:"-" bson:"_id"`
-	Parameter  			fhirmodels.Extension `json:"parameter" bson:"parameter"`
-	Active     			*bool                `json:"active" bson:"active"`
-	ComponentName   string               `json:"componentName" bson:"componentName"`
+	id            string               `json:"-" bson:"_id"`
+	Parameter     fhirmodels.Extension `json:"parameter" bson:"parameter"`
+	Active        *bool                `json:"active" bson:"active"`
+	ComponentName string               `json:"componentName" bson:"componentName"`
 }
