@@ -6,32 +6,28 @@ import (
 	"net/http"
 
 	"github.com/intervention-engine/fhir/server"
-	"github.com/intervention-engine/ie/middleware"
 	"github.com/intervention-engine/ie/models"
 )
 
-func ConditionTotalHandler(rw http.ResponseWriter, r *http.Request) {
+func pipelineExecutor(rw http.ResponseWriter, r *http.Request, pp models.PipelineProducer) {
 	query, err := server.LoadQuery(r)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	pipeline := models.CreateConditionPipeline(query)
-	factCollection := server.Database.C("facts")
-	qr := &middleware.QueryResult{}
-	factCollection.Pipe(pipeline).One(qr)
+	pipeline := pp(query)
+	qr, err := pipeline.Execute(server.Database)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	json.NewEncoder(rw).Encode(qr)
 }
 
+func ConditionTotalHandler(rw http.ResponseWriter, r *http.Request) {
+	pipelineExecutor(rw, r, models.NewConditionPipeline)
+}
+
 func EncounterTotalHandler(rw http.ResponseWriter, r *http.Request) {
-	query, err := server.LoadQuery(r)
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	pipeline := models.CreateEncounterPipeline(query)
-	factCollection := server.Database.C("facts")
-	qr := &middleware.QueryResult{}
-	factCollection.Pipe(pipeline).One(qr)
-	json.NewEncoder(rw).Encode(qr)
+	pipelineExecutor(rw, r, models.NewEncounterPipeline)
 }

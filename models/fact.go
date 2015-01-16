@@ -3,7 +3,6 @@ package models
 import (
 	"github.com/intervention-engine/fhir/models"
 	"gopkg.in/mgo.v2/bson"
-	"time"
 )
 
 type Fact struct {
@@ -71,56 +70,4 @@ func FactFromObservation(o *models.Observation) Fact {
 	i := bson.NewObjectId()
 	f.Id = i.Hex()
 	return f
-}
-
-func CreatePersonPipeline(q *models.Query) []bson.M {
-	pipeline := startPipeline(q)
-
-	pipeline = append(pipeline, bson.M{"$group": bson.M{"_id": nil, "total": bson.M{"$sum": 1}}})
-	return pipeline
-}
-
-func CreateConditionPipeline(q *models.Query) []bson.M {
-	pipeline := startPipeline(q)
-
-	pipeline = append(pipeline, bson.M{"$unwind": "$entries"})
-	pipeline = append(pipeline, bson.M{"$match": bson.M{"entries.type": "Condition"}})
-	pipeline = append(pipeline, bson.M{"$group": bson.M{"_id": "entries.codes.coding.code", "total": bson.M{"$sum": 1}}})
-	pipeline = append(pipeline, bson.M{"$group": bson.M{"_id": nil, "total": bson.M{"$sum": 1}}})
-	return pipeline
-}
-
-func CreateEncounterPipeline(q *models.Query) []bson.M {
-	pipeline := startPipeline(q)
-
-	pipeline = append(pipeline, bson.M{"$unwind": "$entries"})
-	pipeline = append(pipeline, bson.M{"$match": bson.M{"entries.type": "Encounter"}})
-	pipeline = append(pipeline, bson.M{"$group": bson.M{"_id": nil, "total": bson.M{"$sum": 1}}})
-	return pipeline
-}
-
-func startPipeline(q *models.Query) []bson.M {
-	pipeline := []bson.M{{"$group": bson.M{"_id": "$patientid", "gender": bson.M{"$max": "$gender"}, "birthdate": bson.M{"$max": "$birthdate"}, "entries": bson.M{"$push": bson.M{"startdate": "$startdate", "enddate": "$enddate", "codes": "$codes", "type": "$type"}}}}}
-	for _, extension := range q.Parameter {
-		switch extension.Url {
-		case "http://interventionengine.org/patientgender":
-			pipeline = append(pipeline, bson.M{"$match": bson.M{"gender": extension.ValueString}})
-		case "http://interventionengine.org/patientage":
-			lowAgeDate, highAgeDate := ageRangeToTime(extension.ValueRange)
-			pipeline = append(pipeline, bson.M{"$match": bson.M{"birthdate.time": bson.M{"$gte": highAgeDate, "$lte": lowAgeDate}}})
-		case "http://interventionengine.org/conditioncode":
-			// Hack for now assuming that all codable concepts contain a single code
-			conditionCode := extension.ValueCodeableConcept.Coding[0].Code
-			conditionSystem := extension.ValueCodeableConcept.Coding[0].System
-			pipeline = append(pipeline, bson.M{"$match": bson.M{"entries.type": "Condition", "entries.codes.coding.code": conditionCode, "entries.codes.coding.system": conditionSystem}})
-		}
-	}
-
-	return pipeline
-}
-
-func ageRangeToTime(ageRange models.Range) (lowAgeDate, highAgeDate time.Time) {
-	lowAgeDate = time.Date(time.Now().Year()-int(ageRange.Low.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)
-	highAgeDate = time.Date(time.Now().Year()-int(ageRange.High.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)
-	return
 }

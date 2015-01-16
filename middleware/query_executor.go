@@ -11,10 +11,6 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-type QueryResult struct {
-	Total int `json:"total", bson:"total"`
-}
-
 func QueryExecutionHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	next(rw, r)
 
@@ -27,10 +23,8 @@ func QueryExecutionHandler(rw http.ResponseWriter, r *http.Request, next http.Ha
 }
 
 func QueryRunner(query *fhirmodels.Query) {
-	pipeline := models.CreatePersonPipeline(query)
-	factCollection := server.Database.C("facts")
-	qr := &QueryResult{}
-	err := factCollection.Pipe(pipeline).One(qr)
+	pipeline := models.NewPersonPipeline(query)
+	qr, err := pipeline.Execute(server.Database)
 	result := fhirmodels.QueryResponseComponent{}
 	if err != nil {
 		result.Outcome = "error"
