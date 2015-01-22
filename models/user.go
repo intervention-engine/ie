@@ -12,17 +12,6 @@ type User struct {
   Password []byte
 }
 
-// type UserContext struct {
-//   Session sessions.Session
-// }
-// 
-// func NewUserContext(req *http.Request) (*UserContext, error) {
-//   sess, err := Store.Get(req, "intervention-engine")
-//   return &UserContext {
-//     Sessions = sess
-//   }, err
-// }
-
 func (u *User) SetPassword(password string) {
   hashedpass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
   if err != nil {
