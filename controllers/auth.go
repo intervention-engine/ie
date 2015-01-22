@@ -52,11 +52,12 @@ func LoginForm(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 func LogoutHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
   sess, err := Store.Get(r, "intervention-engine")
   delete(sess.Values, "user")
+  sess.AddFlash("You have been logged out.")
   if err != nil {
     http.Error(rw, err.Error(), http.StatusInternalServerError)
   }
   sess.Save(r, rw)
-  http.Redirect(rw, r, "/", http.StatusSeeOther)
+  http.Redirect(rw, r, "/login", http.StatusSeeOther)
 }
 
 func RegisterHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
@@ -103,9 +104,9 @@ func RegisterForm(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc
 func IndexHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc){
   indexForms, _ := template.ParseFiles("templates/_base.html","templates/index.html")
   sess, err := Store.Get(r, "intervention-engine")
-  flashes := sess.Flashes()
-  sess.Save(r, rw)
-  err = indexForms.Execute(rw, map[string]interface{}{"flashes": flashes})
+  userid := sess.Values["user"]
+  isLoggedIn := userid != nil
+  err = indexForms.Execute(rw, map[string]interface{}{"userid": userid, "isLoggedIn": isLoggedIn})
   if err != nil {
     http.Error(rw, err.Error(), http.StatusInternalServerError)
   }

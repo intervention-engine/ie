@@ -3,4 +3,8 @@
 {{ define "content" }}
 <h1>Index</h1>
 
+{{ if .isLoggedIn }}
+  <h2>Logged in as {{ .userid }}</h1>
+{{ end }}
+
 {{ end }}
