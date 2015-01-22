@@ -16,7 +16,7 @@ func pipelineExecutor(rw http.ResponseWriter, r *http.Request, pp models.Pipelin
 		return
 	}
 	pipeline := pp(query)
-	qr, err := pipeline.Execute(server.Database)
+	qr, err := pipeline.ExecuteCount(server.Database)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return

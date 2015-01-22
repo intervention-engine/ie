@@ -23,8 +23,8 @@ func QueryExecutionHandler(rw http.ResponseWriter, r *http.Request, next http.Ha
 }
 
 func QueryRunner(query *fhirmodels.Query) {
-	pipeline := models.NewPersonPipeline(query)
-	qr, err := pipeline.Execute(server.Database)
+	pipeline := models.NewPipeline(query)
+	qr, err := pipeline.ExecuteCount(server.Database)
 	result := fhirmodels.QueryResponseComponent{}
 	if err != nil {
 		result.Outcome = "error"

@@ -15,6 +15,10 @@ type QueryResult struct {
 	Total int `json:"total", bson:"total"`
 }
 
+type QueryPatientList struct {
+	PatientIds []string `json:"patientids", bson:"patientids"`
+}
+
 type PipelineProducer func(q *models.Query) (p Pipeline)
 
 func NewPipeline(q *models.Query) Pipeline {
@@ -38,20 +42,12 @@ func NewPipeline(q *models.Query) Pipeline {
 	return pipeline
 }
 
-func NewPersonPipeline(q *models.Query) Pipeline {
-	pipeline := NewPipeline(q)
-
-	pipeline.MongoPipeline = append(pipeline.MongoPipeline, bson.M{"$group": bson.M{"_id": nil, "total": bson.M{"$sum": 1}}})
-	return pipeline
-}
-
 func NewConditionPipeline(q *models.Query) Pipeline {
 	pipeline := NewPipeline(q)
 
 	pipeline.MongoPipeline = append(pipeline.MongoPipeline, bson.M{"$unwind": "$entries"})
 	pipeline.MongoPipeline = append(pipeline.MongoPipeline, bson.M{"$match": bson.M{"entries.type": "Condition"}})
 	pipeline.MongoPipeline = append(pipeline.MongoPipeline, bson.M{"$group": bson.M{"_id": "entries.codes.coding.code", "total": bson.M{"$sum": 1}}})
-	pipeline.MongoPipeline = append(pipeline.MongoPipeline, bson.M{"$group": bson.M{"_id": nil, "total": bson.M{"$sum": 1}}})
 	return pipeline
 }
 
@@ -60,15 +56,31 @@ func NewEncounterPipeline(q *models.Query) Pipeline {
 
 	pipeline.MongoPipeline = append(pipeline.MongoPipeline, bson.M{"$unwind": "$entries"})
 	pipeline.MongoPipeline = append(pipeline.MongoPipeline, bson.M{"$match": bson.M{"entries.type": "Encounter"}})
-	pipeline.MongoPipeline = append(pipeline.MongoPipeline, bson.M{"$group": bson.M{"_id": nil, "total": bson.M{"$sum": 1}}})
 	return pipeline
 }
 
-func (p *Pipeline) Execute(db *mgo.Database) (QueryResult, error) {
+func (p *Pipeline) MakeCountPipeline() {
+	p.MongoPipeline = append(p.MongoPipeline, bson.M{"$group": bson.M{"_id": nil, "total": bson.M{"$sum": 1}}})
+}
+
+func (p *Pipeline) MakePatientListPipeline() {
+	p.MongoPipeline = append(p.MongoPipeline, bson.M{"$group": bson.M{"_id": nil, "patientids": bson.M{"$push": "$_id"}}})
+}
+
+func (p *Pipeline) ExecuteCount(db *mgo.Database) (QueryResult, error) {
 	factCollection := db.C("facts")
 	qr := QueryResult{}
+	p.MakeCountPipeline()
 	err := factCollection.Pipe(p.MongoPipeline).One(&qr)
 	return qr, err
+}
+
+func (p *Pipeline) ExecutePatientList(db *mgo.Database) (QueryPatientList, error) {
+	factCollection := db.C("facts")
+	qpl := QueryPatientList{}
+	p.MakePatientListPipeline()
+	err := factCollection.Pipe(p.MongoPipeline).One(&qpl)
+	return qpl, err
 }
 
 func ageRangeToTime(ageRange models.Range) (lowAgeDate, highAgeDate time.Time) {
