@@ -70,6 +70,9 @@ func main() {
 	register := s.Router.Path("/register").Subrouter()
 	register.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterForm)))
 	register.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterHandler)))
+	
+	index := s.Router.Path("/index").Subrouter()
+	index.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.IndexHandler)))
 
 	//Store = sessions.NewCookieStore([]byte(os.Getenv("KEY")))
 
