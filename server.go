@@ -9,6 +9,8 @@ import (
 	"os"
 )
 
+//var Store sessions.Store
+
 func main() {
 	// Check for a linked MongoDB container if we are running in Docker
 	mongoHost := os.Getenv("MONGO_PORT_27017_TCP_ADDR")
@@ -60,6 +62,16 @@ func main() {
 	filter.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterShowHandler)))
 	filter.Methods("PUT").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterUpdateHandler)))
 	filter.Methods("DELETE").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterDeleteHandler)))
+
+	login := s.Router.Path("/login").Subrouter()
+	login.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.LoginForm)))
+	login.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.LoginHandler)))
+	
+	register := s.Router.Path("/register").Subrouter()
+	register.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterForm)))
+	register.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterHandler)))
+
+	//Store = sessions.NewCookieStore([]byte(os.Getenv("KEY")))
 
 	s.Run()
 }
