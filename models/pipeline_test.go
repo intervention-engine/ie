@@ -62,6 +62,7 @@ func (p *PipelineSuite) TestNewPersonPipelineList(c *C) {
 	qpl, err := pipeline.ExecutePatientList(p.Session.DB("ie-test"))
 	util.CheckErr(err)
 	c.Assert(qpl.PatientIds, HasLen, 5)
+	c.Assert(qpl.PatientIds, Contains, "546f8ecd1cd4625ec500016f")
 }
 
 func (p *PipelineSuite) TestAgePipeline(c *C) {
@@ -102,3 +103,31 @@ func LoadQueryFromFixture(fileName string) *models.Query {
 	util.CheckErr(err)
 	return query
 }
+
+type containsChecker struct {
+	*CheckerInfo
+}
+
+func (c *containsChecker) Check(params []interface{}, names []string) (result bool, error string) {
+	var (
+		ok       bool
+		list     []string
+		expected string
+	)
+	list, ok = params[0].([]string)
+	if !ok {
+		return false, "List value is not a []string"
+	}
+	expected, ok = params[1].(string)
+	if !ok {
+		return false, "Expected value is not a string"
+	}
+	for _, v := range list {
+		if v == expected {
+			return true, ""
+		}
+	}
+	return false, "Expected value not found in list"
+}
+
+var Contains Checker = &containsChecker{&CheckerInfo{Name: "Contains", Params: []string{"list", "expected"}}}
