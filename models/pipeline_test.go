@@ -49,37 +49,46 @@ func (p *PipelineSuite) TearDownSuite(c *C) {
 }
 
 func (p *PipelineSuite) TestNewPersonPipeline(c *C) {
-	pipeline := NewPersonPipeline(p.Query)
-	c.Assert(4, Equals, len(pipeline.MongoPipeline))
-	qr, err := pipeline.Execute(p.Session.DB("ie-test"))
+	pipeline := NewPipeline(p.Query)
+	c.Assert(3, Equals, len(pipeline.MongoPipeline))
+	qr, err := pipeline.ExecuteCount(p.Session.DB("ie-test"))
 	util.CheckErr(err)
 	c.Assert(qr.Total, Equals, 5)
 }
 
+func (p *PipelineSuite) TestNewPersonPipelineList(c *C) {
+	pipeline := NewPipeline(p.Query)
+	c.Assert(3, Equals, len(pipeline.MongoPipeline))
+	qpl, err := pipeline.ExecutePatientList(p.Session.DB("ie-test"))
+	util.CheckErr(err)
+	c.Assert(qpl.PatientIds, HasLen, 5)
+	c.Assert(qpl.PatientIds, Contains, "546f8ecd1cd4625ec500016f")
+}
+
 func (p *PipelineSuite) TestAgePipeline(c *C) {
-	pipeline := NewPersonPipeline(LoadQueryFromFixture("../fixtures/age-query.json"))
-	qr, err := pipeline.Execute(p.Session.DB("ie-test"))
+	pipeline := NewPipeline(LoadQueryFromFixture("../fixtures/age-query.json"))
+	qr, err := pipeline.ExecuteCount(p.Session.DB("ie-test"))
 	util.CheckErr(err)
 	c.Assert(qr.Total, Equals, 3)
 }
 
 func (p *PipelineSuite) TestEmptyQuery(c *C) {
-	pipeline := NewPersonPipeline(&models.Query{})
-	qr, err := pipeline.Execute(p.Session.DB("ie-test"))
+	pipeline := NewPipeline(&models.Query{})
+	qr, err := pipeline.ExecuteCount(p.Session.DB("ie-test"))
 	util.CheckErr(err)
 	c.Assert(qr.Total, Equals, 39)
 }
 
 func (p *PipelineSuite) TestCreateConditionPipeline(c *C) {
 	pipeline := NewConditionPipeline(p.Query)
-	qr, err := pipeline.Execute(p.Session.DB("ie-test"))
+	qr, err := pipeline.ExecuteCount(p.Session.DB("ie-test"))
 	util.CheckErr(err)
 	c.Assert(qr.Total, Equals, 1)
 }
 
 func (p *PipelineSuite) TestCreateEncounterPipeline(c *C) {
 	pipeline := NewEncounterPipeline(p.Query)
-	qr, err := pipeline.Execute(p.Session.DB("ie-test"))
+	qr, err := pipeline.ExecuteCount(p.Session.DB("ie-test"))
 	util.CheckErr(err)
 	c.Assert(qr.Total, Equals, 12)
 }
@@ -94,3 +103,31 @@ func LoadQueryFromFixture(fileName string) *models.Query {
 	util.CheckErr(err)
 	return query
 }
+
+type containsChecker struct {
+	*CheckerInfo
+}
+
+func (c *containsChecker) Check(params []interface{}, names []string) (result bool, error string) {
+	var (
+		ok       bool
+		list     []string
+		expected string
+	)
+	list, ok = params[0].([]string)
+	if !ok {
+		return false, "List value is not a []string"
+	}
+	expected, ok = params[1].(string)
+	if !ok {
+		return false, "Expected value is not a string"
+	}
+	for _, v := range list {
+		if v == expected {
+			return true, ""
+		}
+	}
+	return false, "Expected value not found in list"
+}
+
+var Contains Checker = &containsChecker{&CheckerInfo{Name: "Contains", Params: []string{"list", "expected"}}}
