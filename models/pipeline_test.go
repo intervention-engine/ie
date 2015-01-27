@@ -56,6 +56,13 @@ func (p *PipelineSuite) TestNewPersonPipeline(c *C) {
 	c.Assert(qr.Total, Equals, 5)
 }
 
+func (p *PipelineSuite) TestNewPersonPipelineMultiCode(c *C) {
+	pipeline := NewPipeline(LoadQueryFromFixture("../fixtures/multi-code-query.json"))
+	qr, err := pipeline.ExecuteCount(p.Session.DB("ie-test"))
+	util.CheckErr(err)
+	c.Assert(qr.Total, Equals, 7)
+}
+
 func (p *PipelineSuite) TestNewPersonPipelineList(c *C) {
 	pipeline := NewPipeline(p.Query)
 	c.Assert(3, Equals, len(pipeline.MongoPipeline))
