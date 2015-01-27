@@ -12,7 +12,7 @@ type Filter struct {
 	Description string           `json:"description" bson:"description"`
 	Query       fhirmodels.Query `json:"query" bson:"query"`
 	Panes       []Pane           `json:"panes" bson:"panes"`
-	Url         string           `json:"url" bson:"url"`
+	Patients    string           `json:"patients" bson:"patients"`
 }
 
 func (f *Filter) CreateQuery(database *mgo.Database) (string, error) {

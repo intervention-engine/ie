@@ -82,7 +82,7 @@ func FilterCreateHandler(rw http.ResponseWriter, r *http.Request, next http.Hand
 	filter.Id = i.Hex()
 	queryId, err := filter.CreateQuery(server.Database)
 	if err == nil {
-		filter.Url = "http://" + host + ":3001/Query/" + queryId
+		filter.Patients = queryId
 		query := filter.Query
 		query.Id = queryId
 		go middleware.QueryRunner(&query)
