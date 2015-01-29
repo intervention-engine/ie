@@ -32,10 +32,10 @@ func NewPipeline(q *models.Query) Pipeline {
 			lowAgeDate, highAgeDate := ageRangeToTime(extension.ValueRange)
 			pipeline.MongoPipeline = append(pipeline.MongoPipeline, bson.M{"$match": bson.M{"birthdate.time": bson.M{"$gte": highAgeDate, "$lte": lowAgeDate}}})
 		case "http://interventionengine.org/conditioncode":
-			// Hack for now assuming that all codable concepts contain a single code
-			conditionCode := extension.ValueCodeableConcept.Coding[0].Code
-			conditionSystem := extension.ValueCodeableConcept.Coding[0].System
-			pipeline.MongoPipeline = append(pipeline.MongoPipeline, bson.M{"$match": bson.M{"entries.type": "Condition", "entries.codes.coding.code": conditionCode, "entries.codes.coding.system": conditionSystem}})
+			pipeline.MongoPipeline = append(pipeline.MongoPipeline, codedPipelinePhase("Condition", extension.ValueCodeableConcept))
+		case "http://interventionengine.org/encountercode":
+			pipeline.MongoPipeline = append(pipeline.MongoPipeline, codedPipelinePhase("Encounter", extension.ValueCodeableConcept))
+
 		}
 	}
 
@@ -81,6 +81,23 @@ func (p *Pipeline) ExecutePatientList(db *mgo.Database) (QueryPatientList, error
 	p.MakePatientListPipeline()
 	err := factCollection.Pipe(p.MongoPipeline).One(&qpl)
 	return qpl, err
+}
+
+func codedPipelinePhase(factType string, cc models.CodeableConcept) bson.M {
+	if len(cc.Coding) == 1 {
+		code := cc.Coding[0].Code
+		system := cc.Coding[0].System
+		return bson.M{"$match": bson.M{"entries.type": factType, "entries.codes.coding.code": code, "entries.codes.coding.system": system}}
+	} else {
+		var codeList []bson.M
+		for _, coding := range cc.Coding {
+			code := coding.Code
+			system := coding.System
+			codeList = append(codeList, bson.M{"entries.codes.coding.code": code, "entries.codes.coding.system": system})
+		}
+		return bson.M{"$match": bson.M{"entries.type": factType, "$or": codeList}}
+	}
+
 }
 
 func ageRangeToTime(ageRange models.Range) (lowAgeDate, highAgeDate time.Time) {
