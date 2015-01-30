@@ -1,6 +1,6 @@
 Intervention Engine
 ===================
-
+[![Build Status](https://travis-ci.org/intervention-engine/ie.svg?branch=master)](https://travis-ci.org/intervention-engine/ie)
 The goal of this project is to allow providers to easily interact with their own clinical data to enable the creation of “homegrown” clinical quality measures. After providers have created their own measures, they will be able to use Intervention Engine to track their performance over time and make adjustments to their measures.
 
 This repository contains the intervention-engine-specific functionality that makes use of the [generic FHIR server](http://github.com/intervention-engine/fhir). Specifically, it contains middleware handlers for fact creation and management to support query execution in MongoDB.
