@@ -5,6 +5,8 @@ import (
 
 	"net/http"
 
+	"github.com/gorilla/mux"
+	fhirmodels "github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/models"
 )
@@ -44,4 +46,29 @@ func EncounterTotalHandler(rw http.ResponseWriter, r *http.Request) {
 
 func PatientListHandler(rw http.ResponseWriter, r *http.Request) {
 	pipelineExecutor(rw, r, models.NewPipeline, "patient")
+}
+
+func InstaCountHandler(rw http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	query := &fhirmodels.Query{}
+	err := decoder.Decode(query)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+	queryType := mux.Vars(r)["type"]
+	var pipeline models.Pipeline
+	switch queryType {
+	case "patient":
+		pipeline = models.NewPipeline(query)
+	case "encounter":
+		pipeline = models.NewEncounterPipeline(query)
+	case "condition":
+		pipeline = models.NewConditionPipeline(query)
+	}
+	qr, err := pipeline.ExecuteCount(server.Database)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(rw).Encode(qr)
 }

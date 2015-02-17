@@ -38,6 +38,7 @@ func main() {
 	s.Router.HandleFunc("/QueryConditionTotal/{id}", controllers.ConditionTotalHandler)
 	s.Router.HandleFunc("/QueryEncounterTotal/{id}", controllers.EncounterTotalHandler)
 	s.Router.HandleFunc("/QueryList/{id}", controllers.PatientListHandler)
+	s.Router.HandleFunc("/InstaCount/{type}", controllers.InstaCountHandler)
 
 	filterBase := s.Router.Path("/Filter").Subrouter()
 	filterBase.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterIndexHandler)))
