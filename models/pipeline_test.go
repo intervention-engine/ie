@@ -76,7 +76,7 @@ func (p *PipelineSuite) TestAgePipeline(c *C) {
 	pipeline := NewPipeline(LoadQueryFromFixture("../fixtures/age-query.json"))
 	qr, err := pipeline.ExecuteCount(p.Session.DB("ie-test"))
 	util.CheckErr(err)
-	c.Assert(qr.Total, Equals, 3)
+	c.Assert(qr.Total, Equals, 6)
 }
 
 func (p *PipelineSuite) TestEmptyQuery(c *C) {
