@@ -11,6 +11,68 @@ type Pipeline struct {
 	MongoPipeline []bson.M
 }
 
+type MatchingStage struct {
+	AndStatements bson.M
+	OrStatements  []bson.M
+}
+
+func NewMS() *MatchingStage {
+	ms := &MatchingStage{}
+	ms.AndStatements = bson.M{}
+	ms.OrStatements = []bson.M{}
+	return ms
+}
+
+func (m *MatchingStage) AddAndStatement(key string, value interface{}) {
+	m.AndStatements[key] = value
+}
+
+func (m *MatchingStage) AddOrStatement(statement bson.M) {
+	m.OrStatements = append(m.OrStatements, statement)
+}
+
+func (m *MatchingStage) AddType(typeString string) {
+	m.AndStatements["entries.type"] = typeString
+}
+
+func (m *MatchingStage) AddCodableConecpt(cc models.CodeableConcept) {
+	if len(cc.Coding) == 1 {
+		code := cc.Coding[0].Code
+		system := cc.Coding[0].System
+		m.AddAndStatement("entries.codes.coding.code", code)
+		m.AddAndStatement("entries.codes.coding.system", system)
+	} else {
+		for _, coding := range cc.Coding {
+			code := coding.Code
+			system := coding.System
+			m.AddOrStatement(bson.M{"entries.codes.coding.code": code, "entries.codes.coding.system": system})
+		}
+	}
+}
+
+func (m *MatchingStage) AddValueCheck(e models.Extension) {
+	if e.ValueInteger != 0 {
+		m.AddAndStatement("entries.resultquantity.value", float64(e.ValueInteger))
+	}
+	if e.ValueRange.High.Value != 0 || e.ValueRange.Low.Value != 0 {
+		rangeQuery := bson.M{}
+		if e.ValueRange.High.Value != 0 {
+			rangeQuery["$lte"] = e.ValueRange.High.Value
+		}
+		if e.ValueRange.Low.Value != 0 {
+			rangeQuery["$gte"] = e.ValueRange.Low.Value
+		}
+		m.AddAndStatement("entries.resultquantity.value", rangeQuery)
+	}
+}
+
+func (m *MatchingStage) ToBSON() bson.M {
+	if len(m.OrStatements) > 1 {
+		m.AndStatements["$or"] = m.OrStatements
+	}
+	return bson.M{"$match": m.AndStatements}
+}
+
 type QueryResult struct {
 	Total int `json:"total", bson:"total"`
 }
@@ -23,23 +85,34 @@ type PipelineProducer func(q *models.Query) (p Pipeline)
 
 func NewPipeline(q *models.Query) Pipeline {
 	pipeline := Pipeline{}
-	pipeline.MongoPipeline = []bson.M{{"$group": bson.M{"_id": "$patientid", "gender": bson.M{"$max": "$gender"}, "birthdate": bson.M{"$max": "$birthdate"}, "entries": bson.M{"$push": bson.M{"startdate": "$startdate", "enddate": "$enddate", "codes": "$codes", "type": "$type"}}}}}
+	pipeline.MongoPipeline = []bson.M{{"$group": bson.M{"_id": "$patientid", "gender": bson.M{"$max": "$gender"}, "birthdate": bson.M{"$max": "$birthdate"}, "entries": bson.M{"$push": bson.M{"startdate": "$startdate", "enddate": "$enddate", "codes": "$codes", "type": "$type", "resultquantity": "$resultquantity"}}}}}
 	for _, extension := range q.Parameter {
+		ms := NewMS()
 		switch extension.Url {
 		case "http://interventionengine.org/patientgender":
-			pipeline.MongoPipeline = append(pipeline.MongoPipeline, bson.M{"$match": bson.M{"gender": extension.ValueString}})
+			ms.AddAndStatement("gender", extension.ValueString)
 		case "http://interventionengine.org/patientage":
 			lowAgeDate, highAgeDate := ageRangeToTime(extension.ValueRange)
-			pipeline.MongoPipeline = append(pipeline.MongoPipeline, bson.M{"$match": bson.M{"birthdate.time": bson.M{"$gte": highAgeDate, "$lte": lowAgeDate}}})
+			ms.AddAndStatement("birthdate.time", bson.M{"$gte": highAgeDate, "$lte": lowAgeDate})
 		case "http://interventionengine.org/conditioncode":
-			pipeline.MongoPipeline = append(pipeline.MongoPipeline, codedPipelinePhase("Condition", extension.ValueCodeableConcept))
+			ms.AddType("Condition")
+			ms.AddCodableConecpt(extension.ValueCodeableConcept)
 		case "http://interventionengine.org/encountercode":
-			pipeline.MongoPipeline = append(pipeline.MongoPipeline, codedPipelinePhase("Encounter", extension.ValueCodeableConcept))
-
+			ms.AddType("Encounter")
+			ms.AddCodableConecpt(extension.ValueCodeableConcept)
+		case "http://interventionengine.org/observationcode":
+			ms.AddType("Observation")
+			ms.AddCodableConecpt(extension.ValueCodeableConcept)
+			ms.AddValueCheck(extension)
 		}
+		pipeline.MongoPipeline = append(pipeline.MongoPipeline, ms.ToBSON())
 	}
 
 	return pipeline
+}
+
+func IsRangePresent(r models.Range) bool {
+	return r.High.Value != 0 && r.Low.Value != 0
 }
 
 func NewConditionPipeline(q *models.Query) Pipeline {
@@ -81,23 +154,6 @@ func (p *Pipeline) ExecutePatientList(db *mgo.Database) (QueryPatientList, error
 	p.MakePatientListPipeline()
 	err := factCollection.Pipe(p.MongoPipeline).One(&qpl)
 	return qpl, err
-}
-
-func codedPipelinePhase(factType string, cc models.CodeableConcept) bson.M {
-	if len(cc.Coding) == 1 {
-		code := cc.Coding[0].Code
-		system := cc.Coding[0].System
-		return bson.M{"$match": bson.M{"entries.type": factType, "entries.codes.coding.code": code, "entries.codes.coding.system": system}}
-	} else {
-		var codeList []bson.M
-		for _, coding := range cc.Coding {
-			code := coding.Code
-			system := coding.System
-			codeList = append(codeList, bson.M{"entries.codes.coding.code": code, "entries.codes.coding.system": system})
-		}
-		return bson.M{"$match": bson.M{"entries.type": factType, "$or": codeList}}
-	}
-
 }
 
 func ageRangeToTime(ageRange models.Range) (lowAgeDate, highAgeDate time.Time) {

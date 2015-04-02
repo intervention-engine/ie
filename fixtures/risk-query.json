@@ -1,0 +1,17 @@
+{
+  "text": {
+    "status": "generated",
+    "div": "<div>[Put rendering here]</div>"
+  },
+  "parameter": [
+    {
+      "url": "http://interventionengine.org/observationcode",
+      "valueInteger": 3,
+      "valueCodeableConcept" : { "coding" : [
+            {
+                "system" : "http://loinc.org",
+                "code" : "75492-9"
+            }]}
+    }
+  ]
+}

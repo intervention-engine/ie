@@ -79,6 +79,13 @@ func (p *PipelineSuite) TestAgePipeline(c *C) {
 	c.Assert(qr.Total, Equals, 6)
 }
 
+func (p *PipelineSuite) TestObservationValuePipeline(c *C) {
+	pipeline := NewPipeline(LoadQueryFromFixture("../fixtures/risk-query.json"))
+	qr, err := pipeline.ExecuteCount(p.Session.DB("ie-test"))
+	util.CheckErr(err)
+	c.Assert(qr.Total, Equals, 1)
+}
+
 func (p *PipelineSuite) TestEmptyQuery(c *C) {
 	pipeline := NewPipeline(&models.Query{})
 	qr, err := pipeline.ExecuteCount(p.Session.DB("ie-test"))
