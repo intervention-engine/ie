@@ -50,6 +50,22 @@ func (m *MatchingStage) AddCodableConecpt(cc models.CodeableConcept) {
 	}
 }
 
+func (m *MatchingStage) AddValueCheck(e models.Extension) {
+	if e.ValueInteger != 0 {
+		m.AddAndStatement("entries.resultquantity.value", float64(e.ValueInteger))
+	}
+	if e.ValueRange.High.Value != 0 || e.ValueRange.Low.Value != 0 {
+		rangeQuery := bson.M{}
+		if e.ValueRange.High.Value != 0 {
+			rangeQuery["$lte"] = e.ValueRange.High.Value
+		}
+		if e.ValueRange.Low.Value != 0 {
+			rangeQuery["$gte"] = e.ValueRange.Low.Value
+		}
+		m.AddAndStatement("entries.resultquantity.value", rangeQuery)
+	}
+}
+
 func (m *MatchingStage) ToBSON() bson.M {
 	if len(m.OrStatements) > 1 {
 		m.AndStatements["$or"] = m.OrStatements
@@ -69,7 +85,7 @@ type PipelineProducer func(q *models.Query) (p Pipeline)
 
 func NewPipeline(q *models.Query) Pipeline {
 	pipeline := Pipeline{}
-	pipeline.MongoPipeline = []bson.M{{"$group": bson.M{"_id": "$patientid", "gender": bson.M{"$max": "$gender"}, "birthdate": bson.M{"$max": "$birthdate"}, "entries": bson.M{"$push": bson.M{"startdate": "$startdate", "enddate": "$enddate", "codes": "$codes", "type": "$type"}}}}}
+	pipeline.MongoPipeline = []bson.M{{"$group": bson.M{"_id": "$patientid", "gender": bson.M{"$max": "$gender"}, "birthdate": bson.M{"$max": "$birthdate"}, "entries": bson.M{"$push": bson.M{"startdate": "$startdate", "enddate": "$enddate", "codes": "$codes", "type": "$type", "resultquantity": "$resultquantity"}}}}}
 	for _, extension := range q.Parameter {
 		ms := NewMS()
 		switch extension.Url {
@@ -87,11 +103,16 @@ func NewPipeline(q *models.Query) Pipeline {
 		case "http://interventionengine.org/observationcode":
 			ms.AddType("Observation")
 			ms.AddCodableConecpt(extension.ValueCodeableConcept)
+			ms.AddValueCheck(extension)
 		}
 		pipeline.MongoPipeline = append(pipeline.MongoPipeline, ms.ToBSON())
 	}
 
 	return pipeline
+}
+
+func IsRangePresent(r models.Range) bool {
+	return r.High.Value != 0 && r.Low.Value != 0
 }
 
 func NewConditionPipeline(q *models.Query) Pipeline {
