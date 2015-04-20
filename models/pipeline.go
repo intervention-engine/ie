@@ -50,6 +50,20 @@ func (m *MatchingStage) AddCodableConecpt(cc models.CodeableConcept) {
 	}
 }
 
+func (m *MatchingStage) AddAgeRange(ageRange models.Range) {
+	rangeQuery := bson.M{}
+	if ageRange.Low.Value > 0 {
+		lowAgeDate := time.Date(time.Now().Year()-int(ageRange.Low.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)
+		rangeQuery["$lte"] = lowAgeDate
+	}
+
+	if ageRange.High.Value > 0 {
+		highAgeDate := time.Date(time.Now().Year()-int(ageRange.High.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)
+		rangeQuery["$gte"] = highAgeDate
+	}
+	m.AddAndStatement("birthdate.time", rangeQuery)
+}
+
 func (m *MatchingStage) AddValueCheck(e models.Extension) {
 	if e.ValueInteger != 0 {
 		m.AddAndStatement("entries.resultquantity.value", float64(e.ValueInteger))
@@ -92,8 +106,7 @@ func NewPipeline(q *models.Query) Pipeline {
 		case "http://interventionengine.org/patientgender":
 			ms.AddAndStatement("gender", extension.ValueString)
 		case "http://interventionengine.org/patientage":
-			lowAgeDate, highAgeDate := ageRangeToTime(extension.ValueRange)
-			ms.AddAndStatement("birthdate.time", bson.M{"$gte": highAgeDate, "$lte": lowAgeDate})
+			ms.AddAgeRange(extension.ValueRange)
 		case "http://interventionengine.org/conditioncode":
 			ms.AddType("Condition")
 			ms.AddCodableConecpt(extension.ValueCodeableConcept)
@@ -154,10 +167,4 @@ func (p *Pipeline) ExecutePatientList(db *mgo.Database) (QueryPatientList, error
 	p.MakePatientListPipeline()
 	err := factCollection.Pipe(p.MongoPipeline).One(&qpl)
 	return qpl, err
-}
-
-func ageRangeToTime(ageRange models.Range) (lowAgeDate, highAgeDate time.Time) {
-	lowAgeDate = time.Date(time.Now().Year()-int(ageRange.Low.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)
-	highAgeDate = time.Date(time.Now().Year()-int(ageRange.High.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)
-	return
 }
