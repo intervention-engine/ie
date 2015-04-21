@@ -1,0 +1,12 @@
+{
+  "text": {
+    "status": "generated",
+    "div": "<div>[Put rendering here]</div>"
+  },
+  "parameter": [
+    {
+      "url": "http://interventionengine.org/patientage",
+      "valueRange": {"low": {"value": 10}}
+    }
+  ]
+}

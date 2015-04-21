@@ -79,6 +79,20 @@ func (p *PipelineSuite) TestAgePipeline(c *C) {
 	c.Assert(qr.Total, Equals, 6)
 }
 
+func (p *PipelineSuite) TestUnderAnAgePipeline(c *C) {
+	pipeline := NewPipeline(LoadQueryFromFixture("../fixtures/under-an-age-query.json"))
+	qr, err := pipeline.ExecuteCount(p.Session.DB("ie-test"))
+	util.CheckErr(err)
+	c.Assert(qr.Total, Equals, 4)
+}
+
+func (p *PipelineSuite) TestOverAnAgePipeline(c *C) {
+	pipeline := NewPipeline(LoadQueryFromFixture("../fixtures/over-an-age-query.json"))
+	qr, err := pipeline.ExecuteCount(p.Session.DB("ie-test"))
+	util.CheckErr(err)
+	c.Assert(qr.Total, Equals, 35)
+}
+
 func (p *PipelineSuite) TestObservationValuePipeline(c *C) {
 	pipeline := NewPipeline(LoadQueryFromFixture("../fixtures/risk-query.json"))
 	qr, err := pipeline.ExecuteCount(p.Session.DB("ie-test"))
