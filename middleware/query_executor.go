@@ -33,7 +33,7 @@ func QueryRunner(query *fhirmodels.Query) {
 		result.Outcome = "ok"
 		result.Total = float64(qr.Total)
 	}
-	query.Response = result
+	query.Response = &result
 	c := server.Database.C("querys")
 	c.Update(bson.M{"_id": query.Id}, query)
 }

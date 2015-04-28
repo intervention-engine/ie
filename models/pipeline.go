@@ -106,16 +106,16 @@ func NewPipeline(q *models.Query) Pipeline {
 		case "http://interventionengine.org/patientgender":
 			ms.AddAndStatement("gender", extension.ValueString)
 		case "http://interventionengine.org/patientage":
-			ms.AddAgeRange(extension.ValueRange)
+			ms.AddAgeRange(*extension.ValueRange)
 		case "http://interventionengine.org/conditioncode":
 			ms.AddType("Condition")
-			ms.AddCodableConecpt(extension.ValueCodeableConcept)
+			ms.AddCodableConecpt(*extension.ValueCodeableConcept)
 		case "http://interventionengine.org/encountercode":
 			ms.AddType("Encounter")
-			ms.AddCodableConecpt(extension.ValueCodeableConcept)
+			ms.AddCodableConecpt(*extension.ValueCodeableConcept)
 		case "http://interventionengine.org/observationcode":
 			ms.AddType("Observation")
-			ms.AddCodableConecpt(extension.ValueCodeableConcept)
+			ms.AddCodableConecpt(*extension.ValueCodeableConcept)
 			ms.AddValueCheck(extension)
 		}
 		pipeline.MongoPipeline = append(pipeline.MongoPipeline, ms.ToBSON())
