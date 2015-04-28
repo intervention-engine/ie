@@ -52,12 +52,12 @@ func (m *MatchingStage) AddCodableConecpt(cc models.CodeableConcept) {
 
 func (m *MatchingStage) AddAgeRange(ageRange models.Range) {
 	rangeQuery := bson.M{}
-	if ageRange.Low.Value > 0 {
+	if (ageRange.Low != nil && ageRange.Low.Value > 0) {
 		lowAgeDate := time.Date(time.Now().Year()-int(ageRange.Low.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)
 		rangeQuery["$lte"] = lowAgeDate
 	}
 
-	if ageRange.High.Value > 0 {
+	if (ageRange.High != nil && ageRange.High.Value > 0) {
 		highAgeDate := time.Date(time.Now().Year()-int(ageRange.High.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)
 		rangeQuery["$gte"] = highAgeDate
 	}
@@ -68,15 +68,17 @@ func (m *MatchingStage) AddValueCheck(e models.Extension) {
 	if e.ValueInteger != 0 {
 		m.AddAndStatement("entries.resultquantity.value", float64(e.ValueInteger))
 	}
-	if e.ValueRange.High.Value != 0 || e.ValueRange.Low.Value != 0 {
-		rangeQuery := bson.M{}
-		if e.ValueRange.High.Value != 0 {
-			rangeQuery["$lte"] = e.ValueRange.High.Value
+	if e.ValueRange != nil {
+		if e.ValueRange.High.Value != 0 || e.ValueRange.Low.Value != 0 {
+			rangeQuery := bson.M{}
+			if e.ValueRange.High.Value != 0 {
+				rangeQuery["$lte"] = e.ValueRange.High.Value
+			}
+			if e.ValueRange.Low.Value != 0 {
+				rangeQuery["$gte"] = e.ValueRange.Low.Value
+			}
+			m.AddAndStatement("entries.resultquantity.value", rangeQuery)
 		}
-		if e.ValueRange.Low.Value != 0 {
-			rangeQuery["$gte"] = e.ValueRange.Low.Value
-		}
-		m.AddAndStatement("entries.resultquantity.value", rangeQuery)
 	}
 }
 
