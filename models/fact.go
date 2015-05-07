@@ -8,12 +8,12 @@ import (
 type Fact struct {
 	Id                    string                   `json:"-" bson:"_id"`
 	TargetID              string                   `json:"targetid" bson:"targetid"`
-	StartDate             *models.FHIRDateTime      `json:"startdate" bson:"startdate"`
-	EndDate               *models.FHIRDateTime      `json:"enddate" bson:"enddate"`
-	BirthDate             *models.FHIRDateTime      `json:"birthdate" bson:"birthdate"`
+	StartDate             *models.FHIRDateTime     `json:"startdate" bson:"startdate"`
+	EndDate               *models.FHIRDateTime     `json:"enddate" bson:"enddate"`
+	BirthDate             *models.FHIRDateTime     `json:"birthdate" bson:"birthdate"`
 	Codes                 []models.CodeableConcept `json:"codes" bson:"codes"`
-	ResultQuantity        *models.Quantity          `json:"resultquantity" bson:"resultquantity"`
-	ResultCodeableConcept *models.CodeableConcept   `json:"resultcodeableconcept" bson:"resultcodeableconcept"`
+	ResultQuantity        *models.Quantity         `json:"resultquantity" bson:"resultquantity"`
+	ResultCodeableConcept *models.CodeableConcept  `json:"resultcodeableconcept" bson:"resultcodeableconcept"`
 	PatientID             string                   `json:"patientid" bson:"patientid"`
 	Type                  string                   `json:"type" bson:"type"`
 	Gender                string                   `json:"gender" bson:"gender"`
@@ -66,6 +66,22 @@ func FactFromObservation(o *models.Observation) Fact {
 	f.ResultCodeableConcept = o.ValueCodeableConcept
 	f.Codes = []models.CodeableConcept{*o.Name}
 	f.PatientID = o.Subject.ReferencedID
+	f.TargetID = o.Id
+	i := bson.NewObjectId()
+	f.Id = i.Hex()
+	return f
+}
+
+func FactFromMedicationStatement(o *models.MedicationStatement, mlu models.MedicationLookup) Fact {
+	f := Fact{}
+	f.Type = "MedicationStatement"
+	f.StartDate = o.WhenGiven.Start
+	f.EndDate = o.WhenGiven.End
+	med, err := mlu(o.Medication.ReferencedID)
+	if err == nil {
+		f.Codes = []models.CodeableConcept{*med.Code}
+	}
+	f.PatientID = o.Patient.ReferencedID
 	f.TargetID = o.Id
 	i := bson.NewObjectId()
 	f.Id = i.Hex()
