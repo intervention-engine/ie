@@ -32,6 +32,8 @@ func FactHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
 				f = models.FactFromEncounter(resource.(*fhirmodels.Encounter))
 			case *fhirmodels.Observation:
 				f = models.FactFromObservation(resource.(*fhirmodels.Observation))
+			case *fhirmodels.MedicationStatement:
+				f = models.FactFromMedicationStatement(resource.(*fhirmodels.MedicationStatement), fhirmodels.BindMedicationLookup(server.Database))
 			case string:
 				//in this case we are handling the Delete method so we don't need to create a fact (we have no json resource to parse, just a targetID of the fact to delete)
 			}
