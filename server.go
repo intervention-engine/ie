@@ -35,6 +35,10 @@ func main() {
 	s.AddMiddleware("ObservationUpdate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("ObservationDelete", negroni.HandlerFunc(middleware.FactHandler))
 
+	s.AddMiddleware("MedicationStatementCreate", negroni.HandlerFunc(middleware.FactHandler))
+	s.AddMiddleware("MedicationStatementUpdate", negroni.HandlerFunc(middleware.FactHandler))
+	s.AddMiddleware("MedicationStatementDelete", negroni.HandlerFunc(middleware.FactHandler))
+
 	s.Router.HandleFunc("/QueryConditionTotal/{id}", controllers.ConditionTotalHandler)
 	s.Router.HandleFunc("/QueryEncounterTotal/{id}", controllers.EncounterTotalHandler)
 	s.Router.HandleFunc("/QueryList/{id}", controllers.PatientListHandler)
