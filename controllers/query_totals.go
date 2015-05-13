@@ -7,7 +7,7 @@ import (
 	fhirmodels "github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/models"
-	mgo "gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2"
 	"net/http"
 )
 
