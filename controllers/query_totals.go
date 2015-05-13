@@ -3,12 +3,12 @@ package controllers
 import (
 	"encoding/json"
 
-	"net/http"
-
 	"github.com/gorilla/mux"
 	fhirmodels "github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/models"
+	mgo "gopkg.in/mgo.v2"
+	"net/http"
 )
 
 func pipelineExecutor(rw http.ResponseWriter, r *http.Request, pp models.PipelineProducer, pipelineType string) {
@@ -21,14 +21,14 @@ func pipelineExecutor(rw http.ResponseWriter, r *http.Request, pp models.Pipelin
 	switch pipelineType {
 	case "patient":
 		qr, err := pipeline.ExecutePatientList(server.Database)
-		if err != nil {
+		if err != nil && err != mgo.ErrNotFound {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		json.NewEncoder(rw).Encode(qr)
 	case "count":
 		qr, err := pipeline.ExecuteCount(server.Database)
-		if err != nil {
+		if err != nil && err != mgo.ErrNotFound {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -66,8 +66,8 @@ func InstaCountHandler(rw http.ResponseWriter, r *http.Request) {
 		pipeline = models.NewConditionPipeline(query)
 	}
 	qr, err := pipeline.ExecuteCount(server.Database)
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	if err != nil && err != mgo.ErrNotFound {
+		http.Error(rw, err.Error(), http.StatusTeapot)
 		return
 	}
 	json.NewEncoder(rw).Encode(qr)
