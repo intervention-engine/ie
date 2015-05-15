@@ -55,6 +55,13 @@ func InstaCountHandler(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 	}
+
+	err = query.Validate()
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	queryType := mux.Vars(r)["type"]
 	var pipeline models.Pipeline
 	switch queryType {
@@ -67,7 +74,7 @@ func InstaCountHandler(rw http.ResponseWriter, r *http.Request) {
 	}
 	qr, err := pipeline.ExecuteCount(server.Database)
 	if err != nil && err != mgo.ErrNotFound {
-		http.Error(rw, err.Error(), http.StatusTeapot)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	json.NewEncoder(rw).Encode(qr)
