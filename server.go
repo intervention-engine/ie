@@ -22,6 +22,7 @@ func main() {
 	s.AddMiddleware("PatientCreate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("PatientUpdate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("PatientDelete", negroni.HandlerFunc(middleware.FactHandler))
+	s.AddMiddleware("PatientIndex", negroni.HandlerFunc(middleware.RiskQueryHandler))
 
 	s.AddMiddleware("ConditionCreate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("ConditionUpdate", negroni.HandlerFunc(middleware.FactHandler))

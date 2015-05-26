@@ -52,12 +52,12 @@ func (m *MatchingStage) AddCodableConecpt(cc models.CodeableConcept) {
 
 func (m *MatchingStage) AddAgeRange(ageRange models.Range) {
 	rangeQuery := bson.M{}
-	if (ageRange.Low != nil && ageRange.Low.Value > 0) {
+	if ageRange.Low != nil && ageRange.Low.Value > 0 {
 		lowAgeDate := time.Date(time.Now().Year()-int(ageRange.Low.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)
 		rangeQuery["$lte"] = lowAgeDate
 	}
 
-	if (ageRange.High != nil && ageRange.High.Value > 0) {
+	if ageRange.High != nil && ageRange.High.Value > 0 {
 		highAgeDate := time.Date(time.Now().Year()-int(ageRange.High.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)
 		rangeQuery["$gte"] = highAgeDate
 	}
