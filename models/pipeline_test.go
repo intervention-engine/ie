@@ -69,7 +69,7 @@ func (p *PipelineSuite) TestNewPersonPipelineList(c *C) {
 	qpl, err := pipeline.ExecutePatientList(p.Session.DB("ie-test"))
 	util.CheckErr(err)
 	c.Assert(qpl.PatientIds, HasLen, 5)
-	c.Assert(qpl.PatientIds, Contains, "546f8ecd1cd4625ec500016f")
+	c.Assert(qpl.PatientIds, Contains, "554bc3fda749dcd47b0002ce")
 }
 
 func (p *PipelineSuite) TestAgePipeline(c *C) {
@@ -90,7 +90,7 @@ func (p *PipelineSuite) TestOverAnAgePipeline(c *C) {
 	pipeline := NewPipeline(LoadQueryFromFixture("../fixtures/over-an-age-query.json"))
 	qr, err := pipeline.ExecuteCount(p.Session.DB("ie-test"))
 	util.CheckErr(err)
-	c.Assert(qr.Total, Equals, 35)
+	c.Assert(qr.Total, Equals, 36)
 }
 
 func (p *PipelineSuite) TestObservationValuePipeline(c *C) {
@@ -104,14 +104,14 @@ func (p *PipelineSuite) TestEmptyQuery(c *C) {
 	pipeline := NewPipeline(&models.Query{})
 	qr, err := pipeline.ExecuteCount(p.Session.DB("ie-test"))
 	util.CheckErr(err)
-	c.Assert(qr.Total, Equals, 39)
+	c.Assert(qr.Total, Equals, 40)
 }
 
 func (p *PipelineSuite) TestCreateConditionPipeline(c *C) {
 	pipeline := NewConditionPipeline(p.Query)
 	qr, err := pipeline.ExecuteCount(p.Session.DB("ie-test"))
 	util.CheckErr(err)
-	c.Assert(qr.Total, Equals, 1)
+	c.Assert(qr.Total, Equals, 6)
 }
 
 func (p *PipelineSuite) TestCreateEncounterPipeline(c *C) {
