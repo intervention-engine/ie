@@ -26,7 +26,7 @@ func RiskQueryHandler(rw http.ResponseWriter, r *http.Request, next http.Handler
 		mapFn := `function() {
   emit(this.patientid, {factType: this.type, risk: 0})
 }`
-		reduceSoure := `function(patient_id, values) {
+		reduceSource := `function(patient_id, values) {
   var reducedObject = {
     factType: 'risk',
     risk: 0
@@ -47,7 +47,7 @@ func RiskQueryHandler(rw http.ResponseWriter, r *http.Request, next http.Handler
 
   return reducedObject;
 }`
-		reduceTemplate, err := template.New("reduce").Parse(reduceSoure)
+		reduceTemplate, err := template.New("reduce").Parse(reduceSource)
 		var buffer bytes.Buffer
 		rmps := handleRiskModelParameters(query)
 		reduceTemplate.Execute(&buffer, rmps)
