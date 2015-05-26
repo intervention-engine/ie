@@ -5,6 +5,7 @@ import (
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/controllers"
 	"github.com/intervention-engine/ie/middleware"
+	"github.com/intervention-engine/ie/notifications"
 	"os"
 )
 
@@ -38,6 +39,10 @@ func main() {
 	s.AddMiddleware("MedicationStatementCreate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("MedicationStatementUpdate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("MedicationStatementDelete", negroni.HandlerFunc(middleware.FactHandler))
+
+	// Setup the notification handler to use the default notification definitions (and then register it)
+	notificationHandler := &middleware.NotificationHandler{Registry: notifications.DefaultNotificationDefinitionRegistry}
+	s.AddMiddleware("EncounterCreate", negroni.HandlerFunc(notificationHandler.Handle))
 
 	s.Router.HandleFunc("/QueryConditionTotal/{id}", controllers.ConditionTotalHandler)
 	s.Router.HandleFunc("/QueryEncounterTotal/{id}", controllers.EncounterTotalHandler)
