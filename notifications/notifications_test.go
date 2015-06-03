@@ -110,6 +110,8 @@ func AssertEncounterNotificationContents(cr *models.CommunicationRequest, reason
 	c.Assert(cr.Category.Coding[0].Code, Equals, "185087000")
 	c.Assert(cr.Payload, HasLen, 1)
 	c.Assert(cr.Payload[0].ContentReference.Reference, Equals, "http://intervention-engine.org/Encounter/1")
+	c.Assert(cr.Payload[0].ContentReference.ReferencedID, Equals, "1")
+	c.Assert(cr.Payload[0].ContentReference.Type, Equals, "Encounter")
 	c.Assert(cr.Status, Equals, "requested")
 	c.Assert(cr.Reason, HasLen, 1)
 	c.Assert(cr.Reason[0].Coding, HasLen, 1)
