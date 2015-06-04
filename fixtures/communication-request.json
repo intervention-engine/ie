@@ -1,0 +1,29 @@
+{
+	"category": {
+		"coding": [{
+			"system": "http://snomed.info/sct",
+			"code": "185087000"
+		}]
+	},
+	"payload": [{
+		"contentReference": {
+			"reference": "http://localhost:3001/Encounter/5564865619d2504cba00006e",
+			"type": "Encounter",
+			"referenceid": "5564865619d2504cba00006e"
+		}
+	}],
+	"status": "requested",
+	"reason": [{
+		"coding": [{
+			"system": "http://snomed.info/sct",
+			"code": "32485007",
+			"display": "Hospital admission (procedure)"
+		}]
+	}],
+	"orderedOn": "2015-05-26T10:42:30-04:00",
+	"subject": {
+		"reference": "http://MM198075-PC:3001/Patient/5564865619d2504cba00006c",
+		"type": "Patient",
+		"referenceid": "5564865619d2504cba00006c"
+	}
+}

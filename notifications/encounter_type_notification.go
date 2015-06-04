@@ -50,7 +50,10 @@ func (def *EncounterTypeNotificationDefinition) GetNotification(resource interfa
 		cr.Category.Coding[0].Code = "185087000"
 		//cr.Recipient = TODO
 		cr.Payload = make([]models.CommunicationRequestPayloadComponent, 1)
-		cr.Payload[0].ContentReference = &models.Reference{Reference: baseURL + "/Encounter/" + encounter.Id}
+		cr.Payload[0].ContentReference = &models.Reference{
+			Reference:    baseURL + "/Encounter/" + encounter.Id,
+			Type:         "Encounter",
+			ReferencedID: encounter.Id}
 		cr.Status = "requested"
 		cr.Reason = make([]models.CodeableConcept, 1)
 		cr.Reason[0] = models.CodeableConcept{Coding: make([]models.Coding, 1)}
