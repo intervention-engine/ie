@@ -51,7 +51,7 @@ func (n *NotificationCountSuite) TestEmptyNotificationCount(c *C) {
 		c.Fatal("Non-OK response code received: %v", w.Code)
 	}
 
-	counts := make([]interface{}, 0, 1)
+	var counts []NotificationCountResult
 	err := json.NewDecoder(w.Body).Decode(&counts)
 	util.CheckErr(err)
 
@@ -78,11 +78,7 @@ func (n *NotificationCountSuite) TestNotificationCount(c *C) {
 		c.Fatal("Non-OK response code received: %v", w.Code)
 	}
 
-	type Count struct {
-		Patient string  `json:"patient"`
-		Count   float64 `json:"count"`
-	}
-	counts := make([]Count, 0, 3)
+	var counts []NotificationCountResult
 	err = json.NewDecoder(w.Body).Decode(&counts)
 	util.CheckErr(err)
 
