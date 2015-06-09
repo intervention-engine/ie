@@ -111,7 +111,7 @@ func (p *PipelineSuite) TestCreateConditionPipeline(c *C) {
 	pipeline := NewConditionPipeline(p.Query)
 	qr, err := pipeline.ExecuteCount(p.Session.DB("ie-test"))
 	util.CheckErr(err)
-	c.Assert(qr.Total, Equals, 6)
+	c.Assert(qr.Total, Equals, 10)
 }
 
 func (p *PipelineSuite) TestCreateEncounterPipeline(c *C) {

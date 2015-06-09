@@ -135,7 +135,6 @@ func NewConditionPipeline(q *models.Query) Pipeline {
 
 	pipeline.MongoPipeline = append(pipeline.MongoPipeline, bson.M{"$unwind": "$entries"})
 	pipeline.MongoPipeline = append(pipeline.MongoPipeline, bson.M{"$match": bson.M{"entries.type": "Condition"}})
-	pipeline.MongoPipeline = append(pipeline.MongoPipeline, bson.M{"$group": bson.M{"_id": "$entries.codes.text", "total": bson.M{"$sum": 1}}})
 	return pipeline
 }
 
