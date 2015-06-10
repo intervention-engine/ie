@@ -79,3 +79,37 @@ func InstaCountHandler(rw http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(rw).Encode(qr)
 }
+
+func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	query := &fhirmodels.Query{}
+	err := decoder.Decode(query)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+
+	err = query.Validate()
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	pipelineMap := make(map[string]models.Pipeline)
+
+	pipelineMap["patients"] = models.NewPipeline(query)
+	pipelineMap["encounters"] = models.NewEncounterPipeline(query)
+	pipelineMap["conditions"] = models.NewConditionPipeline(query)
+
+	resultMap := make(map[string]int)
+
+	for pipelineType, pipeline := range pipelineMap {
+		qr, err := pipeline.ExecuteCount(server.Database)
+		if err != nil && err != mgo.ErrNotFound {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		resultMap[pipelineType] = qr.Total
+	}
+
+	json.NewEncoder(rw).Encode(resultMap)
+}

@@ -49,6 +49,7 @@ func main() {
 	s.Router.HandleFunc("/QueryEncounterTotal/{id}", controllers.EncounterTotalHandler)
 	s.Router.HandleFunc("/QueryList/{id}", controllers.PatientListHandler)
 	s.Router.HandleFunc("/InstaCount/{type}", controllers.InstaCountHandler)
+	s.Router.HandleFunc("/InstaCountAll", controllers.InstaCountAllHandler)
 	s.Router.HandleFunc("/NotificationCount", controllers.NotificationCountHandler)
 
 	filterBase := s.Router.Path("/Filter").Subrouter()
