@@ -56,20 +56,14 @@ func main() {
 	filter.Methods("DELETE").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterDeleteHandler)))
 
 	login := s.Router.Path("/login").Subrouter()
-	login.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.LoginForm)))
 	login.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.LoginHandler)))
-	
-	logout := s.Router.Path("/logout").Subrouter()
-	logout.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.LogoutHandler)))
-	
-	register := s.Router.Path("/register").Subrouter()
-	register.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterForm)))
-	register.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterHandler)))
-	
-	index := s.Router.Path("/index").Subrouter()
-	index.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.IndexHandler)))
 
-	//Store = sessions.NewCookieStore([]byte(os.Getenv("KEY")))
+	// logout := s.Router.Path("/logout").Subrouter()
+	// logout.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.LogoutHandler)))
+	//
+	// register := s.Router.Path("/register").Subrouter()
+	// register.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterForm)))
+	// register.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterHandler)))
 
 	s.Run()
 }
