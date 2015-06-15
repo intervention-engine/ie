@@ -65,13 +65,13 @@ func main() {
 
 	login := s.Router.Path("/login").Subrouter()
 	login.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.LoginHandler)))
-
-	// logout := s.Router.Path("/logout").Subrouter()
-	// logout.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.LogoutHandler)))
-	//
-	// register := s.Router.Path("/register").Subrouter()
-	// register.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterForm)))
-	// register.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterHandler)))
+/*
+	logout := s.Router.Path("/logout").Subrouter()
+	logout.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.LogoutHandler)))
+	*/
+	register := s.Router.Path("/register").Subrouter()
+	register.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterForm)))
+	register.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterHandler)))
 
 	s.Run()
 }

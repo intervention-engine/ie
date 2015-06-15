@@ -2,12 +2,20 @@ package controllers
 
 import (
 	"encoding/json"
-	//"github.com/intervention-engine/fhir/server"
+	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/models"
-	//"gopkg.in/mgo.v2/bson"
-	//"html/template"
+	"gopkg.in/mgo.v2/bson"
+	"html/template"
 	"net/http"
+	"encoding/gob"
+	"github.com/gorilla/sessions"
 )
+
+var Store = sessions.NewCookieStore([]byte("somethingsecret"))
+
+func init() {
+  gob.Register(bson.ObjectId(""))
+}
 
 type request_form struct {
 	Session session_request_form
@@ -45,10 +53,11 @@ func LoginHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc
 	user, err := models.Login(username, password)
 
 	if err != nil {
-		var errform error_form
-		errform.Error = "invalid credentials"
+		//var errform error_form
+		//errform.Error = "invalid credentials"
 		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-		json.NewEncoder(rw).Encode(errform)
+		//json.NewEncoder(rw).Encode(errform)
+		http.Error(rw, "{\"error\":\"invalid credentials\"}", 422)
 		return
 	}
 
@@ -60,54 +69,54 @@ func LoginHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc
 	}
 }
 
-// func LogoutHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-// 	sess, err := Store.Get(r, "intervention-engine")
-// 	delete(sess.Values, "user")
-// 	sess.AddFlash("You have been logged out.")
-// 	if err != nil {
-// 		http.Error(rw, err.Error(), http.StatusInternalServerError)
-// 	}
-// 	sess.Save(r, rw)
-// 	http.Redirect(rw, r, "/login", http.StatusSeeOther)
-// }
-//
-// func RegisterHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-// 	username, password, confirm := r.FormValue("username"), r.FormValue("password"), r.FormValue("confirm")
-// 	sess, err := Store.Get(r, "intervention-engine")
-//
-// 	if password != confirm {
-// 		sess.AddFlash("Password and confirmation must match.")
-// 		sess.Save(r, rw)
-// 		http.Redirect(rw, r, "/register", http.StatusSeeOther)
-// 		return
-// 	}
-//
-// 	u := &models.User{
-// 		Username: username,
-// 		ID:       bson.NewObjectId(),
-// 	}
-// 	u.SetPassword(password)
-//
-// 	err = server.Database.C("users").Insert(u)
-// 	if err != nil {
-// 		sess.AddFlash("Problem registering user.")
-// 		http.Redirect(rw, r, "/register", http.StatusInternalServerError)
-// 		return
-// 	}
-//
-// 	sess.Values["user"] = u.ID
-// 	sess.AddFlash("Successfully registered user.")
-// 	sess.Save(r, rw)
-// 	http.Redirect(rw, r, "/login", http.StatusSeeOther)
-// }
-//
-// func RegisterForm(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-// 	registerForms, _ := template.ParseFiles("templates/_base.html", "templates/register.html")
-// 	sess, err := Store.Get(r, "intervention-engine")
-// 	flashes := sess.Flashes()
-// 	sess.Save(r, rw)
-// 	err = registerForms.Execute(rw, map[string]interface{}{"flashes": flashes})
-// 	if err != nil {
-// 		http.Error(rw, err.Error(), http.StatusInternalServerError)
-// 	}
-// }
+/*func LogoutHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	sess, err := Store.Get(r, "intervention-engine")
+	delete(sess.Values, "user")
+	sess.AddFlash("You have been logged out.")
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+	sess.Save(r, rw)
+	http.Redirect(rw, r, "/login", http.StatusSeeOther)
+}*/
+
+func RegisterHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	username, password, confirm := r.FormValue("username"), r.FormValue("password"), r.FormValue("confirm")
+	sess, err := Store.Get(r, "intervention-engine")
+
+	if password != confirm {
+		sess.AddFlash("Password and confirmation must match.")
+		sess.Save(r, rw)
+		http.Redirect(rw, r, "/register", http.StatusSeeOther)
+		return
+	}
+
+	u := &models.User{
+		Username: username,
+		ID:       bson.NewObjectId(),
+	}
+	u.SetPassword(password)
+
+	err = server.Database.C("users").Insert(u)
+	if err != nil {
+		sess.AddFlash("Problem registering user.")
+		http.Redirect(rw, r, "/register", http.StatusInternalServerError)
+		return
+	}
+
+	sess.Values["user"] = u.ID
+	sess.AddFlash("Successfully registered user.")
+	sess.Save(r, rw)
+	http.Redirect(rw, r, "/login", http.StatusSeeOther)
+}
+
+func RegisterForm(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	registerForms, _ := template.ParseFiles("templates/_base.html", "templates/register.html")
+	sess, err := Store.Get(r, "intervention-engine")
+	flashes := sess.Flashes()
+	sess.Save(r, rw)
+	err = registerForms.Execute(rw, map[string]interface{}{"flashes": flashes})
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+}
