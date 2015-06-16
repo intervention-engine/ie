@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"encoding/gob"
 	"github.com/gorilla/sessions"
+	"fmt"
 )
 
 var Store = sessions.NewCookieStore([]byte("somethingsecret"))
@@ -105,9 +106,8 @@ func RegisterHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerF
 	}
 
 	sess.Values["user"] = u.ID
-	sess.AddFlash("Successfully registered user.")
 	sess.Save(r, rw)
-	http.Redirect(rw, r, "/login", http.StatusSeeOther)
+	fmt.Fprintf(rw, "Success registering user.")
 }
 
 func RegisterForm(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
