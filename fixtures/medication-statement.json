@@ -2,11 +2,11 @@
     "patient" : {
         "reference" : "http://glowcloud.mitre.org:3001/Patient/5540f2041cd4623133000001"
     },
-    "whenGiven" : {
+    "effectivePeriod" : {
         "start" : "2014-01-01",
         "end" : "2014-06-01"
     },
-    "medication" : {
+    "medicationReference" : {
         "reference" : "http://glowcloud.mitre.org:3001/Medication/5540f2041cd462313300000c"
     }
 }

@@ -52,29 +52,29 @@ func (m *MatchingStage) AddCodableConecpt(cc models.CodeableConcept) {
 
 func (m *MatchingStage) AddAgeRange(ageRange models.Range) {
 	rangeQuery := bson.M{}
-	if ageRange.Low != nil && ageRange.Low.Value > 0 {
-		lowAgeDate := time.Date(time.Now().Year()-int(ageRange.Low.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)
+	if ageRange.Low != nil && ageRange.Low.Value != nil {
+		lowAgeDate := time.Date(time.Now().Year()-int(*ageRange.Low.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)
 		rangeQuery["$lte"] = lowAgeDate
 	}
 
-	if ageRange.High != nil && ageRange.High.Value > 0 {
-		highAgeDate := time.Date(time.Now().Year()-int(ageRange.High.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)
+	if ageRange.High != nil && ageRange.High.Value != nil {
+		highAgeDate := time.Date(time.Now().Year()-int(*ageRange.High.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)
 		rangeQuery["$gte"] = highAgeDate
 	}
 	m.AddAndStatement("birthdate.time", rangeQuery)
 }
 
 func (m *MatchingStage) AddValueCheck(e models.Extension) {
-	if e.ValueInteger != 0 {
-		m.AddAndStatement("entries.resultquantity.value", float64(e.ValueInteger))
+	if e.ValueInteger != nil {
+		m.AddAndStatement("entries.resultquantity.value", float64(*e.ValueInteger))
 	}
 	if e.ValueRange != nil {
-		if e.ValueRange.High.Value != 0 || e.ValueRange.Low.Value != 0 {
+		if e.ValueRange.High.Value != nil || e.ValueRange.Low.Value != nil {
 			rangeQuery := bson.M{}
-			if e.ValueRange.High.Value != 0 {
+			if e.ValueRange.High.Value != nil {
 				rangeQuery["$lte"] = e.ValueRange.High.Value
 			}
-			if e.ValueRange.Low.Value != 0 {
+			if e.ValueRange.Low.Value != nil {
 				rangeQuery["$gte"] = e.ValueRange.Low.Value
 			}
 			m.AddAndStatement("entries.resultquantity.value", rangeQuery)
@@ -127,7 +127,7 @@ func NewPipeline(q *models.Query) Pipeline {
 }
 
 func IsRangePresent(r models.Range) bool {
-	return r.High.Value != 0 && r.Low.Value != 0
+	return r.High.Value != nil && r.Low.Value != nil
 }
 
 func NewConditionPipeline(q *models.Query) Pipeline {

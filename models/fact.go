@@ -34,10 +34,10 @@ func FactFromPatient(p *models.Patient) Fact {
 func FactFromCondition(c *models.Condition) Fact {
 	f := Fact{}
 	f.Type = "Condition"
-	f.StartDate = c.OnsetDate
+	f.StartDate = c.OnsetDateTime
 	f.EndDate = c.AbatementDate
 	f.Codes = []models.CodeableConcept{*c.Code}
-	f.PatientID = c.Subject.ReferencedID
+	f.PatientID = c.Patient.ReferencedID
 	f.TargetID = c.Id
 	i := bson.NewObjectId()
 	f.Id = i.Hex()
@@ -50,7 +50,7 @@ func FactFromEncounter(e *models.Encounter) Fact {
 	f.StartDate = e.Period.Start
 	f.EndDate = e.Period.End
 	f.Codes = e.Type
-	f.PatientID = e.Subject.ReferencedID
+	f.PatientID = e.Patient.ReferencedID
 	f.TargetID = e.Id
 	i := bson.NewObjectId()
 	f.Id = i.Hex()
@@ -60,11 +60,11 @@ func FactFromEncounter(e *models.Encounter) Fact {
 func FactFromObservation(o *models.Observation) Fact {
 	f := Fact{}
 	f.Type = "Observation"
-	f.StartDate = o.AppliesPeriod.Start
-	f.EndDate = o.AppliesPeriod.End
+	f.StartDate = o.EffectivePeriod.Start
+	f.EndDate = o.EffectivePeriod.End
 	f.ResultQuantity = o.ValueQuantity
 	f.ResultCodeableConcept = o.ValueCodeableConcept
-	f.Codes = []models.CodeableConcept{*o.Name}
+	f.Codes = []models.CodeableConcept{*o.Code}
 	f.PatientID = o.Subject.ReferencedID
 	f.TargetID = o.Id
 	i := bson.NewObjectId()
@@ -75,9 +75,9 @@ func FactFromObservation(o *models.Observation) Fact {
 func FactFromMedicationStatement(o *models.MedicationStatement, mlu models.MedicationLookup) Fact {
 	f := Fact{}
 	f.Type = "MedicationStatement"
-	f.StartDate = o.WhenGiven.Start
-	f.EndDate = o.WhenGiven.End
-	med, err := mlu(o.Medication.ReferencedID)
+	f.StartDate = o.EffectivePeriod.Start
+	f.EndDate = o.EffectivePeriod.End
+	med, err := mlu(o.MedicationReference.ReferencedID)
 	if err == nil {
 		f.Codes = []models.CodeableConcept{*med.Code}
 	}

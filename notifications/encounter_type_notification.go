@@ -49,7 +49,7 @@ func (def *EncounterTypeNotificationDefinition) GetNotification(resource interfa
 		cr.Category.Coding[0].System = "http://snomed.info/sct"
 		cr.Category.Coding[0].Code = "185087000"
 		//cr.Recipient = TODO
-		cr.Payload = make([]models.CommunicationRequestPayloadComponent, 1)
+		cr.Payload = make([]models.CommunicationRequestCommunicationRequestPayloadComponent, 1)
 		cr.Payload[0].ContentReference = &models.Reference{
 			Reference:    baseURL + "/Encounter/" + encounter.Id,
 			Type:         "Encounter",
@@ -58,7 +58,7 @@ func (def *EncounterTypeNotificationDefinition) GetNotification(resource interfa
 		cr.Reason = make([]models.CodeableConcept, 1)
 		cr.Reason[0] = models.CodeableConcept{Coding: make([]models.Coding, 1)}
 		cr.Reason[0].Coding[0] = def.reason
-		cr.Subject = encounter.Subject
+		cr.Subject = encounter.Patient
 		cr.OrderedOn = &models.FHIRDateTime{Precision: models.Timestamp, Time: time.Now()}
 		return &cr
 	}
