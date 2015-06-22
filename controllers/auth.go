@@ -1,21 +1,24 @@
 package controllers
 
 import (
+	"crypto/rand"
+	"encoding/base64"
+	"encoding/gob"
 	"encoding/json"
+	"fmt"
+	"github.com/gorilla/sessions"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/models"
 	"gopkg.in/mgo.v2/bson"
 	"html/template"
 	"net/http"
-	"encoding/gob"
-	"github.com/gorilla/sessions"
-	"fmt"
+	"time"
 )
 
 var Store = sessions.NewCookieStore([]byte("somethingsecret"))
 
 func init() {
-  gob.Register(bson.ObjectId(""))
+	gob.Register(bson.ObjectId(""))
 }
 
 type request_form struct {
@@ -64,10 +67,30 @@ func LoginHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc
 
 	if user != nil {
 		var respform response_form
-		respform.Session.Token = "secret token!"
+		token := generate_token()
+
+		var usersession models.UserSession
+		usersession.User = *user
+		usersession.Token = token
+		usersession.Expiration = time.Now().Add(90 * time.Minute)
+		server.Database.C("sessions").Insert(usersession)
+
+		respform.Session.Token = token
 		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		json.NewEncoder(rw).Encode(respform)
 	}
+}
+
+func generate_token() string {
+	rb := make([]byte, 32)
+	_, err := rand.Read(rb)
+
+	if err != nil {
+		panic(err)
+	}
+
+	token := base64.URLEncoding.EncodeToString(rb)
+	return token
 }
 
 /*func LogoutHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {

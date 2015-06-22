@@ -20,12 +20,14 @@ func main() {
 
 	s := server.NewServer(mongoHost)
 
+	s.AddMiddleware("QueryCreate", negroni.HandlerFunc(middleware.AuthHandler))
 	s.AddMiddleware("QueryCreate", negroni.HandlerFunc(middleware.QueryExecutionHandler))
 
 	s.AddMiddleware("PatientCreate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("PatientUpdate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("PatientDelete", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("PatientIndex", negroni.HandlerFunc(middleware.RiskQueryHandler))
+	s.AddMiddleware("PatientIndex", negroni.HandlerFunc(middleware.AuthHandler))
 
 	s.AddMiddleware("ConditionCreate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("ConditionUpdate", negroni.HandlerFunc(middleware.FactHandler))
@@ -65,9 +67,9 @@ func main() {
 
 	login := s.Router.Path("/login").Subrouter()
 	login.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.LoginHandler)))
-/*
-	logout := s.Router.Path("/logout").Subrouter()
-	logout.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.LogoutHandler)))
+	/*
+		logout := s.Router.Path("/logout").Subrouter()
+		logout.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.LogoutHandler)))
 	*/
 	register := s.Router.Path("/register").Subrouter()
 	register.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterForm)))
