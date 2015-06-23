@@ -93,16 +93,16 @@ func generate_token() string {
 	return token
 }
 
-/*func LogoutHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	sess, err := Store.Get(r, "intervention-engine")
-	delete(sess.Values, "user")
-	sess.AddFlash("You have been logged out.")
+func LogoutHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	client_token := r.Header.Get("Authorization")
+	sessionCollection := server.Database.C("sessions")
+
+	err := sessionCollection.Remove(bson.M{"token": client_token})
+
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 	}
-	sess.Save(r, rw)
-	http.Redirect(rw, r, "/login", http.StatusSeeOther)
-}*/
+}
 
 func RegisterHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	username, password, confirm := r.FormValue("username"), r.FormValue("password"), r.FormValue("confirm")

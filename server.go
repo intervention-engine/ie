@@ -57,20 +57,18 @@ func main() {
 	s.Router.HandleFunc("/NotificationCount", controllers.NotificationCountHandler)
 
 	filterBase := s.Router.Path("/Filter").Subrouter()
-	filterBase.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterIndexHandler)))
-	filterBase.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterCreateHandler)))
+	filterBase.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(middleware.AuthHandler), negroni.HandlerFunc(controllers.FilterIndexHandler)))
+	filterBase.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(middleware.AuthHandler), negroni.HandlerFunc(controllers.FilterCreateHandler)))
 
 	filter := s.Router.Path("/Filter/{id}").Subrouter()
-	filter.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterShowHandler)))
-	filter.Methods("PUT").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterUpdateHandler)))
-	filter.Methods("DELETE").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterDeleteHandler)))
+	filter.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(middleware.AuthHandler), negroni.HandlerFunc(controllers.FilterShowHandler)))
+	filter.Methods("PUT").Handler(negroni.New(negroni.HandlerFunc(middleware.AuthHandler), negroni.HandlerFunc(controllers.FilterUpdateHandler)))
+	filter.Methods("DELETE").Handler(negroni.New(negroni.HandlerFunc(middleware.AuthHandler), negroni.HandlerFunc(controllers.FilterDeleteHandler)))
 
 	login := s.Router.Path("/login").Subrouter()
 	login.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.LoginHandler)))
-	/*
-		logout := s.Router.Path("/logout").Subrouter()
-		logout.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.LogoutHandler)))
-	*/
+	login.Methods("DELETE").Handler(negroni.New(negroni.HandlerFunc(controllers.LogoutHandler)))
+
 	register := s.Router.Path("/register").Subrouter()
 	register.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterForm)))
 	register.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterHandler)))
