@@ -25,7 +25,12 @@ func FactFromPatient(p *models.Patient) Fact {
 	f.BirthDate = p.BirthDate
 	f.PatientID = p.Id
 	f.TargetID = p.Id
-	f.Gender = p.Gender.Coding[0].Code
+	switch p.Gender {
+	case "male":
+		f.Gender = "M"
+	case "female":
+		f.Gender = "F"
+	}
 	i := bson.NewObjectId()
 	f.Id = i.Hex()
 	return f
