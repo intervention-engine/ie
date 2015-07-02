@@ -9,6 +9,8 @@ import (
 	"os"
 )
 
+//var Store sessions.Store
+
 func main() {
 	// Check for a linked MongoDB container if we are running in Docker
 	mongoHost := os.Getenv("MONGO_PORT_27017_TCP_ADDR")
@@ -18,12 +20,14 @@ func main() {
 
 	s := server.NewServer(mongoHost)
 
+	s.AddMiddleware("QueryCreate", negroni.HandlerFunc(middleware.AuthHandler))
 	s.AddMiddleware("QueryCreate", negroni.HandlerFunc(middleware.QueryExecutionHandler))
 
 	s.AddMiddleware("PatientCreate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("PatientUpdate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("PatientDelete", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("PatientIndex", negroni.HandlerFunc(middleware.RiskQueryHandler))
+	s.AddMiddleware("PatientIndex", negroni.HandlerFunc(middleware.AuthHandler))
 
 	s.AddMiddleware("ConditionCreate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("ConditionUpdate", negroni.HandlerFunc(middleware.FactHandler))
@@ -53,13 +57,21 @@ func main() {
 	s.Router.HandleFunc("/NotificationCount", controllers.NotificationCountHandler)
 
 	filterBase := s.Router.Path("/Filter").Subrouter()
-	filterBase.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterIndexHandler)))
-	filterBase.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterCreateHandler)))
+	filterBase.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(middleware.AuthHandler), negroni.HandlerFunc(controllers.FilterIndexHandler)))
+	filterBase.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(middleware.AuthHandler), negroni.HandlerFunc(controllers.FilterCreateHandler)))
 
 	filter := s.Router.Path("/Filter/{id}").Subrouter()
-	filter.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterShowHandler)))
-	filter.Methods("PUT").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterUpdateHandler)))
-	filter.Methods("DELETE").Handler(negroni.New(negroni.HandlerFunc(controllers.FilterDeleteHandler)))
+	filter.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(middleware.AuthHandler), negroni.HandlerFunc(controllers.FilterShowHandler)))
+	filter.Methods("PUT").Handler(negroni.New(negroni.HandlerFunc(middleware.AuthHandler), negroni.HandlerFunc(controllers.FilterUpdateHandler)))
+	filter.Methods("DELETE").Handler(negroni.New(negroni.HandlerFunc(middleware.AuthHandler), negroni.HandlerFunc(controllers.FilterDeleteHandler)))
+
+	login := s.Router.Path("/login").Subrouter()
+	login.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.LoginHandler)))
+	login.Methods("DELETE").Handler(negroni.New(negroni.HandlerFunc(controllers.LogoutHandler)))
+
+	register := s.Router.Path("/register").Subrouter()
+	register.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterForm)))
+	register.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterHandler)))
 
 	s.Run()
 }
