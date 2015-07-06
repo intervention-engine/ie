@@ -12,10 +12,11 @@ import (
 	"github.com/pebbe/util"
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/dbtest"
 )
 
 type NotificationCountSuite struct {
-	Session                *mgo.Session
+	DBServer               *dbtest.DBServer
 	NotificationCollection *mgo.Collection
 }
 
@@ -24,22 +25,23 @@ func Test(t *testing.T) { TestingT(t) }
 var _ = Suite(&NotificationCountSuite{})
 
 func (n *NotificationCountSuite) SetUpSuite(c *C) {
-	//Set up the database
-	var err error
-	n.Session, err = mgo.Dial("localhost")
-	util.CheckErr(err)
-	server.Database = n.Session.DB("ie-test")
-	n.NotificationCollection = server.Database.C("communicationrequests")
-	n.NotificationCollection.DropCollection()
+	n.DBServer = &dbtest.DBServer{}
+	n.DBServer.SetPath(c.MkDir())
+}
+
+func (n *NotificationCountSuite) SetUpTest(c *C) {
+	session := n.DBServer.Session()
+	server.Database = session.DB("ie-test")
+	n.NotificationCollection = session.DB("ie-test").C("communicationrequests")
 }
 
 func (n *NotificationCountSuite) TearDownSuite(c *C) {
-	n.Session.Close()
+	n.DBServer.Stop()
 }
 
 func (n *NotificationCountSuite) TearDownTest(c *C) {
-	//clear the notification database
-	n.NotificationCollection.DropCollection()
+	server.Database.Session.Close()
+	n.DBServer.Wipe()
 }
 
 func (n *NotificationCountSuite) TestEmptyNotificationCount(c *C) {

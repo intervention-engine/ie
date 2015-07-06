@@ -6,34 +6,36 @@ import (
 
 	"github.com/pebbe/util"
 	. "gopkg.in/check.v1"
-	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/dbtest"
 )
 
 type FilterSuite struct {
-	Session *mgo.Session
+	DBServer *dbtest.DBServer
 }
 
 var _ = Suite(&FilterSuite{})
 
 func (f *FilterSuite) SetUpSuite(c *C) {
-	var err error
-	// Setup the database
-	f.Session, err = mgo.Dial("localhost")
-	util.CheckErr(err)
-	queryCollection := f.Session.DB("ie-test").C("querys")
-	queryCollection.DropCollection()
+	f.DBServer = &dbtest.DBServer{}
+	f.DBServer.SetPath(c.MkDir())
+}
+
+func (f *FilterSuite) TearDownTest(c *C) {
+	f.DBServer.Wipe()
 }
 
 func (f *FilterSuite) TearDownSuite(c *C) {
-	f.Session.Close()
+	f.DBServer.Stop()
 }
 
 func (f *FilterSuite) TestCreateQuery(c *C) {
 	filter := LoadFilterFromFixture("../fixtures/gender-filter.json")
-	queryId, err := filter.CreateQuery(f.Session.DB("ie-test"))
+	session := f.DBServer.Session()
+	defer session.Close()
+	queryId, err := filter.CreateQuery(session.DB("ie-test"))
 	c.Assert(err, IsNil)
 	c.Assert(queryId, NotNil)
-	queryCount, _ := f.Session.DB("ie-test").C("querys").Count()
+	queryCount, _ := session.DB("ie-test").C("querys").Count()
 	c.Assert(queryCount, Equals, 1)
 }
 

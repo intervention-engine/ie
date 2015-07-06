@@ -11,27 +11,30 @@ import (
 	"github.com/intervention-engine/ie/models"
 	"github.com/pebbe/util"
 	. "gopkg.in/check.v1"
-	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"gopkg.in/mgo.v2/dbtest"
 	"strings"
 )
 
 type QueryTotalsSuite struct {
-	Session *mgo.Session
+	DBServer *dbtest.DBServer
 }
 
 var _ = Suite(&QueryTotalsSuite{})
 
 func (q *QueryTotalsSuite) SetUpSuite(c *C) {
+	q.DBServer = &dbtest.DBServer{}
+	q.DBServer.SetPath(c.MkDir())
+}
+
+func (q *QueryTotalsSuite) SetUpTest(c *C) {
 	file, err := os.Open("../fixtures/facts.json")
 	defer file.Close()
 	util.CheckErr(err)
 
 	// Setup the database
-	q.Session, err = mgo.Dial("localhost")
-	util.CheckErr(err)
-	factCollection := q.Session.DB("ie-test").C("facts")
-	factCollection.DropCollection()
+	session := q.DBServer.Session()
+	factCollection := session.DB("ie-test").C("facts")
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		decoder := json.NewDecoder(strings.NewReader(scanner.Text()))
@@ -43,11 +46,16 @@ func (q *QueryTotalsSuite) SetUpSuite(c *C) {
 		factCollection.Insert(fact)
 	}
 	util.CheckErr(scanner.Err())
-	server.Database = q.Session.DB("ie-test")
+	server.Database = session.DB("ie-test")
+}
+
+func (q *QueryTotalsSuite) TearDownTest(c *C) {
+	server.Database.Session.Close()
+	q.DBServer.Wipe()
 }
 
 func (q *QueryTotalsSuite) TearDownSuite(c *C) {
-	q.Session.Close()
+	q.DBServer.Stop()
 }
 
 func (q *QueryTotalsSuite) TestInstaCountAllHandler(c *C) {

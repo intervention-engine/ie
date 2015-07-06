@@ -15,14 +15,15 @@ import (
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"gopkg.in/mgo.v2/dbtest"
 )
 
 type MiddlewareSuite struct {
-	Session          *mgo.Session
-	Server           *httptest.Server
-	Router           *mux.Router
-	MiddlewareConfig map[string][]negroni.Handler
-	FactCollection	 *mgo.Collection
+	DBServer          *dbtest.DBServer
+	Server            *httptest.Server
+	Router            *mux.Router
+	MiddlewareConfig  map[string][]negroni.Handler
+	FactCollection    *mgo.Collection
 	PatientCollection *mgo.Collection
 }
 
@@ -31,14 +32,8 @@ func Test(t *testing.T) { TestingT(t) }
 var _ = Suite(&MiddlewareSuite{})
 
 func (m *MiddlewareSuite) SetUpSuite(c *C) {
-	//Set up the database
-	var err error
-	m.Session, err = mgo.Dial("localhost")
-	util.CheckErr(err)
-	server.Database = m.Session.DB("ie-test")
-	m.FactCollection = server.Database.C("facts")
-	m.PatientCollection = server.Database.C("patients")
-	m.FactCollection.DropCollection()
+	m.DBServer = &dbtest.DBServer{}
+	m.DBServer.SetPath(c.MkDir())
 
 	//register facthandler middleware
 	m.MiddlewareConfig = make(map[string][]negroni.Handler)
@@ -56,9 +51,21 @@ func (m *MiddlewareSuite) SetUpSuite(c *C) {
 	m.Server = httptest.NewServer(m.Router)
 }
 
+func (m *MiddlewareSuite) SetUpTest(c *C) {
+	session := m.DBServer.Session()
+	db := session.DB("ie-test")
+	server.Database = db
+	m.FactCollection = db.C("facts")
+	m.PatientCollection = db.C("patients")
+}
+
+func (m *MiddlewareSuite) TearDownTest(c *C) {
+	server.Database.Session.Close()
+	m.DBServer.Wipe()
+}
+
 func (m *MiddlewareSuite) TearDownSuite(c *C) {
-	server.Database.C("facts").DropCollection()
-	m.Session.Close()
+	m.DBServer.Stop()
 	m.Server.Close()
 }
 

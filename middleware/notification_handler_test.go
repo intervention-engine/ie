@@ -13,10 +13,11 @@ import (
 	"github.com/pebbe/util"
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/dbtest"
 )
 
 type NotificationHandlerSuite struct {
-	Session                *mgo.Session
+	DBServer               *dbtest.DBServer
 	Server                 *httptest.Server
 	Handler                *NotificationHandler
 	NotificationCollection *mgo.Collection
@@ -25,13 +26,8 @@ type NotificationHandlerSuite struct {
 var _ = Suite(&NotificationHandlerSuite{})
 
 func (n *NotificationHandlerSuite) SetUpSuite(c *C) {
-	//Set up the database
-	var err error
-	n.Session, err = mgo.Dial("localhost")
-	util.CheckErr(err)
-	server.Database = n.Session.DB("ie-test")
-	n.NotificationCollection = server.Database.C("communicationrequests")
-	n.NotificationCollection.DropCollection()
+	n.DBServer = &dbtest.DBServer{}
+	n.DBServer.SetPath(c.MkDir())
 
 	//register notification handler middleware
 	n.Handler = &NotificationHandler{Registry: &notifications.NotificationDefinitionRegistry{}}
@@ -48,15 +44,22 @@ func (n *NotificationHandlerSuite) SetUpSuite(c *C) {
 	n.Server = httptest.NewServer(router)
 }
 
-func (n *NotificationHandlerSuite) TearDownSuite(c *C) {
-	n.Session.Close()
-	n.Server.Close()
+func (n *NotificationHandlerSuite) SetUpTest(c *C) {
+	session := n.DBServer.Session()
+	server.Database = session.DB("ie-test")
+	n.NotificationCollection = session.DB("ie-test").C("communicationrequests")
 }
 
 func (n *NotificationHandlerSuite) TearDownTest(c *C) {
 	//clear the notification definition registry and the notification database
 	n.Handler.Registry = &notifications.NotificationDefinitionRegistry{}
-	n.NotificationCollection.DropCollection()
+	server.Database.Session.Close()
+	n.DBServer.Wipe()
+}
+
+func (n *NotificationHandlerSuite) TearDownSuite(c *C) {
+	n.DBServer.Stop()
+	n.Server.Close()
 }
 
 func (n *NotificationHandlerSuite) TestNotificationTriggers(c *C) {

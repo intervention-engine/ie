@@ -8,8 +8,8 @@ import (
 	"github.com/intervention-engine/ie/models"
 	"github.com/pebbe/util"
 	. "gopkg.in/check.v1"
-	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"gopkg.in/mgo.v2/dbtest"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -18,20 +18,25 @@ import (
 )
 
 type RiskQueryHandlerSuite struct {
-	Session *mgo.Session
+	DBServer *dbtest.DBServer
 }
 
 var _ = Suite(&RiskQueryHandlerSuite{})
 
 func (r *RiskQueryHandlerSuite) SetUpSuite(c *C) {
+	r.DBServer = &dbtest.DBServer{}
+	r.DBServer.SetPath(c.MkDir())
+}
+
+func (r *RiskQueryHandlerSuite) SetUpTest(c *C) {
 	file, err := os.Open("../fixtures/facts.json")
 	defer file.Close()
 	util.CheckErr(err)
 
 	// Setup the database
-	r.Session, err = mgo.Dial("localhost")
-	util.CheckErr(err)
-	factCollection := r.Session.DB("ie-test").C("facts")
+	session := r.DBServer.Session()
+	defer session.Close()
+	factCollection := session.DB("ie-test").C("facts")
 	factCollection.DropCollection()
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -46,6 +51,14 @@ func (r *RiskQueryHandlerSuite) SetUpSuite(c *C) {
 	util.CheckErr(scanner.Err())
 }
 
+func (r *RiskQueryHandlerSuite) TearDownTest(c *C) {
+	r.DBServer.Wipe()
+}
+
+func (r *RiskQueryHandlerSuite) TearDownSuite(c *C) {
+	r.DBServer.Stop()
+}
+
 func (r *RiskQueryHandlerSuite) TestHandleRiskModelParameters(c *C) {
 	rawUrl := "http://foo.com/Patient?_query=risk&Condition=count&ConditionWeight=5.0"
 	testUrl, _ := url.Parse(rawUrl)
@@ -57,7 +70,9 @@ func (r *RiskQueryHandlerSuite) TestHandleRiskModelParameters(c *C) {
 }
 
 func (r *RiskQueryHandlerSuite) TestRiskQueryHandler(c *C) {
-	server.Database = r.Session.DB("ie-test")
+	session := r.DBServer.Session()
+	defer session.Close()
+	server.Database = session.DB("ie-test")
 	n := negroni.New()
 	n.UseFunc(RiskQueryHandler)
 	testServer := httptest.NewServer(n)
