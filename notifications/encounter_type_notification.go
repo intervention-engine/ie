@@ -58,7 +58,7 @@ func (def *EncounterTypeNotificationDefinition) GetNotification(resource interfa
 		cr.Reason = make([]models.CodeableConcept, 1)
 		cr.Reason[0] = models.CodeableConcept{Coding: make([]models.Coding, 1)}
 		cr.Reason[0].Coding[0] = def.reason
-		cr.Subject = encounter.Subject
+		cr.Subject = encounter.Patient
 		cr.OrderedOn = &models.FHIRDateTime{Precision: models.Timestamp, Time: time.Now()}
 		return &cr
 	}

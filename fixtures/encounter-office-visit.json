@@ -6,7 +6,7 @@
 			"code": "99201"
 		}]
 	}],
-	"subject": {
+	"patient": {
 		"reference": "http://intervention-engine.org/Patient/5540f2041cd4623133000001"
 	},
 	"period": {
