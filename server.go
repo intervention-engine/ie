@@ -20,8 +20,8 @@ func main() {
 
 	s := server.NewServer(mongoHost)
 
-	s.AddMiddleware("QueryCreate", negroni.HandlerFunc(middleware.AuthHandler))
-	s.AddMiddleware("QueryCreate", negroni.HandlerFunc(middleware.QueryExecutionHandler))
+	s.AddMiddleware("GroupCreate", negroni.HandlerFunc(middleware.AuthHandler))
+	s.AddMiddleware("GroupCreate", negroni.HandlerFunc(middleware.QueryExecutionHandler))
 
 	s.AddMiddleware("PatientCreate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("PatientUpdate", negroni.HandlerFunc(middleware.FactHandler))
@@ -49,21 +49,12 @@ func main() {
 	notificationHandler := &middleware.NotificationHandler{Registry: notifications.DefaultNotificationDefinitionRegistry}
 	s.AddMiddleware("EncounterCreate", negroni.HandlerFunc(notificationHandler.Handle))
 
-	s.Router.HandleFunc("/QueryConditionTotal/{id}", controllers.ConditionTotalHandler)
-	s.Router.HandleFunc("/QueryEncounterTotal/{id}", controllers.EncounterTotalHandler)
-	s.Router.HandleFunc("/QueryList/{id}", controllers.PatientListHandler)
+	s.Router.HandleFunc("/GroupConditionTotal/{id}", controllers.ConditionTotalHandler)
+	s.Router.HandleFunc("/GroupEncounterTotal/{id}", controllers.EncounterTotalHandler)
+	s.Router.HandleFunc("/GroupList/{id}", controllers.PatientListHandler)
 	s.Router.HandleFunc("/InstaCount/{type}", controllers.InstaCountHandler)
 	s.Router.HandleFunc("/InstaCountAll", controllers.InstaCountAllHandler)
 	s.Router.HandleFunc("/NotificationCount", controllers.NotificationCountHandler)
-
-	filterBase := s.Router.Path("/Filter").Subrouter()
-	filterBase.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(middleware.AuthHandler), negroni.HandlerFunc(controllers.FilterIndexHandler)))
-	filterBase.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(middleware.AuthHandler), negroni.HandlerFunc(controllers.FilterCreateHandler)))
-
-	filter := s.Router.Path("/Filter/{id}").Subrouter()
-	filter.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(middleware.AuthHandler), negroni.HandlerFunc(controllers.FilterShowHandler)))
-	filter.Methods("PUT").Handler(negroni.New(negroni.HandlerFunc(middleware.AuthHandler), negroni.HandlerFunc(controllers.FilterUpdateHandler)))
-	filter.Methods("DELETE").Handler(negroni.New(negroni.HandlerFunc(middleware.AuthHandler), negroni.HandlerFunc(controllers.FilterDeleteHandler)))
 
 	login := s.Router.Path("/login").Subrouter()
 	login.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.LoginHandler)))

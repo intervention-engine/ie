@@ -12,12 +12,12 @@ import (
 )
 
 func pipelineExecutor(rw http.ResponseWriter, r *http.Request, pp models.PipelineProducer, pipelineType string) {
-	query, err := server.LoadQuery(r)
+	group, err := server.LoadGroup(r)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	pipeline := pp(query)
+	pipeline := pp(group)
 	switch pipelineType {
 	case "patient":
 		qr, err := pipeline.ExecutePatientList(server.Database)
@@ -50,27 +50,21 @@ func PatientListHandler(rw http.ResponseWriter, r *http.Request) {
 
 func InstaCountHandler(rw http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-	query := &fhirmodels.Query{}
-	err := decoder.Decode(query)
+	group := &fhirmodels.Group{}
+	err := decoder.Decode(group)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-
-	err = query.Validate()
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
-		return
 	}
 
 	queryType := mux.Vars(r)["type"]
 	var pipeline models.Pipeline
 	switch queryType {
 	case "patient":
-		pipeline = models.NewPipeline(query)
+		pipeline = models.NewPipeline(group)
 	case "encounter":
-		pipeline = models.NewEncounterPipeline(query)
+		pipeline = models.NewEncounterPipeline(group)
 	case "condition":
-		pipeline = models.NewConditionPipeline(query)
+		pipeline = models.NewConditionPipeline(group)
 	}
 	qr, err := pipeline.ExecuteCount(server.Database)
 	if err != nil && err != mgo.ErrNotFound {
@@ -82,23 +76,17 @@ func InstaCountHandler(rw http.ResponseWriter, r *http.Request) {
 
 func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-	query := &fhirmodels.Query{}
-	err := decoder.Decode(query)
+	group := &fhirmodels.Group{}
+	err := decoder.Decode(group)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 	}
 
-	err = query.Validate()
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	pipelineMap := make(map[string]models.Pipeline)
 
-	pipelineMap["patients"] = models.NewPipeline(query)
-	pipelineMap["encounters"] = models.NewEncounterPipeline(query)
-	pipelineMap["conditions"] = models.NewConditionPipeline(query)
+	pipelineMap["patients"] = models.NewPipeline(group)
+	pipelineMap["encounters"] = models.NewEncounterPipeline(group)
+	pipelineMap["conditions"] = models.NewConditionPipeline(group)
 
 	resultMap := make(map[string]int)
 
