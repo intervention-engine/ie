@@ -1,0 +1,17 @@
+{
+  "resourceType": "Group",
+  "type": "person",
+  "actual": true,
+  "name": "People with risk assessments",
+  "characteristic": [
+    {
+      "code": {
+        "coding": [{"system": "http://loinc.org", "code": "30954-2"}],
+        "text": "Observation"
+      },
+      "valueCodeableConcept": {
+        "coding": [{"system": "http://loinc.org", "code": "75492-9"}]
+      }
+    }
+  ]
+}

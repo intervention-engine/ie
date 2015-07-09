@@ -14,7 +14,7 @@ import (
 
 type PipelineSuite struct {
 	DBServer *dbtest.DBServer
-	Query    *models.Query
+	Group    *models.Group
 }
 
 var _ = Suite(&PipelineSuite{})
@@ -44,7 +44,7 @@ func (p *PipelineSuite) SetUpTest(c *C) {
 		factCollection.Insert(fact)
 	}
 	util.CheckErr(scanner.Err())
-	p.Query = LoadQueryFromFixture("../fixtures/sample-query.json")
+	p.Group = LoadGroupFromFixture("../fixtures/sample-group.json")
 }
 
 func (p *PipelineSuite) TearDownTest(c *C) {
@@ -56,7 +56,7 @@ func (p *PipelineSuite) TearDownSuite(c *C) {
 }
 
 func (p *PipelineSuite) TestNewPersonPipeline(c *C) {
-	pipeline := NewPipeline(p.Query)
+	pipeline := NewPipeline(p.Group)
 	c.Assert(3, Equals, len(pipeline.MongoPipeline))
 	session := p.DBServer.Session()
 	defer session.Close()
@@ -66,7 +66,7 @@ func (p *PipelineSuite) TestNewPersonPipeline(c *C) {
 }
 
 func (p *PipelineSuite) TestNewPersonPipelineMultiCode(c *C) {
-	pipeline := NewPipeline(LoadQueryFromFixture("../fixtures/multi-code-query.json"))
+	pipeline := NewPipeline(LoadGroupFromFixture("../fixtures/multi-code-group.json"))
 	session := p.DBServer.Session()
 	defer session.Close()
 	qr, err := pipeline.ExecuteCount(session.DB("ie-test"))
@@ -75,7 +75,7 @@ func (p *PipelineSuite) TestNewPersonPipelineMultiCode(c *C) {
 }
 
 func (p *PipelineSuite) TestNewPersonPipelineList(c *C) {
-	pipeline := NewPipeline(p.Query)
+	pipeline := NewPipeline(p.Group)
 	c.Assert(3, Equals, len(pipeline.MongoPipeline))
 	session := p.DBServer.Session()
 	defer session.Close()
@@ -86,7 +86,7 @@ func (p *PipelineSuite) TestNewPersonPipelineList(c *C) {
 }
 
 func (p *PipelineSuite) TestAgePipeline(c *C) {
-	pipeline := NewPipeline(LoadQueryFromFixture("../fixtures/age-query.json"))
+	pipeline := NewPipeline(LoadGroupFromFixture("../fixtures/age-group.json"))
 	session := p.DBServer.Session()
 	defer session.Close()
 	qr, err := pipeline.ExecuteCount(session.DB("ie-test"))
@@ -95,7 +95,7 @@ func (p *PipelineSuite) TestAgePipeline(c *C) {
 }
 
 func (p *PipelineSuite) TestUnderAnAgePipeline(c *C) {
-	pipeline := NewPipeline(LoadQueryFromFixture("../fixtures/under-an-age-query.json"))
+	pipeline := NewPipeline(LoadGroupFromFixture("../fixtures/under-an-age-group.json"))
 	session := p.DBServer.Session()
 	defer session.Close()
 	qr, err := pipeline.ExecuteCount(session.DB("ie-test"))
@@ -104,7 +104,7 @@ func (p *PipelineSuite) TestUnderAnAgePipeline(c *C) {
 }
 
 func (p *PipelineSuite) TestOverAnAgePipeline(c *C) {
-	pipeline := NewPipeline(LoadQueryFromFixture("../fixtures/over-an-age-query.json"))
+	pipeline := NewPipeline(LoadGroupFromFixture("../fixtures/over-an-age-group.json"))
 	session := p.DBServer.Session()
 	defer session.Close()
 	qr, err := pipeline.ExecuteCount(session.DB("ie-test"))
@@ -113,7 +113,7 @@ func (p *PipelineSuite) TestOverAnAgePipeline(c *C) {
 }
 
 func (p *PipelineSuite) TestObservationValuePipeline(c *C) {
-	pipeline := NewPipeline(LoadQueryFromFixture("../fixtures/risk-query.json"))
+	pipeline := NewPipeline(LoadGroupFromFixture("../fixtures/risk-group.json"))
 	session := p.DBServer.Session()
 	defer session.Close()
 	qr, err := pipeline.ExecuteCount(session.DB("ie-test"))
@@ -122,7 +122,7 @@ func (p *PipelineSuite) TestObservationValuePipeline(c *C) {
 }
 
 func (p *PipelineSuite) TestEmptyQuery(c *C) {
-	pipeline := NewPipeline(&models.Query{})
+	pipeline := NewPipeline(&models.Group{})
 	session := p.DBServer.Session()
 	defer session.Close()
 	qr, err := pipeline.ExecuteCount(session.DB("ie-test"))
@@ -131,7 +131,7 @@ func (p *PipelineSuite) TestEmptyQuery(c *C) {
 }
 
 func (p *PipelineSuite) TestCreateConditionPipeline(c *C) {
-	pipeline := NewConditionPipeline(p.Query)
+	pipeline := NewConditionPipeline(p.Group)
 	session := p.DBServer.Session()
 	defer session.Close()
 	qr, err := pipeline.ExecuteCount(session.DB("ie-test"))
@@ -140,7 +140,7 @@ func (p *PipelineSuite) TestCreateConditionPipeline(c *C) {
 }
 
 func (p *PipelineSuite) TestCreateEncounterPipeline(c *C) {
-	pipeline := NewEncounterPipeline(p.Query)
+	pipeline := NewEncounterPipeline(p.Group)
 	session := p.DBServer.Session()
 	defer session.Close()
 	qr, err := pipeline.ExecuteCount(session.DB("ie-test"))
@@ -148,15 +148,15 @@ func (p *PipelineSuite) TestCreateEncounterPipeline(c *C) {
 	c.Assert(qr.Total, Equals, 12)
 }
 
-func LoadQueryFromFixture(fileName string) *models.Query {
+func LoadGroupFromFixture(fileName string) *models.Group {
 	data, err := os.Open(fileName)
 	defer data.Close()
 	util.CheckErr(err)
 	decoder := json.NewDecoder(data)
-	query := &models.Query{}
-	err = decoder.Decode(query)
+	group := &models.Group{}
+	err = decoder.Decode(group)
 	util.CheckErr(err)
-	return query
+	return group
 }
 
 type containsChecker struct {

@@ -60,8 +60,8 @@ func (q *QueryTotalsSuite) TearDownSuite(c *C) {
 
 func (q *QueryTotalsSuite) TestInstaCountAllHandler(c *C) {
 	handler := InstaCountAllHandler
-	queryFile, _ := os.Open("../fixtures/sample-query.json")
-	req, _ := http.NewRequest("POST", "/InstaCountAll", queryFile)
+	groupFile, _ := os.Open("../fixtures/sample-group.json")
+	req, _ := http.NewRequest("POST", "/InstaCountAll", groupFile)
 	w := httptest.NewRecorder()
 	handler(w, req)
 	if w.Code != http.StatusOK {

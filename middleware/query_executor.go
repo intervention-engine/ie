@@ -16,24 +16,22 @@ func QueryExecutionHandler(rw http.ResponseWriter, r *http.Request, next http.Ha
 
 	resourceType := context.Get(r, "Resource")
 	actionType := context.Get(r, "Action")
-	if resourceType == "Query" && actionType == "create" {
-		query := context.Get(r, "Query").(*fhirmodels.Query)
-		go QueryRunner(query)
+	if resourceType == "Group" && actionType == "create" {
+		group := context.Get(r, "Group").(*fhirmodels.Group)
+		go GroupRunner(group)
 	}
 }
 
-func QueryRunner(query *fhirmodels.Query) {
-	pipeline := models.NewPipeline(query)
+func GroupRunner(group *fhirmodels.Group) {
+	pipeline := models.NewPipeline(group)
 	qr, err := pipeline.ExecuteCount(server.Database)
-	result := fhirmodels.QueryResponseComponent{}
 	if err != nil {
-		result.Outcome = "error"
 		log.Println(err.Error())
 	} else {
-		result.Outcome = "ok"
-		result.Total = float64(qr.Total)
+		total := uint32(qr.Total)
+		group.Quantity = &total
+		c := server.Database.C("groups")
+		c.Update(bson.M{"_id": group.Id}, group)
 	}
-	query.Response = &result
-	c := server.Database.C("querys")
-	c.Update(bson.M{"_id": query.Id}, query)
+
 }

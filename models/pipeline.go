@@ -64,18 +64,18 @@ func (m *MatchingStage) AddAgeRange(ageRange models.Range) {
 	m.AddAndStatement("birthdate.time", rangeQuery)
 }
 
-func (m *MatchingStage) AddValueCheck(e models.Extension) {
-	if e.ValueInteger != nil {
-		m.AddAndStatement("entries.resultquantity.value", float64(*e.ValueInteger))
+func (m *MatchingStage) AddValueCheck(c models.GroupCharacteristicComponent) {
+	if c.ValueQuantity != nil && c.ValueQuantity.Value != nil {
+		m.AddAndStatement("entries.resultquantity.value", float64(*c.ValueQuantity.Value))
 	}
-	if e.ValueRange != nil {
-		if e.ValueRange.High.Value != nil || e.ValueRange.Low.Value != nil {
+	if c.ValueRange != nil {
+		if c.ValueRange.High.Value != nil || c.ValueRange.Low.Value != nil {
 			rangeQuery := bson.M{}
-			if e.ValueRange.High.Value != nil {
-				rangeQuery["$lte"] = e.ValueRange.High.Value
+			if c.ValueRange.High.Value != nil {
+				rangeQuery["$lte"] = c.ValueRange.High.Value
 			}
-			if e.ValueRange.Low.Value != nil {
-				rangeQuery["$gte"] = e.ValueRange.Low.Value
+			if c.ValueRange.Low.Value != nil {
+				rangeQuery["$gte"] = c.ValueRange.Low.Value
 			}
 			m.AddAndStatement("entries.resultquantity.value", rangeQuery)
 		}
@@ -97,28 +97,29 @@ type QueryPatientList struct {
 	PatientIds []string `json:"patientids", bson:"patientids"`
 }
 
-type PipelineProducer func(q *models.Query) (p Pipeline)
+type PipelineProducer func(g *models.Group) (p Pipeline)
 
-func NewPipeline(q *models.Query) Pipeline {
+func NewPipeline(g *models.Group) Pipeline {
 	pipeline := Pipeline{}
 	pipeline.MongoPipeline = []bson.M{{"$group": bson.M{"_id": "$patientid", "gender": bson.M{"$max": "$gender"}, "birthdate": bson.M{"$max": "$birthdate"}, "entries": bson.M{"$push": bson.M{"startdate": "$startdate", "enddate": "$enddate", "codes": "$codes", "type": "$type", "resultquantity": "$resultquantity"}}}}}
-	for _, extension := range q.Parameter {
+	for _, characteristic := range g.Characteristic {
 		ms := NewMS()
-		switch extension.Url {
-		case "http://interventionengine.org/patientgender":
-			ms.AddAndStatement("gender", extension.ValueString)
-		case "http://interventionengine.org/patientage":
-			ms.AddAgeRange(*extension.ValueRange)
-		case "http://interventionengine.org/conditioncode":
+		characteristicCode := characteristic.Code
+		switch {
+		case characteristicCode.MatchesCode("http://loinc.org", "21840-4"):
+			ms.AddAndStatement("gender", characteristic.ValueCodeableConcept.Coding[0].Code)
+		case characteristicCode.MatchesCode("http://loinc.org", "21612-7"):
+			ms.AddAgeRange(*characteristic.ValueRange)
+		case characteristicCode.MatchesCode("http://loinc.org", "11450-4"):
 			ms.AddType("Condition")
-			ms.AddCodableConecpt(*extension.ValueCodeableConcept)
-		case "http://interventionengine.org/encountercode":
+			ms.AddCodableConecpt(*characteristic.ValueCodeableConcept)
+		case characteristicCode.MatchesCode("http://loinc.org", "46240-8"):
 			ms.AddType("Encounter")
-			ms.AddCodableConecpt(*extension.ValueCodeableConcept)
-		case "http://interventionengine.org/observationcode":
+			ms.AddCodableConecpt(*characteristic.ValueCodeableConcept)
+		case characteristicCode.MatchesCode("http://loinc.org", "30954-2"):
 			ms.AddType("Observation")
-			ms.AddCodableConecpt(*extension.ValueCodeableConcept)
-			ms.AddValueCheck(extension)
+			ms.AddCodableConecpt(*characteristic.ValueCodeableConcept)
+			ms.AddValueCheck(characteristic)
 		}
 		pipeline.MongoPipeline = append(pipeline.MongoPipeline, ms.ToBSON())
 	}
@@ -130,16 +131,16 @@ func IsRangePresent(r models.Range) bool {
 	return r.High.Value != nil && r.Low.Value != nil
 }
 
-func NewConditionPipeline(q *models.Query) Pipeline {
-	pipeline := NewPipeline(q)
+func NewConditionPipeline(g *models.Group) Pipeline {
+	pipeline := NewPipeline(g)
 
 	pipeline.MongoPipeline = append(pipeline.MongoPipeline, bson.M{"$unwind": "$entries"})
 	pipeline.MongoPipeline = append(pipeline.MongoPipeline, bson.M{"$match": bson.M{"entries.type": "Condition"}})
 	return pipeline
 }
 
-func NewEncounterPipeline(q *models.Query) Pipeline {
-	pipeline := NewPipeline(q)
+func NewEncounterPipeline(g *models.Group) Pipeline {
+	pipeline := NewPipeline(g)
 
 	pipeline.MongoPipeline = append(pipeline.MongoPipeline, bson.M{"$unwind": "$entries"})
 	pipeline.MongoPipeline = append(pipeline.MongoPipeline, bson.M{"$match": bson.M{"entries.type": "Encounter"}})
