@@ -61,7 +61,6 @@ func main() {
 	login.Methods("DELETE").Handler(negroni.New(negroni.HandlerFunc(controllers.LogoutHandler)))
 
 	register := s.Router.Path("/register").Subrouter()
-	register.Methods("GET").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterForm)))
 	register.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterHandler)))
 
 	s.Run()
