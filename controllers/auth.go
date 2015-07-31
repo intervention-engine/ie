@@ -5,14 +5,13 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"encoding/json"
-	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/gorilla/sessions"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/models"
 	"gopkg.in/mgo.v2/bson"
-	"html/template"
-	"net/http"
-	"time"
 )
 
 var Store = sessions.NewCookieStore([]byte("somethingsecret"))
@@ -40,6 +39,12 @@ type session_response_form struct {
 
 type error_form struct {
 	Error string `json:"error"`
+}
+
+type registration_request_form struct {
+	Identification string
+	Password       string
+	Confirmation   string
 }
 
 func LoginHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
@@ -105,41 +110,39 @@ func LogoutHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFun
 }
 
 func RegisterHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	username, password, confirm := r.FormValue("username"), r.FormValue("password"), r.FormValue("confirm")
-	sess, err := Store.Get(r, "intervention-engine")
 
-	if password != confirm {
-		sess.AddFlash("Password and confirmation must match.")
-		sess.Save(r, rw)
-		http.Redirect(rw, r, "/register", http.StatusSeeOther)
+	decoder := json.NewDecoder(r.Body)
+	var regform registration_request_form
+	err := decoder.Decode(&regform)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+	}
+
+	//grab username, password, and password confirmation from object
+	username, password, confirmation := regform.Identification, regform.Password, regform.Confirmation
+
+	count, err := server.Database.C("users").Find(bson.M{"username": username}).Count()
+	if count != 0 {
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
+		http.Error(rw, "{\"error\":\"username already exists\"}", 422)
 		return
 	}
 
-	u := &models.User{
+	if password != confirmation {
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
+		http.Error(rw, "{\"error\":\"password and confirmation must match\"}", 422)
+		return
+	}
+
+	newuser := &models.User{
 		Username: username,
 		ID:       bson.NewObjectId(),
 	}
-	u.SetPassword(password)
+	newuser.SetPassword(password)
 
-	err = server.Database.C("users").Insert(u)
+	err = server.Database.C("users").Insert(newuser)
 	if err != nil {
-		sess.AddFlash("Problem registering user.")
-		http.Redirect(rw, r, "/register", http.StatusInternalServerError)
+		http.Error(rw, "{\"error\":\"problem registering user\"}", http.StatusInternalServerError)
 		return
-	}
-
-	sess.Values["user"] = u.ID
-	sess.Save(r, rw)
-	fmt.Fprintf(rw, "Success registering user.")
-}
-
-func RegisterForm(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	registerForms, _ := template.ParseFiles("templates/_base.html", "templates/register.html")
-	sess, err := Store.Get(r, "intervention-engine")
-	flashes := sess.Flashes()
-	sess.Save(r, rw)
-	err = registerForms.Execute(rw, map[string]interface{}{"flashes": flashes})
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
