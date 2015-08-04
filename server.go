@@ -18,6 +18,20 @@ func main() {
 		mongoHost = "localhost"
 	}
 
+	riskServiceEndpoint := os.Getenv("RISKSERVICE_PORT_9000_TCP_ADDR")
+	if riskServiceEndpoint == "" {
+		riskServiceEndpoint = "http://localhost:9000/calculate"
+	} else {
+		riskServiceEndpoint += ":9000/calculate"
+	}
+
+	hostname, err := os.Hostname()
+	selfUrl := "http://" + hostname + ":3001"
+
+	if err != nil {
+		panic(err)
+	}
+
 	s := server.NewServer(mongoHost)
 
 	s.AddMiddleware("GroupCreate", negroni.HandlerFunc(middleware.AuthHandler))
@@ -30,6 +44,7 @@ func main() {
 	s.AddMiddleware("PatientIndex", negroni.HandlerFunc(middleware.AuthHandler))
 
 	s.AddMiddleware("ConditionCreate", negroni.HandlerFunc(middleware.FactHandler))
+	s.AddMiddleware("ConditionCreate", middleware.GenerateRiskHandler(riskServiceEndpoint, selfUrl))
 	s.AddMiddleware("ConditionUpdate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("ConditionDelete", negroni.HandlerFunc(middleware.FactHandler))
 
@@ -42,6 +57,7 @@ func main() {
 	s.AddMiddleware("ObservationDelete", negroni.HandlerFunc(middleware.FactHandler))
 
 	s.AddMiddleware("MedicationStatementCreate", negroni.HandlerFunc(middleware.FactHandler))
+	s.AddMiddleware("MedicationStatementCreate", middleware.GenerateRiskHandler(riskServiceEndpoint, selfUrl))
 	s.AddMiddleware("MedicationStatementUpdate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("MedicationStatementDelete", negroni.HandlerFunc(middleware.FactHandler))
 
