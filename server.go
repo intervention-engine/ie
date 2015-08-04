@@ -25,12 +25,13 @@ func main() {
 		riskServiceEndpoint += ":9000/calculate"
 	}
 
-	hostname, err := os.Hostname()
-	selfUrl := "http://" + hostname + ":3001"
+	//TODO: figure out what to do with hostname here
+	//hostname, err := os.Hostname()
+	selfUrl := "http://localhost:3001"
 
-	if err != nil {
+/*	if err != nil {
 		panic(err)
-	}
+	}*/
 
 	s := server.NewServer(mongoHost)
 

@@ -77,15 +77,12 @@ func FactFromObservation(o *models.Observation) Fact {
 	return f
 }
 
-func FactFromMedicationStatement(o *models.MedicationStatement, mlu models.MedicationLookup) Fact {
+func FactFromMedicationStatement(o *models.MedicationStatement) Fact {
 	f := Fact{}
 	f.Type = "MedicationStatement"
 	f.StartDate = o.EffectivePeriod.Start
 	f.EndDate = o.EffectivePeriod.End
-	med, err := mlu(o.MedicationReference.ReferencedID)
-	if err == nil {
-		f.Codes = []models.CodeableConcept{*med.Code}
-	}
+	f.Codes = []models.CodeableConcept{*o.MedicationCodeableConcept}
 	f.PatientID = o.Patient.ReferencedID
 	f.TargetID = o.Id
 	i := bson.NewObjectId()

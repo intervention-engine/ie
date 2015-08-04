@@ -12,7 +12,7 @@ import (
 
 func GenerateRiskHandler(riskEndpoint, rootURL string) negroni.HandlerFunc {
 	f := func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-
+		next(rw, r)
 		resourceType, ok := context.GetOk(r, "Resource")
 		if ok {
 			resource := context.Get(r, resourceType)
