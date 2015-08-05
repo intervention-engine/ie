@@ -29,7 +29,7 @@ func main() {
 	//hostname, err := os.Hostname()
 	selfUrl := "http://localhost:3001"
 
-/*	if err != nil {
+	/*	if err != nil {
 		panic(err)
 	}*/
 
@@ -72,6 +72,7 @@ func main() {
 	s.Router.HandleFunc("/InstaCount/{type}", controllers.InstaCountHandler)
 	s.Router.HandleFunc("/InstaCountAll", controllers.InstaCountAllHandler)
 	s.Router.HandleFunc("/NotificationCount", controllers.NotificationCountHandler)
+	s.Router.HandleFunc("/Pie/{id}", controllers.PieHandler)
 
 	login := s.Router.Path("/login").Subrouter()
 	login.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.LoginHandler)))
