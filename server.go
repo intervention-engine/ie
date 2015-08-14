@@ -7,6 +7,8 @@ import (
 	"github.com/intervention-engine/ie/middleware"
 	"github.com/intervention-engine/ie/notifications"
 	"os"
+	"net"
+	"fmt"
 )
 
 //var Store sessions.Store
@@ -22,16 +24,26 @@ func main() {
 	if riskServiceEndpoint == "" {
 		riskServiceEndpoint = "http://localhost:9000/calculate"
 	} else {
-		riskServiceEndpoint += ":9000/calculate"
+		riskServiceEndpoint = "http://" + riskServiceEndpoint + ":9000/calculate"
 	}
 
-	//TODO: figure out what to do with hostname here
-	//hostname, err := os.Hostname()
-	selfUrl := "http://localhost:3001"
-
-	/*	if err != nil {
+	var ip net.IP
+	var selfUrl string
+	host, err := os.Hostname()
+	if err != nil {
 		panic(err)
-	}*/
+	}
+	addrs, err := net.LookupIP(host)
+	if err != nil {
+		fmt.Println("Unable to lookup IP based on hostname, defaulting to localhost.")
+		selfUrl = "http://localhost:3001"
+	}
+	for _, addr := range addrs {
+		if ipv4 := addr.To4(); ipv4 != nil {
+			ip = ipv4
+			selfUrl = "http://" + ip.String() + ":3001"
+		}
+	}
 
 	s := server.NewServer(mongoHost)
 
