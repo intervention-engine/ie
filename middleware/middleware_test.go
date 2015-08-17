@@ -126,5 +126,5 @@ func (m *MiddlewareSuite) TestFactUpdate(c *C) {
 	fact := models.Fact{}
 	err = m.FactCollection.Find(bson.M{"targetid": tempId}).One(&fact)
 	util.CheckErr(err)
-	c.Assert(fact.Gender, Equals, "F")
+	c.Assert(fact.Gender, Equals, "female")
 }

@@ -25,7 +25,7 @@ func (f *FactSuite) SetUpSuite(c *C) {
 func (f *FactSuite) TestFactFromPatient(c *C) {
 	patient := LoadPatientFromFixture("../fixtures/patient-example-a.json")
 	fact := FactFromPatient(patient)
-	c.Assert(fact.Gender, Equals, "M")
+	c.Assert(fact.Gender, Equals, "male")
 }
 
 func (f *FactSuite) TestFactFromMedicationStatement(c *C) {
