@@ -6,8 +6,12 @@ import (
 	"net/http"
 )
 
-func PieHandler(rw http.ResponseWriter, r *http.Request) {
-	idString := mux.Vars(r)["id"]
-	resp, _ := http.Get("http://localhost:9000/pies/" + idString)
-	io.Copy(rw, resp.Body)
+func GeneratePieHandler(riskEndpoint string) func(http.ResponseWriter, *http.Request) {
+	f := func(rw http.ResponseWriter, r *http.Request) {
+		idString := mux.Vars(r)["id"]
+		piesEndpoint := riskEndpoint + "/pies/" + idString
+		resp, _ := http.Get(piesEndpoint)
+		io.Copy(rw, resp.Body)
+	}
+	return f
 }

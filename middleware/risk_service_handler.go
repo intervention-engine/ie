@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+	"fmt"
 
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/context"
@@ -29,7 +30,11 @@ func GenerateRiskHandler(riskEndpoint, rootURL string) negroni.HandlerFunc {
 				timestamp = resource.(*fhirmodels.MedicationStatement).EffectivePeriod.Start.Time
 			}
 
-			_, err := http.PostForm(riskEndpoint,
+			calculateEndpoint := riskEndpoint + "/calculate"
+
+			fmt.Println(calculateEndpoint)
+
+			_, err := http.PostForm(calculateEndpoint,
 				url.Values{"patientId": {patientId},
 					"timestamp":       {timestamp.Format(time.RFC3339)},
 					"fhirEndpointUrl": {rootURL}})

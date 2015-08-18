@@ -22,9 +22,9 @@ func main() {
 
 	riskServiceEndpoint := os.Getenv("RISKSERVICE_PORT_9000_TCP_ADDR")
 	if riskServiceEndpoint == "" {
-		riskServiceEndpoint = "http://localhost:9000/calculate"
+		riskServiceEndpoint = "http://localhost:9000"
 	} else {
-		riskServiceEndpoint = "http://" + riskServiceEndpoint + ":9000/calculate"
+		riskServiceEndpoint = "http://" + riskServiceEndpoint + ":9000"
 	}
 
 	var ip net.IP
@@ -84,7 +84,7 @@ func main() {
 	s.Router.HandleFunc("/InstaCount/{type}", controllers.InstaCountHandler)
 	s.Router.HandleFunc("/InstaCountAll", controllers.InstaCountAllHandler)
 	s.Router.HandleFunc("/NotificationCount", controllers.NotificationCountHandler)
-	s.Router.HandleFunc("/Pie/{id}", controllers.PieHandler)
+	s.Router.HandleFunc("/Pie/{id}", controllers.GeneratePieHandler(riskServiceEndpoint))
 
 	login := s.Router.Path("/login").Subrouter()
 	login.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.LoginHandler)))
