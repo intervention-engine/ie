@@ -1,12 +1,26 @@
 {
+    "_id" : "55c3847267803d2945000005",
     "patient" : {
-        "reference" : "http://glowcloud.mitre.org:3001/Patient/5540f2041cd4623133000001"
+        "_id" : "",
+        "reference" : "Patient/55c3847267803d2945000003",
+        "type" : "Patient",
+        "referenceid" : "55c3847267803d2945000003",
+        "external" : false
     },
     "effectivePeriod" : {
-        "start" : "2014-01-01",
-        "end" : "2014-06-01"
+        "_id" : "",
+        "start" : "2015-04-01T00:00:00-04:00",
+        "end" :  "2015-04-03T12:30:00-04:00"
     },
-    "medicationReference" : {
-        "reference" : "http://glowcloud.mitre.org:3001/Medication/5540f2041cd462313300000c"
+    "medicationCodeableConcept" : {
+        "_id" : "",
+        "coding" : [
+            {
+                "_id" : "",
+                "system" : "http://www.nlm.nih.gov/research/umls/rxnorm/",
+                "code" : "1000048"
+            }
+        ],
+        "text" : "Medication, Order: BH Antidepressant medication (Code List: 2.16.840.1.113883.3.1257.1.972)"
     }
 }

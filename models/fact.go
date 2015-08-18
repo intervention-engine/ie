@@ -25,12 +25,7 @@ func FactFromPatient(p *models.Patient) Fact {
 	f.BirthDate = p.BirthDate
 	f.PatientID = p.Id
 	f.TargetID = p.Id
-	switch p.Gender {
-	case "male":
-		f.Gender = "M"
-	case "female":
-		f.Gender = "F"
-	}
+	f.Gender = p.Gender
 	i := bson.NewObjectId()
 	f.Id = i.Hex()
 	return f
@@ -77,15 +72,12 @@ func FactFromObservation(o *models.Observation) Fact {
 	return f
 }
 
-func FactFromMedicationStatement(o *models.MedicationStatement, mlu models.MedicationLookup) Fact {
+func FactFromMedicationStatement(o *models.MedicationStatement) Fact {
 	f := Fact{}
 	f.Type = "MedicationStatement"
 	f.StartDate = o.EffectivePeriod.Start
 	f.EndDate = o.EffectivePeriod.End
-	med, err := mlu(o.MedicationReference.ReferencedID)
-	if err == nil {
-		f.Codes = []models.CodeableConcept{*med.Code}
-	}
+	f.Codes = []models.CodeableConcept{*o.MedicationCodeableConcept}
 	f.PatientID = o.Patient.ReferencedID
 	f.TargetID = o.Id
 	i := bson.NewObjectId()

@@ -10,27 +10,28 @@ import (
 	"time"
 )
 
-type FactSuite struct{}
+type FactSuite struct {
+	EDT *time.Location
+}
 
 func Test(t *testing.T) { TestingT(t) }
 
 var _ = Suite(&FactSuite{})
 
+func (f *FactSuite) SetUpSuite(c *C) {
+	f.EDT = time.FixedZone("EDT", -4*60*60)
+}
+
 func (f *FactSuite) TestFactFromPatient(c *C) {
 	patient := LoadPatientFromFixture("../fixtures/patient-example-a.json")
 	fact := FactFromPatient(patient)
-	c.Assert(fact.Gender, Equals, "M")
+	c.Assert(fact.Gender, Equals, "male")
 }
 
 func (f *FactSuite) TestFactFromMedicationStatement(c *C) {
 	ms := LoadMedicationStatementFromFixture("../fixtures/medication-statement.json")
-	mlu := func(id string) (models.Medication, error) {
-		c.Assert(id, Equals, "5540f2041cd462313300000c")
-		coding := models.Coding{System: "Foo", Code: "Bar"}
-		return models.Medication{Code: &models.CodeableConcept{Coding: []models.Coding{coding}}}, nil
-	}
-	fact := FactFromMedicationStatement(ms, mlu)
-	c.Assert(fact.StartDate.Time, Equals, time.Date(2014, time.January, 1, 0, 0, 0, 0, time.UTC))
+	fact := FactFromMedicationStatement(ms)
+	c.Assert(fact.StartDate.Time.UnixNano(), Equals, time.Date(2015, time.April, 1, 0, 0, 0, 0, f.EDT).UnixNano())
 }
 
 func LoadPatientFromFixture(fileName string) *models.Patient {
