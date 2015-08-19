@@ -159,7 +159,7 @@ func (p *Pipeline) ExecuteCount(db *mgo.Database) (QueryResult, error) {
 	factCollection := db.C("facts")
 	qr := QueryResult{}
 	p.MakeCountPipeline()
-	err := factCollection.Pipe(p.MongoPipeline).One(&qr)
+	err := factCollection.Pipe(p.MongoPipeline).AllowDiskUse().One(&qr)
 	return qr, err
 }
 
@@ -167,6 +167,6 @@ func (p *Pipeline) ExecutePatientList(db *mgo.Database) (QueryPatientList, error
 	factCollection := db.C("facts")
 	qpl := QueryPatientList{}
 	p.MakePatientListPipeline()
-	err := factCollection.Pipe(p.MongoPipeline).One(&qpl)
+	err := factCollection.Pipe(p.MongoPipeline).AllowDiskUse().One(&qpl)
 	return qpl, err
 }
