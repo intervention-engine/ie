@@ -1,14 +1,17 @@
 package main
 
 import (
+	"fmt"
+	"net"
+	"os"
+	"sync"
+
 	"github.com/codegangsta/negroni"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/controllers"
 	"github.com/intervention-engine/ie/middleware"
 	"github.com/intervention-engine/ie/notifications"
-	"os"
-	"net"
-	"fmt"
+	"github.com/intervention-engine/ie/subscription"
 )
 
 //var Store sessions.Store
@@ -28,7 +31,7 @@ func main() {
 	}
 
 	var ip net.IP
-	var selfUrl string
+	var selfURL string
 	host, err := os.Hostname()
 	if err != nil {
 		panic(err)
@@ -36,17 +39,23 @@ func main() {
 	addrs, err := net.LookupIP(host)
 	if err != nil {
 		fmt.Println("Unable to lookup IP based on hostname, defaulting to localhost.")
-		selfUrl = "http://localhost:3001"
+		selfURL = "http://localhost:3001"
 	}
 	for _, addr := range addrs {
 		if ipv4 := addr.To4(); ipv4 != nil {
 			ip = ipv4
-			selfUrl = "http://" + ip.String() + ":3001"
+			selfURL = "http://" + ip.String() + ":3001"
 		}
 	}
 
 	s := server.NewServer(mongoHost)
 
+	workerChannel := make(chan subscription.ResourceUpdateMessage)
+	watch := subscription.GenerateResourceWatch(workerChannel)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go subscription.NotifySubscribers(workerChannel, selfURL, &wg)
+	defer stopNotifier(workerChannel, &wg)
 	s.AddMiddleware("GroupCreate", negroni.HandlerFunc(middleware.AuthHandler))
 	s.AddMiddleware("GroupCreate", negroni.HandlerFunc(middleware.QueryExecutionHandler))
 
@@ -57,7 +66,7 @@ func main() {
 	s.AddMiddleware("PatientIndex", negroni.HandlerFunc(middleware.AuthHandler))
 
 	s.AddMiddleware("ConditionCreate", negroni.HandlerFunc(middleware.FactHandler))
-	s.AddMiddleware("ConditionCreate", middleware.GenerateRiskHandler(riskServiceEndpoint, selfUrl))
+	s.AddMiddleware("ConditionCreate", watch)
 	s.AddMiddleware("ConditionUpdate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("ConditionDelete", negroni.HandlerFunc(middleware.FactHandler))
 
@@ -70,7 +79,7 @@ func main() {
 	s.AddMiddleware("ObservationDelete", negroni.HandlerFunc(middleware.FactHandler))
 
 	s.AddMiddleware("MedicationStatementCreate", negroni.HandlerFunc(middleware.FactHandler))
-	s.AddMiddleware("MedicationStatementCreate", middleware.GenerateRiskHandler(riskServiceEndpoint, selfUrl))
+	s.AddMiddleware("MedicationStatementCreate", watch)
 	s.AddMiddleware("MedicationStatementUpdate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("MedicationStatementDelete", negroni.HandlerFunc(middleware.FactHandler))
 
@@ -94,4 +103,9 @@ func main() {
 	register.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterHandler)))
 
 	s.Run()
+}
+
+func stopNotifier(wc chan subscription.ResourceUpdateMessage, wg *sync.WaitGroup) {
+	close(wc)
+	wg.Wait()
 }
