@@ -60,8 +60,7 @@ func FactFromEncounter(e *models.Encounter) Fact {
 func FactFromObservation(o *models.Observation) Fact {
 	f := Fact{}
 	f.Type = "Observation"
-	f.StartDate = o.EffectivePeriod.Start
-	f.EndDate = o.EffectivePeriod.End
+	f.StartDate = o.EffectiveDateTime
 	f.ResultQuantity = o.ValueQuantity
 	f.ResultCodeableConcept = o.ValueCodeableConcept
 	f.Codes = []models.CodeableConcept{*o.Code}
