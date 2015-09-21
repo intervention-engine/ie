@@ -26,6 +26,9 @@ func GenerateResourceWatch(subUpdateQueue chan<- ResourceUpdateMessage) negroni.
 			case *fhirmodels.MedicationStatement:
 				patientID = resource.(*fhirmodels.MedicationStatement).Patient.ReferencedID
 				timestamp = resource.(*fhirmodels.MedicationStatement).EffectivePeriod.Start.Time
+			case *fhirmodels.Encounter:
+				patientID = resource.(*fhirmodels.Encounter).Patient.ReferencedID
+				timestamp = resource.(*fhirmodels.Encounter).Period.Start.Time
 			}
 
 			ru := NewResourceUpdateMessage(patientID, timestamp.Format(time.RFC3339))
