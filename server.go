@@ -71,6 +71,7 @@ func main() {
 	s.AddMiddleware("ConditionDelete", negroni.HandlerFunc(middleware.FactHandler))
 
 	s.AddMiddleware("EncounterCreate", negroni.HandlerFunc(middleware.FactHandler))
+	s.AddMiddleware("EncounterCreate", watch)
 	s.AddMiddleware("EncounterUpdate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("EncounterDelete", negroni.HandlerFunc(middleware.FactHandler))
 
