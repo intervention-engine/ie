@@ -118,9 +118,9 @@ func AssertEncounterNotificationContents(cr *models.CommunicationRequest, reason
 	c.Assert(cr.Reason[0].Coding[0].System, Equals, reason.System)
 	c.Assert(cr.Reason[0].Coding[0].Code, Equals, reason.Code)
 	c.Assert(cr.Subject.Reference, Matches, ".*/Patient/5540f2041cd4623133000001")
-	c.Assert(cr.OrderedOn.Precision, Equals, models.Precision(models.Timestamp))
-	c.Assert(cr.OrderedOn.Time.Before(time.Now()), Equals, true)
-	c.Assert(time.Now().Sub(cr.OrderedOn.Time) < time.Duration(5)*time.Minute, Equals, true)
+	c.Assert(cr.RequestedOn.Precision, Equals, models.Precision(models.Timestamp))
+	c.Assert(cr.RequestedOn.Time.Before(time.Now()), Equals, true)
+	c.Assert(time.Now().Sub(cr.RequestedOn.Time) < time.Duration(5)*time.Minute, Equals, true)
 }
 
 func IsRegistered(n NotificationDefinition) bool {

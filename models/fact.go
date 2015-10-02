@@ -35,7 +35,7 @@ func FactFromCondition(c *models.Condition) Fact {
 	f := Fact{}
 	f.Type = "Condition"
 	f.StartDate = c.OnsetDateTime
-	f.EndDate = c.AbatementDate
+	f.EndDate = c.AbatementDateTime
 	f.Codes = []models.CodeableConcept{*c.Code}
 	f.PatientID = c.Patient.ReferencedID
 	f.TargetID = c.Id
