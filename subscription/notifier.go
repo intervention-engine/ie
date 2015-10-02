@@ -22,13 +22,15 @@ func NotifySubscribers(subUpdateQueue <-chan ResourceUpdateMessage, rootURL stri
 		var subscriptions []models.Subscription
 		query.All(&subscriptions)
 		for _, s := range subscriptions {
-			_, err := http.PostForm(s.Channel.Endpoint,
+			resp, err := http.PostForm(s.Channel.Endpoint,
 				url.Values{"patientId": {rum.PatientID},
 					"timestamp":       {rum.Timestamp},
 					"fhirEndpointUrl": {rootURL}})
 			if err != nil {
 				s.Error = err.Error()
 				subsCollection.Update(bson.M{"_id": s.Id}, s)
+			} else {
+				resp.Body.Close()
 			}
 		}
 	}
