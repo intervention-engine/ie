@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/gorilla/mux"
 	fhirmodels "github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/search"
 	"github.com/intervention-engine/fhir/server"
@@ -41,44 +40,6 @@ func pipelineExecutor(rw http.ResponseWriter, r *http.Request, pp models.Pipelin
 	}
 }
 
-func ConditionTotalHandler(rw http.ResponseWriter, r *http.Request) {
-	pipelineExecutor(rw, r, models.NewConditionPipeline, "count")
-}
-
-func EncounterTotalHandler(rw http.ResponseWriter, r *http.Request) {
-	pipelineExecutor(rw, r, models.NewEncounterPipeline, "count")
-}
-
-func PatientListHandler(rw http.ResponseWriter, r *http.Request) {
-	pipelineExecutor(rw, r, models.NewPipeline, "patient")
-}
-
-func InstaCountHandler(rw http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
-	group := &fhirmodels.Group{}
-	err := decoder.Decode(group)
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-
-	queryType := mux.Vars(r)["type"]
-	var pipeline models.Pipeline
-	switch queryType {
-	case "patient":
-		pipeline = models.NewPipeline(group)
-	case "encounter":
-		pipeline = models.NewEncounterPipeline(group)
-	case "condition":
-		pipeline = models.NewConditionPipeline(group)
-	}
-	qr, err := pipeline.ExecuteCount(server.Database)
-	if err != nil && err != mgo.ErrNotFound {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	json.NewEncoder(rw).Encode(qr)
-}
-
 func TrimSuffix(s, suffix string) string {
 	if strings.HasSuffix(s, suffix) {
 		s = s[:len(s)-len(suffix)]
@@ -97,6 +58,8 @@ func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
 	pquery := ""
 	cquery := ""
 	equery := ""
+
+	intersectRequired := false
 
 	for _, characteristic := range group.Characteristic {
 
@@ -123,11 +86,13 @@ func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
 			//Condition
 			if coding.System == "http://loinc.org" && coding.Code == "11450-4" {
 				cquery += "code=" + characteristic.ValueCodeableConcept.Coding[0].System + "|" + characteristic.ValueCodeableConcept.Coding[0].Code + "&"
+				intersectRequired = true
 			}
 
 			//Encounter
 			if coding.System == "http://loinc.org" && coding.Code == "46240-8" {
 				equery += "type=" + characteristic.ValueCodeableConcept.Coding[0].System + "|" + characteristic.ValueCodeableConcept.Coding[0].Code + "&"
+				intersectRequired = true
 			}
 		}
 	}
@@ -149,66 +114,75 @@ func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
 		pids[i] = pResultIDs[i].ID
 	}
 
-	var cResultIDs []struct {
-		ID string `bson:"patient.referenceid"`
-	}
-	cSearchQuery := search.Query{Resource: "Condition", Query: cquery}
-	cQ := searcher.CreateQuery(cSearchQuery)
-	cQ.Select(bson.M{"patient.referenceid": 1}).All(&cResultIDs)
-
-	cids := make([]string, len(cResultIDs))
-	for i := range cResultIDs {
-		cids[i] = cResultIDs[i].ID
-	}
-
-	var eResultIDs []struct {
-		ID string `bson:"patient.referenceid"`
-	}
-	eSearchQuery := search.Query{Resource: "Encounter", Query: equery}
-	eQ := searcher.CreateQuery(eSearchQuery)
-	eQ.Select(bson.M{"patient.referenceid": 1}).All(&eResultIDs)
-	eids := make([]string, len(eResultIDs))
-	for i := range eResultIDs {
-		eids[i] = eResultIDs[i].ID
-	}
-	spew.Dump(len(pids), len(cids), len(eids))
-
-	intersectMap := make(map[string]bool)
-
-	for _, pid := range pids {
-		if pid != "" {
-			intersectMap[pid] = true
+	if intersectRequired {
+		type patientContainer struct {
+			ID string `bson:"referenceid"`
 		}
-	}
 
-	for _, cid := range cids {
-		if cid != "" {
-			intersectMap[cid] = true
+		var cResultIDs []struct {
+			Patient patientContainer `bson:"patient"`
 		}
-	}
-
-	for _, eid := range eids {
-		if eid != "" {
-			intersectMap[eid] = true
+		cSearchQuery := search.Query{Resource: "Condition", Query: cquery}
+		cQ := searcher.CreateQuery(cSearchQuery)
+		cQ.Select(bson.M{"patient.referenceid": 1}).All(&cResultIDs)
+		cids := make([]string, len(cResultIDs))
+		for i := range cResultIDs {
+			cids[i] = cResultIDs[i].Patient.ID
 		}
-	}
 
-	pipelineMap := make(map[string]models.Pipeline)
-
-	pipelineMap["patients"] = models.NewPipeline(group)
-	pipelineMap["encounters"] = models.NewEncounterPipeline(group)
-	pipelineMap["conditions"] = models.NewConditionPipeline(group)
-
-	resultMap := make(map[string]int)
-
-	for pipelineType, pipeline := range pipelineMap {
-		qr, err := pipeline.ExecuteCount(server.Database)
-		if err != nil && err != mgo.ErrNotFound {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
+		var eResultIDs []struct {
+			Patient patientContainer `bson:"patient"`
 		}
-		resultMap[pipelineType] = qr.Total
+		eSearchQuery := search.Query{Resource: "Encounter", Query: equery}
+		eQ := searcher.CreateQuery(eSearchQuery)
+		eQ.Select(bson.M{"patient.referenceid": 1}).All(&eResultIDs)
+		eids := make([]string, len(eResultIDs))
+		for i := range eResultIDs {
+			eids[i] = eResultIDs[i].Patient.ID
+		}
+
+		firstIntersect := make(map[string]bool)
+		secondIntersect := make(map[string]bool)
+		finalIntersect := make(map[string]bool)
+
+		for _, pid := range pids {
+			firstIntersect[pid] = true
+		}
+
+		for _, cid := range cids {
+			if firstIntersect[cid] == true {
+				secondIntersect[cid] = true
+			}
+		}
+
+		for _, eid := range eids {
+			if secondIntersect[eid] == true {
+				finalIntersect[eid] = true
+			}
+		}
+
+		intersectPIDs := make([]string, 0, len(finalIntersect))
+		for id := range finalIntersect {
+			intersectPIDs = append(intersectPIDs, id)
+		}
+		pids = intersectPIDs
 	}
 
-	json.NewEncoder(rw).Encode(resultMap)
+	pCount := len(pids)
+
+	cCollection := server.Database.C("conditions")
+	cCount, err := cCollection.Find(bson.M{"patient.referenceid": bson.M{"$in": pids}}).Count()
+
+	eCollection := server.Database.C("encounters")
+	eCount, err := eCollection.Find(bson.M{"patient.referenceid": bson.M{"$in": pids}}).Count()
+
+	newResultMap := map[string]int{
+		"patients":   pCount,
+		"conditions": cCount,
+		"encounters": eCount,
+	}
+
+	spew.Dump(newResultMap)
+
+	json.NewEncoder(rw).Encode(newResultMap)
 }

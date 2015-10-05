@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -85,6 +85,10 @@ func (q *QueryTotalsSuite) TestInstaCountAllHandler(c *C) {
 	if w.Code != http.StatusOK {
 		c.Fatal("Non-OK response code received: %v", w.Code)
 	}
+
+	spew.Dump(server.Database.C("patients").Count())
+	spew.Dump(server.Database.C("encounters").Count())
+	spew.Dump(server.Database.C("conditions").Count())
 
 	counts := make(map[string]int)
 	err := json.NewDecoder(w.Body).Decode(&counts)

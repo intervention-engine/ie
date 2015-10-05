@@ -88,10 +88,10 @@ func main() {
 	notificationHandler := &middleware.NotificationHandler{Registry: notifications.DefaultNotificationDefinitionRegistry}
 	s.AddMiddleware("EncounterCreate", negroni.HandlerFunc(notificationHandler.Handle))
 
-	s.Router.HandleFunc("/GroupConditionTotal/{id}", controllers.ConditionTotalHandler)
-	s.Router.HandleFunc("/GroupEncounterTotal/{id}", controllers.EncounterTotalHandler)
-	s.Router.HandleFunc("/GroupList/{id}", controllers.PatientListHandler)
-	s.Router.HandleFunc("/InstaCount/{type}", controllers.InstaCountHandler)
+	// s.Router.HandleFunc("/GroupConditionTotal/{id}", controllers.ConditionTotalHandler)
+	// s.Router.HandleFunc("/GroupEncounterTotal/{id}", controllers.EncounterTotalHandler)
+	// s.Router.HandleFunc("/GroupList/{id}", controllers.PatientListHandler)
+	// s.Router.HandleFunc("/InstaCount/{type}", controllers.InstaCountHandler)
 	s.Router.HandleFunc("/InstaCountAll", controllers.InstaCountAllHandler)
 	s.Router.HandleFunc("/NotificationCount", controllers.NotificationCountHandler)
 	s.Router.HandleFunc("/Pie/{id}", controllers.GeneratePieHandler(riskServiceEndpoint))
