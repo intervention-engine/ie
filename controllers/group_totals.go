@@ -3,7 +3,6 @@ package controllers
 import (
 	"encoding/json"
 
-	"github.com/davecgh/go-spew/spew"
 	fhirmodels "github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/search"
 	"github.com/intervention-engine/fhir/server"
@@ -181,8 +180,6 @@ func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
 		"conditions": cCount,
 		"encounters": eCount,
 	}
-
-	spew.Dump(newResultMap)
 
 	json.NewEncoder(rw).Encode(newResultMap)
 }

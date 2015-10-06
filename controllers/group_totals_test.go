@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"github.com/davecgh/go-spew/spew"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -60,6 +59,8 @@ func (q *QueryTotalsSuite) SetUpTest(c *C) {
 	err = conditionDecoder.Decode(condition)
 	util.CheckErr(err)
 
+	patient.Id = "TESTID"
+
 	patientCollection.Insert(patient)
 	encounterCollection.Insert(encounter)
 	conditionCollection.Insert(condition)
@@ -85,10 +86,6 @@ func (q *QueryTotalsSuite) TestInstaCountAllHandler(c *C) {
 	if w.Code != http.StatusOK {
 		c.Fatal("Non-OK response code received: %v", w.Code)
 	}
-
-	spew.Dump(server.Database.C("patients").Count())
-	spew.Dump(server.Database.C("encounters").Count())
-	spew.Dump(server.Database.C("conditions").Count())
 
 	counts := make(map[string]int)
 	err := json.NewDecoder(w.Body).Decode(&counts)

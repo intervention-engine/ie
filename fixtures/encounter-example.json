@@ -15,9 +15,9 @@
     ],
     "patient" : {
         "_id" : "",
-        "reference" : "Patient/55fc289767803d071800000a",
+        "reference" : "Patient/TESTID",
         "type" : "Patient",
-        "referenceid" : "55fc289767803d071800000a",
+        "referenceid" : "TESTID",
         "external" : false
     },
     "period" : {
