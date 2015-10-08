@@ -58,7 +58,8 @@ func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
 	cquery := ""
 	equery := ""
 
-	intersectRequired := false
+	hasConditionCriteria := false
+	hasEncounterCriteria := false
 
 	for _, characteristic := range group.Characteristic {
 
@@ -67,11 +68,11 @@ func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
 		for _, coding := range codings {
 			//Age
 			if coding.System == "http://loinc.org" && coding.Code == "21612-7" {
-				highAgeDate := time.Date(time.Now().Year()-int(*characteristic.ValueRange.Low.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format("2006-01-02")
-				lowAgeDate := time.Date(time.Now().Year()-int(*characteristic.ValueRange.High.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format("2006-01-02")
-				pquery += "birthdate=lt" + highAgeDate + "&birthdate=gt" + lowAgeDate + "&"
-				cquery += "patient.birthdate=lt" + highAgeDate + "&patient.birthdate=gt" + lowAgeDate + "&"
-				equery += "patient.birthdate=lt" + highAgeDate + "&patient.birthdate=gt" + lowAgeDate + "&"
+				highAgeDate := time.Date(time.Now().Year()-int(*characteristic.ValueRange.Low.Value), time.Now().Month(), time.Now().Day(), 23, 59, 59, 999, time.UTC).Format("2006-01-02T15:04:05.999")
+				lowAgeDate := time.Date(time.Now().Year()-int(*characteristic.ValueRange.High.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format("2006-01-02T15:04:05.999")
+				pquery += "birthdate=lte" + highAgeDate + "&birthdate=gte" + lowAgeDate + "&"
+				cquery += "patient.birthdate=lte" + highAgeDate + "&patient.birthdate=gte" + lowAgeDate + "&"
+				equery += "patient.birthdate=lte" + highAgeDate + "&patient.birthdate=gte" + lowAgeDate + "&"
 			}
 
 			//Gender
@@ -85,13 +86,13 @@ func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
 			//Condition
 			if coding.System == "http://loinc.org" && coding.Code == "11450-4" {
 				cquery += "code=" + characteristic.ValueCodeableConcept.Coding[0].System + "|" + characteristic.ValueCodeableConcept.Coding[0].Code + "&"
-				intersectRequired = true
+				hasConditionCriteria = true
 			}
 
 			//Encounter
 			if coding.System == "http://loinc.org" && coding.Code == "46240-8" {
 				equery += "type=" + characteristic.ValueCodeableConcept.Coding[0].System + "|" + characteristic.ValueCodeableConcept.Coding[0].Code + "&"
-				intersectRequired = true
+				hasEncounterCriteria = true
 			}
 		}
 	}
@@ -102,22 +103,16 @@ func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
 
 	searcher := search.NewMongoSearcher(server.Database)
 
-	var pResultIDs []struct {
-		ID string `bson:"_id"`
-	}
-	pSearchQuery := search.Query{Resource: "Patient", Query: pquery}
-	pQ := searcher.CreateQuery(pSearchQuery)
-	pQ.Select(bson.M{"_id": 1}).All(&pResultIDs)
-	pids := make([]string, len(pResultIDs))
-	for i := range pResultIDs {
-		pids[i] = pResultIDs[i].ID
+	var pids []string
+	var cids []string
+	var eids []string
+
+	type patientContainer struct {
+		ID string `bson:"referenceid"`
 	}
 
-	if intersectRequired {
-		type patientContainer struct {
-			ID string `bson:"referenceid"`
-		}
-
+	//We only need to query for conditions if the group contains a condition criteria
+	if hasConditionCriteria {
 		var cResultIDs []struct {
 			Patient patientContainer `bson:"patient"`
 		}
@@ -128,7 +123,10 @@ func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
 		for i := range cResultIDs {
 			cids[i] = cResultIDs[i].Patient.ID
 		}
+	}
 
+	//We only need to query for encounters if the group contains an encounter criteria
+	if hasEncounterCriteria {
 		var eResultIDs []struct {
 			Patient patientContainer `bson:"patient"`
 		}
@@ -139,32 +137,46 @@ func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
 		for i := range eResultIDs {
 			eids[i] = eResultIDs[i].Patient.ID
 		}
+	}
 
-		firstIntersect := make(map[string]bool)
-		secondIntersect := make(map[string]bool)
-		finalIntersect := make(map[string]bool)
-
-		for _, pid := range pids {
-			firstIntersect[pid] = true
-		}
+	//If we have both a condition critera and an encounter criteria, the patient ID list is the intersection of the resultant IDs from those queries
+	if hasConditionCriteria && hasEncounterCriteria {
+		cidMap := make(map[string]bool)
+		intersectMap := make(map[string]bool)
 
 		for _, cid := range cids {
-			if firstIntersect[cid] == true {
-				secondIntersect[cid] = true
-			}
+			cidMap[cid] = true
 		}
 
 		for _, eid := range eids {
-			if secondIntersect[eid] == true {
-				finalIntersect[eid] = true
+			if cidMap[eid] == true {
+				intersectMap[eid] = true
 			}
 		}
 
-		intersectPIDs := make([]string, 0, len(finalIntersect))
-		for id := range finalIntersect {
+		intersectPIDs := make([]string, 0, len(intersectMap))
+		for id := range intersectMap {
 			intersectPIDs = append(intersectPIDs, id)
 		}
 		pids = intersectPIDs
+	} else if hasConditionCriteria {
+		//If we only have a condition criteria, the patient ID list is the resultant IDs from that query
+		pids = cids
+	} else if hasEncounterCriteria {
+		//If we only have an encounter criteria, the patient ID list is the resultant IDs from that query
+		pids = eids
+	} else {
+		//If we have neither a condition nor encounter criteria, the patient ID list is the result of the demographic query against the patient collection
+		var pResultIDs []struct {
+			ID string `bson:"_id"`
+		}
+		pSearchQuery := search.Query{Resource: "Patient", Query: pquery}
+		pQ := searcher.CreateQuery(pSearchQuery)
+		pQ.Select(bson.M{"_id": 1}).All(&pResultIDs)
+		pids = make([]string, len(pResultIDs))
+		for i := range pResultIDs {
+			pids[i] = pResultIDs[i].ID
+		}
 	}
 
 	pCount := len(pids)

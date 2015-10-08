@@ -92,6 +92,7 @@ func (q *QueryTotalsSuite) TestInstaCountAllHandler(c *C) {
 
 	util.CheckErr(err)
 
+	//TODO: These tests should be made more robust once we have better fixtures and test helpers
 	c.Assert(counts["patients"], Equals, 1)
 	c.Assert(counts["conditions"], Equals, 1)
 	c.Assert(counts["encounters"], Equals, 1)
