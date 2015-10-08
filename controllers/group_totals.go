@@ -119,7 +119,7 @@ func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
 		cSearchQuery := search.Query{Resource: "Condition", Query: cquery}
 		cQ := searcher.CreateQuery(cSearchQuery)
 		cQ.Select(bson.M{"patient.referenceid": 1}).All(&cResultIDs)
-		cids := make([]string, len(cResultIDs))
+		cids = make([]string, len(cResultIDs))
 		for i := range cResultIDs {
 			cids[i] = cResultIDs[i].Patient.ID
 		}
@@ -133,7 +133,7 @@ func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
 		eSearchQuery := search.Query{Resource: "Encounter", Query: equery}
 		eQ := searcher.CreateQuery(eSearchQuery)
 		eQ.Select(bson.M{"patient.referenceid": 1}).All(&eResultIDs)
-		eids := make([]string, len(eResultIDs))
+		eids = make([]string, len(eResultIDs))
 		for i := range eResultIDs {
 			eids[i] = eResultIDs[i].Patient.ID
 		}
