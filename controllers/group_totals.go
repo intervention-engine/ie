@@ -6,54 +6,13 @@ import (
 	fhirmodels "github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/search"
 	"github.com/intervention-engine/fhir/server"
-	"github.com/intervention-engine/ie/models"
-	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"strings"
 	"time"
 )
 
-func pipelineExecutor(rw http.ResponseWriter, r *http.Request, pp models.PipelineProducer, pipelineType string) {
-	group, err := server.LoadGroup(r)
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	pipeline := pp(group)
-	switch pipelineType {
-	case "patient":
-		qr, err := pipeline.ExecutePatientList(server.Database)
-		if err != nil && err != mgo.ErrNotFound {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		json.NewEncoder(rw).Encode(qr)
-	case "count":
-		qr, err := pipeline.ExecuteCount(server.Database)
-		if err != nil && err != mgo.ErrNotFound {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		json.NewEncoder(rw).Encode(qr)
-	}
-}
-
-func TrimSuffix(s, suffix string) string {
-	if strings.HasSuffix(s, suffix) {
-		s = s[:len(s)-len(suffix)]
-	}
-	return s
-}
-
-func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
-	group := &fhirmodels.Group{}
-	err := decoder.Decode(group)
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-
+func groupListResolver(group fhirmodels.Group) []string {
 	pquery := ""
 	cquery := ""
 	equery := ""
@@ -97,9 +56,9 @@ func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	pquery = TrimSuffix(pquery, "&")
-	cquery = TrimSuffix(cquery, "&")
-	equery = TrimSuffix(equery, "&")
+	pquery = trimSuffix(pquery, "&")
+	cquery = trimSuffix(cquery, "&")
+	equery = trimSuffix(equery, "&")
 
 	searcher := search.NewMongoSearcher(server.Database)
 
@@ -179,6 +138,37 @@ func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	return pids
+}
+
+func PatientListHandler(rw http.ResponseWriter, r *http.Request) {
+	group, err := server.LoadGroup(r)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+	patientIds := groupListResolver(*group)
+	responseMap := map[string][]string{
+		"patientids": patientIds,
+	}
+	json.NewEncoder(rw).Encode(responseMap)
+}
+
+func trimSuffix(s, suffix string) string {
+	if strings.HasSuffix(s, suffix) {
+		s = s[:len(s)-len(suffix)]
+	}
+	return s
+}
+
+func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	group := &fhirmodels.Group{}
+	err := decoder.Decode(group)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+
+	pids := groupListResolver(*group)
 	pCount := len(pids)
 
 	cCollection := server.Database.C("conditions")

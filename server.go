@@ -57,37 +57,18 @@ func main() {
 	go subscription.NotifySubscribers(workerChannel, selfURL, &wg)
 	defer stopNotifier(workerChannel, &wg)
 	s.AddMiddleware("GroupCreate", negroni.HandlerFunc(middleware.AuthHandler))
-	s.AddMiddleware("GroupCreate", negroni.HandlerFunc(middleware.QueryExecutionHandler))
 
-	s.AddMiddleware("PatientCreate", negroni.HandlerFunc(middleware.FactHandler))
-	s.AddMiddleware("PatientUpdate", negroni.HandlerFunc(middleware.FactHandler))
-	s.AddMiddleware("PatientDelete", negroni.HandlerFunc(middleware.FactHandler))
-	s.AddMiddleware("PatientIndex", negroni.HandlerFunc(middleware.RiskQueryHandler))
 	s.AddMiddleware("PatientIndex", negroni.HandlerFunc(middleware.AuthHandler))
 
-	s.AddMiddleware("ConditionCreate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("ConditionCreate", watch)
-	s.AddMiddleware("ConditionUpdate", negroni.HandlerFunc(middleware.FactHandler))
-	s.AddMiddleware("ConditionDelete", negroni.HandlerFunc(middleware.FactHandler))
 
-	s.AddMiddleware("EncounterCreate", negroni.HandlerFunc(middleware.FactHandler))
-	s.AddMiddleware("EncounterCreate", watch)
-	s.AddMiddleware("EncounterUpdate", negroni.HandlerFunc(middleware.FactHandler))
-	s.AddMiddleware("EncounterDelete", negroni.HandlerFunc(middleware.FactHandler))
-
-	s.AddMiddleware("ObservationCreate", negroni.HandlerFunc(middleware.FactHandler))
-	s.AddMiddleware("ObservationUpdate", negroni.HandlerFunc(middleware.FactHandler))
-	s.AddMiddleware("ObservationDelete", negroni.HandlerFunc(middleware.FactHandler))
-
-	s.AddMiddleware("MedicationStatementCreate", negroni.HandlerFunc(middleware.FactHandler))
 	s.AddMiddleware("MedicationStatementCreate", watch)
-	s.AddMiddleware("MedicationStatementUpdate", negroni.HandlerFunc(middleware.FactHandler))
-	s.AddMiddleware("MedicationStatementDelete", negroni.HandlerFunc(middleware.FactHandler))
 
 	// Setup the notification handler to use the default notification definitions (and then register it)
 	notificationHandler := &middleware.NotificationHandler{Registry: notifications.DefaultNotificationDefinitionRegistry}
 	s.AddMiddleware("EncounterCreate", negroni.HandlerFunc(notificationHandler.Handle))
 
+	s.Router.HandleFunc("/GroupList/{id}", controllers.PatientListHandler)
 	s.Router.HandleFunc("/InstaCountAll", controllers.InstaCountAllHandler)
 	s.Router.HandleFunc("/NotificationCount", controllers.NotificationCountHandler)
 	s.Router.HandleFunc("/Pie/{id}", controllers.GeneratePieHandler(riskServiceEndpoint))
