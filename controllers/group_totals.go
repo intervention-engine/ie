@@ -27,7 +27,7 @@ func groupListResolver(group fhirmodels.Group) []string {
 		for _, coding := range codings {
 			//Age
 			if coding.System == "http://loinc.org" && coding.Code == "21612-7" {
-				highAgeDate := time.Date(time.Now().Year()-int(*characteristic.ValueRange.Low.Value), time.Now().Month(), time.Now().Day(), 23, 59, 59, 999, time.UTC).Format("2006-01-02T15:04:05.999")
+				highAgeDate := time.Date(time.Now().Year()-int(*characteristic.ValueRange.Low.Value), time.Now().Month(), time.Now().Day(), 23, 59, 59, 999*int(time.Millisecond), time.UTC).Format("2006-01-02T15:04:05.999")
 				lowAgeDate := time.Date(time.Now().Year()-int(*characteristic.ValueRange.High.Value), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format("2006-01-02T15:04:05.999")
 				pquery += "birthdate=lte" + highAgeDate + "&birthdate=gte" + lowAgeDate + "&"
 				cquery += "patient.birthdate=lte" + highAgeDate + "&patient.birthdate=gte" + lowAgeDate + "&"
