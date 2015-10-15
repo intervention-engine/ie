@@ -64,6 +64,8 @@ func main() {
 
 	s.AddMiddleware("MedicationStatementCreate", watch)
 
+	s.AddMiddleware("EncounterCreate", watch)
+
 	// Setup the notification handler to use the default notification definitions (and then register it)
 	notificationHandler := &middleware.NotificationHandler{Registry: notifications.DefaultNotificationDefinitionRegistry}
 	s.AddMiddleware("EncounterCreate", negroni.HandlerFunc(notificationHandler.Handle))
