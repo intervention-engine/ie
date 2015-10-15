@@ -1,0 +1,34 @@
+{
+    "_id" : "55fc289767803d0718000014",
+    "type" : [
+        {
+            "_id" : "",
+            "coding" : [
+                {
+                    "_id" : "",
+                    "system" : "http://www.ama-assn.org/go/cpt",
+                    "code" : "90791"
+                }
+            ],
+            "text" : "Encounter, Performed: Psych Visit (Code List: 2.16.840.113883.3.67.1.101.3.2445)"
+        }
+    ],
+    "patient" : {
+        "_id" : "",
+        "reference" : "Patient/TESTID",
+        "type" : "Patient",
+        "referenceid" : "TESTID",
+        "external" : false
+    },
+    "period" : {
+        "_id" : "",
+        "start" : {
+            "time" : "2015-04-01T00:00:00-04:00",
+            "precision" : "timestamp"
+        },
+        "end" : {
+            "time" : "2015-04-01T00:00:00-04:00",
+            "precision" : "timestamp"
+        }
+    }
+}

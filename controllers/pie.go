@@ -10,7 +10,12 @@ func GeneratePieHandler(riskEndpoint string) func(http.ResponseWriter, *http.Req
 	f := func(rw http.ResponseWriter, r *http.Request) {
 		idString := mux.Vars(r)["id"]
 		piesEndpoint := riskEndpoint + "/pies/" + idString
-		resp, _ := http.Get(piesEndpoint)
+		resp, err := http.Get(piesEndpoint)
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+
 		io.Copy(rw, resp.Body)
 	}
 	return f

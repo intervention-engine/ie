@@ -1,0 +1,35 @@
+{
+    "_id" : "55fc289767803d0718000010",
+    "patient" : {
+        "_id" : "",
+        "reference" : "Patient/TESTID",
+        "type" : "Patient",
+        "referenceid" : "TESTID",
+        "external" : false
+    },
+    "code" : {
+        "_id" : "",
+        "coding" : [
+            {
+                "_id" : "",
+                "system" : "http://snomed.info/sct",
+                "code" : "14183003"
+            },
+            {
+                "_id" : "",
+                "system" : "http://hl7.org/fhir/sid/icd-9",
+                "code" : "296.21"
+            },
+            {
+                "_id" : "",
+                "system" : "http://hl7.org/fhir/sid/icd-10",
+                "code" : "F32.0"
+            }
+        ],
+        "text" : "Diagnosis, Active: Major Depression (Code List: 2.16.840.1.113883.3.464.1003.105.12.1007)"
+    },
+    "onsetDateTime" : {
+        "time" : "2015-04-01T00:00:00-04:00",
+        "precision" : "timestamp"
+    }
+}
