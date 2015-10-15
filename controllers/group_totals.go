@@ -3,13 +3,14 @@ package controllers
 import (
 	"encoding/json"
 
+	"net/http"
+	"strings"
+	"time"
+
 	fhirmodels "github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/search"
 	"github.com/intervention-engine/fhir/server"
 	"gopkg.in/mgo.v2/bson"
-	"net/http"
-	"strings"
-	"time"
 )
 
 func groupListResolver(group fhirmodels.Group) []string {
@@ -142,11 +143,12 @@ func groupListResolver(group fhirmodels.Group) []string {
 }
 
 func PatientListHandler(rw http.ResponseWriter, r *http.Request) {
-	group, err := server.LoadGroup(r)
+	groupController := server.ResourceController{Name: "Group"}
+	group, err := groupController.LoadResource(r)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 	}
-	patientIds := groupListResolver(*group)
+	patientIds := groupListResolver(*group.(*fhirmodels.Group))
 	responseMap := map[string][]string{
 		"patientids": patientIds,
 	}
