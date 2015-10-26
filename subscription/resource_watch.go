@@ -15,25 +15,35 @@ func GenerateResourceWatch(subUpdateQueue chan<- ResourceUpdateMessage) negroni.
 		resourceType, ok := context.GetOk(r, "Resource")
 		if ok {
 			resource := context.Get(r, resourceType)
-
-			var patientID string
-			var timestamp time.Time
-
-			switch resource.(type) {
-			case *fhirmodels.Condition:
-				patientID = resource.(*fhirmodels.Condition).Patient.ReferencedID
-				timestamp = resource.(*fhirmodels.Condition).OnsetDateTime.Time
-			case *fhirmodels.MedicationStatement:
-				patientID = resource.(*fhirmodels.MedicationStatement).Patient.ReferencedID
-				timestamp = resource.(*fhirmodels.MedicationStatement).EffectivePeriod.Start.Time
-			case *fhirmodels.Encounter:
-				patientID = resource.(*fhirmodels.Encounter).Patient.ReferencedID
-				timestamp = resource.(*fhirmodels.Encounter).Period.Start.Time
-			}
-
-			ru := NewResourceUpdateMessage(patientID, timestamp.Format(time.RFC3339))
-			subUpdateQueue <- ru
+			HandleResourceUpdate(subUpdateQueue, resource)
 		}
 	}
 	return f
+}
+
+func HandleResourceUpdate(subUpdateQueue chan<- ResourceUpdateMessage, resource interface{}) {
+	var patientID string
+	var timestamp time.Time
+
+	switch t := resource.(type) {
+	case *fhirmodels.Condition:
+		patientID = t.Patient.ReferencedID
+		timestamp = t.OnsetDateTime.Time
+	case *fhirmodels.MedicationStatement:
+		patientID = t.Patient.ReferencedID
+		timestamp = t.EffectivePeriod.Start.Time
+	case *fhirmodels.Encounter:
+		patientID = t.Patient.ReferencedID
+		timestamp = t.Period.Start.Time
+	case *fhirmodels.Bundle:
+		for _, entry := range t.Entry {
+			HandleResourceUpdate(subUpdateQueue, entry.Resource)
+		}
+		return
+	default:
+		return
+	}
+
+	ru := NewResourceUpdateMessage(patientID, timestamp.Format(time.RFC3339))
+	subUpdateQueue <- ru
 }
