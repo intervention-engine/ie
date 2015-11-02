@@ -12,6 +12,7 @@ import (
 	"github.com/intervention-engine/ie/middleware"
 	"github.com/intervention-engine/ie/notifications"
 	"github.com/intervention-engine/ie/subscription"
+	"github.com/intervention-engine/ie/utilities"
 )
 
 //var Store sessions.Store
@@ -84,6 +85,7 @@ func main() {
 	register := s.Router.Path("/register").Subrouter()
 	register.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterHandler)))
 
+	utilities.LoadICD9FromCMS(mongoHost)
 	s.Run()
 }
 
