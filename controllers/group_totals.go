@@ -77,7 +77,7 @@ func groupListResolver(group fhirmodels.Group) []string {
 			Patient patientContainer `bson:"patient"`
 		}
 		cSearchQuery := search.Query{Resource: "Condition", Query: cquery}
-		cQ := searcher.CreateQuery(cSearchQuery)
+		cQ := searcher.CreateQueryWithoutOptions(cSearchQuery)
 		cQ.Select(bson.M{"patient.referenceid": 1}).All(&cResultIDs)
 		cids = make([]string, len(cResultIDs))
 		for i := range cResultIDs {
@@ -91,7 +91,7 @@ func groupListResolver(group fhirmodels.Group) []string {
 			Patient patientContainer `bson:"patient"`
 		}
 		eSearchQuery := search.Query{Resource: "Encounter", Query: equery}
-		eQ := searcher.CreateQuery(eSearchQuery)
+		eQ := searcher.CreateQueryWithoutOptions(eSearchQuery)
 		eQ.Select(bson.M{"patient.referenceid": 1}).All(&eResultIDs)
 		eids = make([]string, len(eResultIDs))
 		for i := range eResultIDs {
@@ -131,7 +131,7 @@ func groupListResolver(group fhirmodels.Group) []string {
 			ID string `bson:"_id"`
 		}
 		pSearchQuery := search.Query{Resource: "Patient", Query: pquery}
-		pQ := searcher.CreateQuery(pSearchQuery)
+		pQ := searcher.CreateQueryWithoutOptions(pSearchQuery)
 		pQ.Select(bson.M{"_id": 1}).All(&pResultIDs)
 		pids = make([]string, len(pResultIDs))
 		for i := range pResultIDs {
