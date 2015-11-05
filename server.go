@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"os"
@@ -22,6 +23,17 @@ func main() {
 	mongoHost := os.Getenv("MONGO_PORT_27017_TCP_ADDR")
 	if mongoHost == "" {
 		mongoHost = "localhost"
+	}
+
+	codeLookupFlag := flag.Bool("loadCodes", false, "flag to enable download of icd-9 code lookup")
+	codeLookupURL := flag.String("lookupURL", "https://www.cms.gov/Medicare/Coding/ICD9ProviderDiagnosticCodes/Downloads/ICD-9-CM-v32-master-descriptions.zip", "url for icd-9 code definition zip")
+	flag.Parse()
+
+	parsedLookupFlag := *codeLookupFlag
+	parsedLookupURL := *codeLookupURL
+
+	if parsedLookupFlag {
+		utilities.LoadICD9FromCMS(mongoHost, parsedLookupURL)
 	}
 
 	riskServiceEndpoint := os.Getenv("RISKSERVICE_PORT_9000_TCP_ADDR")
@@ -85,7 +97,9 @@ func main() {
 	register := s.Router.Path("/register").Subrouter()
 	register.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterHandler)))
 
-	utilities.LoadICD9FromCMS(mongoHost)
+	codelookup := s.Router.Path("/codelookup").Subrouter()
+	codelookup.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.CodeLookup)))
+
 	s.Run()
 }
 

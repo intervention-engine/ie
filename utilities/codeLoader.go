@@ -19,7 +19,7 @@ type CodeEntry struct {
 	Description string `bson:"name"`
 }
 
-func LoadICD9FromCMS(mongoHost string) {
+func LoadICD9FromCMS(mongoHost, lookupURL string) {
 
 	mongoSession, err := mgo.Dial(mongoHost)
 	if err != nil {
@@ -29,7 +29,7 @@ func LoadICD9FromCMS(mongoHost string) {
 	database := mongoSession.DB("fhir")
 	codeCollection := database.C("codelookup")
 
-	urlReader, err := getReaderFromUrl("https://www.cms.gov/Medicare/Coding/ICD9ProviderDiagnosticCodes/Downloads/ICD-9-CM-v32-master-descriptions.zip")
+	urlReader, err := getReaderFromUrl(lookupURL)
 	if err != nil {
 		log.Fatal(err)
 	}
