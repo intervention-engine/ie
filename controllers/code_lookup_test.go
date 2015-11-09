@@ -69,7 +69,7 @@ func (l *CodeLookupSuite) TestCodeLookupByName(c *C) {
 func (l *CodeLookupSuite) TestCodeLookupByCode(c *C) {
 	handler := CodeLookup
 	codelookupFile, _ := os.Open("../fixtures/sample-lookup-request-by-code.json")
-	code_req, _ := http.NewRequest("POST", "/codelookup", codelookupFile)
+	code_req, _ := http.NewRequest("POST", "/CodeLookup", codelookupFile)
 	w := httptest.NewRecorder()
 	handler(w, code_req)
 	if w.Code != http.StatusOK {

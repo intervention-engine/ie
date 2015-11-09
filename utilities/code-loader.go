@@ -34,7 +34,7 @@ func LoadICD9FromCMS(mongoHost, lookupURL string) {
 		log.Fatal(err)
 	}
 
-	zr, err := zip.NewReader(urlReader, int64(urlReader.Len()))
+	zr, err := zip.NewReader(urlReader, urlReader.Size())
 	if err != nil {
 		log.Fatalf("Unable to read zip: %s", err)
 	}
@@ -68,7 +68,7 @@ func LoadICD9FromCMS(mongoHost, lookupURL string) {
 					name,
 				}
 
-				codeCollection.Upsert(bson.M{"code": code}, codeEntry)
+				codeCollection.Upsert(bson.M{"codeSystem": "ICD-9", "code": code}, codeEntry)
 			}
 		}
 	}

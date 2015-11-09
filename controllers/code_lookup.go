@@ -17,28 +17,25 @@ type code_request_form struct {
 func CodeLookup(rw http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 
-	var codereqform code_request_form
+	var f code_request_form
 
-	err := decoder.Decode(&codereqform)
+	err := decoder.Decode(&f)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 	}
-
-	codesystem, querystring := codereqform.CodeSystem, codereqform.Query
-	resultlimit := codereqform.ResultLimit
 
 	codecollection := server.Database.C("codelookup")
 
 	result := []utilities.CodeEntry{}
 
-	iter := codecollection.Find(bson.M{
-		"codeSystem": codesystem,
+	query := codecollection.Find(bson.M{
+		"codeSystem": f.CodeSystem,
 		"$or": []interface{}{
-			bson.M{"code": bson.RegEx{Pattern: ".*" + querystring + ".*", Options: "i"}},
-			bson.M{"name": bson.RegEx{Pattern: ".*" + querystring + ".*", Options: "i"}},
-		}}).Limit(resultlimit).Iter()
+			bson.M{"code": bson.RegEx{Pattern: ".*" + f.Query + ".*", Options: "i"}},
+			bson.M{"name": bson.RegEx{Pattern: ".*" + f.Query + ".*", Options: "i"}},
+		}}).Limit(f.ResultLimit)
 
-	err = iter.All(&result)
+	err = query.All(&result)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 	}
