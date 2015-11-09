@@ -3,15 +3,16 @@ package controllers
 import (
 	"bufio"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"strings"
+
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/utilities"
 	"github.com/pebbe/util"
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2/dbtest"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"strings"
 )
 
 type CodeLookupSuite struct {
@@ -52,7 +53,7 @@ func (l *CodeLookupSuite) TearDownSuite(c *C) {
 func (l *CodeLookupSuite) TestCodeLookupByName(c *C) {
 	handler := CodeLookup
 	namelookupFile, _ := os.Open("../fixtures/sample-lookup-request-by-name.json")
-	name_req, _ := http.NewRequest("POST", "/codelookup", namelookupFile)
+	name_req, _ := http.NewRequest("POST", "/CodeLookup", namelookupFile)
 	w := httptest.NewRecorder()
 	handler(w, name_req)
 	if w.Code != http.StatusOK {
