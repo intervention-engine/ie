@@ -4,12 +4,11 @@ go:
 branches:
   only:
   - master
-before_install:
-- sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10
-- echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' |
-  sudo tee /etc/apt/sources.list.d/mongodb.list
-- sudo apt-get update
-- sudo apt-get install mongodb-org-server
+sudo: false
+addons:
+  apt:
+    packages:
+    - mongodb-org-server
 notifications:
   slack:
     secure: V9+O3D5/NAjvLnkWbUI0nQv+GuEAVJGEpl+BrpSzrxeGyU2OGV+nOm+76Z7bTgpdcwOdPvooGAMqR2ahbIwvh8Q8LZYAaF3u3memCTiyhHapqx+mUKMyV+AyPLnPQeksNbPasfUuNllqyD1/Sws5zfYWWLGep0YcmN3DFCHbcxs=
