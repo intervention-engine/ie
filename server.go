@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"github.com/intervention-engine/ie/middleware"
 	"github.com/intervention-engine/ie/notifications"
 	"github.com/intervention-engine/ie/subscription"
+	"github.com/intervention-engine/ie/utilities"
 )
 
 //var Store sessions.Store
@@ -21,6 +23,17 @@ func main() {
 	mongoHost := os.Getenv("MONGO_PORT_27017_TCP_ADDR")
 	if mongoHost == "" {
 		mongoHost = "localhost"
+	}
+
+	codeLookupFlag := flag.Bool("loadCodes", false, "flag to enable download of icd-9 code lookup")
+	icd9URL := flag.String("icd9URL", "https://www.cms.gov/Medicare/Coding/ICD9ProviderDiagnosticCodes/Downloads/ICD-9-CM-v32-master-descriptions.zip", "url for icd-9 code definition zip")
+	flag.Parse()
+
+	parsedLookupFlag := *codeLookupFlag
+	parsedICD9LookupURL := *icd9URL
+
+	if parsedLookupFlag {
+		utilities.LoadICD9FromCMS(mongoHost, parsedICD9LookupURL)
 	}
 
 	riskServiceEndpoint := os.Getenv("RISKSERVICE_PORT_9000_TCP_ADDR")
@@ -76,6 +89,7 @@ func main() {
 	s.Router.HandleFunc("/InstaCountAll", controllers.InstaCountAllHandler)
 	s.Router.HandleFunc("/NotificationCount", controllers.NotificationCountHandler)
 	s.Router.HandleFunc("/Pie/{id}", controllers.GeneratePieHandler(riskServiceEndpoint))
+	s.Router.HandleFunc("/CodeLookup", controllers.CodeLookup)
 
 	login := s.Router.Path("/login").Subrouter()
 	login.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.LoginHandler)))

@@ -1,0 +1,26 @@
+{"code":"001.0","codeSystem":"ICD-9","name":" Cholera due to vibrio cholerae"}
+{"code":"001.1","codeSystem":"ICD-9","name":" Cholera due to vibrio cholerae el tor"}
+{"code":"001.9","codeSystem":"ICD-9","name":" Cholera, unspecified"}
+{"code":"002.0","codeSystem":"ICD-9","name":" Typhoid fever"}
+{"code":"002.1","codeSystem":"ICD-9","name":" Paratyphoid fever A"}
+{"code":"002.2","codeSystem":"ICD-9","name":" Paratyphoid fever B"}
+{"code":"002.3","codeSystem":"ICD-9","name":" Paratyphoid fever C"}
+{"code":"002.9","codeSystem":"ICD-9","name":" Paratyphoid fever, unspecified"}
+{"code":"003.0","codeSystem":"ICD-9","name":" Salmonella gastroenteritis"}
+{"code":"003.1","codeSystem":"ICD-9","name":" Salmonella septicemia"}
+{"code":"003.20","codeSystem":"ICD-9","name":"Localized salmonella infection, unspecified"}
+{"code":"003.21","codeSystem":"ICD-9","name":"Salmonella meningitis"}
+{"code":"003.22","codeSystem":"ICD-9","name":"Salmonella pneumonia"}
+{"code":"003.23","codeSystem":"ICD-9","name":"Salmonella arthritis"}
+{"code":"003.24","codeSystem":"ICD-9","name":"Salmonella osteomyelitis"}
+{"code":"003.29","codeSystem":"ICD-9","name":"Other localized salmonella infections"}
+{"code":"003.8","codeSystem":"ICD-9","name":" Other specified salmonella infections"}
+{"code":"003.9","codeSystem":"ICD-9","name":" Salmonella infection, unspecified"}
+{"code":"004.0","codeSystem":"ICD-9","name":" Shigella dysenteriae"}
+{"code":"004.1","codeSystem":"ICD-9","name":" Shigella flexneri"}
+{"code":"004.2","codeSystem":"ICD-9","name":" Shigella boydii"}
+{"code":"004.3","codeSystem":"ICD-9","name":" Shigella sonnei"}
+{"code":"004.8","codeSystem":"ICD-9","name":" Other specified shigella infections"}
+{"code":"004.9","codeSystem":"ICD-9","name":" Shigellosis, unspecified"}
+{"code":"005.0","codeSystem":"ICD-9","name":" Staphylococcal food poisoning"}
+{"code":"005.1","codeSystem":"ICD-9","name":" Botulism food poisoning"}
