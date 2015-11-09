@@ -89,6 +89,7 @@ func main() {
 	s.Router.HandleFunc("/InstaCountAll", controllers.InstaCountAllHandler)
 	s.Router.HandleFunc("/NotificationCount", controllers.NotificationCountHandler)
 	s.Router.HandleFunc("/Pie/{id}", controllers.GeneratePieHandler(riskServiceEndpoint))
+	s.Router.HandleFunc("/codelookup", controllers.CodeLookup)
 
 	login := s.Router.Path("/login").Subrouter()
 	login.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.LoginHandler)))
@@ -96,9 +97,6 @@ func main() {
 
 	register := s.Router.Path("/register").Subrouter()
 	register.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterHandler)))
-
-	codelookup := s.Router.Path("/codelookup").Subrouter()
-	codelookup.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.CodeLookup)))
 
 	s.Run()
 }

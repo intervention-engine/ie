@@ -14,9 +14,9 @@ import (
 )
 
 type CodeEntry struct {
-	CodeSystem  string `bson:"codeSystem"`
-	Code        string `bson:"code"`
-	Description string `bson:"name"`
+	CodeSystem string `bson:"codeSystem",json:"codeSystem"`
+	Code       string `bson:"code",json:"code"`
+	Name       string `bson:"name",json:"name"`
 }
 
 func LoadICD9FromCMS(mongoHost, lookupURL string) {
@@ -50,7 +50,7 @@ func LoadICD9FromCMS(mongoHost, lookupURL string) {
 				codeString := scanner.Text()
 				splitEntry := strings.SplitN(codeString, " ", 2)
 				code := splitEntry[0]
-				description := splitEntry[1]
+				name := splitEntry[1]
 
 				if strings.HasPrefix(code, "E") && len(code) > 4 {
 					code = code[:4] + "." + code[4:]
@@ -65,7 +65,7 @@ func LoadICD9FromCMS(mongoHost, lookupURL string) {
 				codeEntry := CodeEntry{
 					"ICD-9",
 					code,
-					description,
+					name,
 				}
 
 				codeCollection.Upsert(bson.M{"code": code}, codeEntry)

@@ -14,7 +14,7 @@ type code_request_form struct {
 	ResultLimit int    `json:"limit"`
 }
 
-func CodeLookup(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func CodeLookup(rw http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 
 	var codereqform code_request_form
@@ -34,10 +34,9 @@ func CodeLookup(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) 
 	iter := codecollection.Find(bson.M{
 		"codeSystem": codesystem,
 		"$or": []interface{}{
-			bson.M{"code": "/" + querystring + "/"},
-			bson.M{"name": "/" + querystring + "/"},
-		},
-	}).Limit(resultlimit).Iter()
+			bson.M{"code": bson.RegEx{Pattern: ".*" + querystring + ".*", Options: "i"}},
+			bson.M{"name": bson.RegEx{Pattern: ".*" + querystring + ".*", Options: "i"}},
+		}}).Limit(resultlimit).Iter()
 
 	err = iter.All(&result)
 	if err != nil {
