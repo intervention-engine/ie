@@ -95,8 +95,9 @@ func main() {
 	login.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.LoginHandler)))
 	login.Methods("DELETE").Handler(negroni.New(negroni.HandlerFunc(controllers.LogoutHandler)))
 
-	register := s.Router.Path("/register").Subrouter()
-	register.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterHandler)))
+	// Registration is currently disabled.
+	// register := s.Router.Path("/register").Subrouter()
+	// register.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterHandler)))
 
 	s.Run()
 }
