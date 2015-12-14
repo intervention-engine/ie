@@ -28,6 +28,11 @@ To start the server, simply run server.go:
 
     go run server.go
 
+Creating a User
+---------------
+
+To use the web application, you must register a user account using the `ie-user` tool.  For more info see the [intervention-engine/tools](https://github.com/intervention-engine/tools) repo.
+
 License
 -------
 
