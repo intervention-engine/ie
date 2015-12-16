@@ -26,8 +26,8 @@ func (l *CodeLookupSuite) SetUpSuite(c *C) {
 	l.DBServer.SetPath(c.MkDir())
 
 	file, err := os.Open("../fixtures/code-lookup.json")
-	defer file.Close()
 	util.CheckErr(err)
+	defer file.Close()
 
 	session := l.DBServer.Session()
 	lookupCollection := session.DB("ie-test").C("codelookup")

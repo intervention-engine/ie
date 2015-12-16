@@ -62,8 +62,8 @@ func (r *ResourceWatchSuite) TearDownSuite(c *C) {
 func (r *ResourceWatchSuite) TestGenerateResourceWatch(c *C) {
 	//load fixture
 	data, err := os.Open("../fixtures/medication-statement.json")
-	defer data.Close()
 	util.CheckErr(err)
+	defer data.Close()
 
 	//post fixture
 	client := &http.Client{}

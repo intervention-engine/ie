@@ -96,10 +96,10 @@ func (n *NotificationCountSuite) TestNotificationCount(c *C) {
 
 func UnmarshallCommunicationRequest(file string) (*models.CommunicationRequest, error) {
 	data, err := os.Open(file)
-	defer data.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer data.Close()
 
 	cr := &models.CommunicationRequest{}
 	err = json.NewDecoder(data).Decode(cr)

@@ -26,16 +26,16 @@ func (q *QueryTotalsSuite) SetUpSuite(c *C) {
 
 func (q *QueryTotalsSuite) SetUpTest(c *C) {
 	patientFile, err := os.Open("../fixtures/patient-example-a.json")
-	defer patientFile.Close()
 	util.CheckErr(err)
+	defer patientFile.Close()
 
 	encounterFile, err := os.Open("../fixtures/encounter-example.json")
-	defer encounterFile.Close()
 	util.CheckErr(err)
+	defer encounterFile.Close()
 
 	conditionFile, err := os.Open("../fixtures/condition-example.json")
-	defer conditionFile.Close()
 	util.CheckErr(err)
+	defer conditionFile.Close()
 
 	// Setup the database
 	session := q.DBServer.Session()
