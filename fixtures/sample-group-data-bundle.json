@@ -1,0 +1,94 @@
+{
+  "resourceType": "Bundle",
+  "id": "bundle-transaction",
+  "type": "transaction",
+  "entry": [
+    {
+      "fullUrl": "urn:uuid:61ebe359-bfdc-4613-8bf2-c5e300945f2a",
+      "resource": {
+        "resourceType": "Patient",
+        "name": [
+          {
+            "use": "official",
+            "family": ["Donald"],
+            "given": ["Duck"]
+          }
+        ],
+        "gender": "male"
+      },
+      "request": {
+        "method": "POST",
+        "url": "Patient"
+      }
+    },
+		{
+      "fullUrl": "urn:uuid:61ebe359-bfdc-4613-8bf2-c5e300945f2b",
+      "resource": {
+          "resourceType": "Encounter",
+          "type" : [
+              {
+                  "coding" : [{"system" : "http://www.ama-assn.org/go/cpt", "code" : "90791"}],
+                  "text" : "Encounter, Performed: Psych Visit (Code List: 2.16.840.113883.3.67.1.101.3.2445)"
+              }
+          ],
+          "patient": {
+        		"reference": "urn:uuid:61ebe359-bfdc-4613-8bf2-c5e300945f2a"
+        	},
+          "period": {
+        		"start": "2015-04-01T00:00:00-04:00",
+            "end" : "2015-04-01T00:00:00-04:00"
+        	}
+      },
+      "request": {
+        "method": "POST",
+        "url": "Encounter"
+      }
+    },
+		{
+      "fullUrl": "urn:uuid:61ebe359-bfdc-4613-8bf2-c5e300945f2f",
+      "resource": {
+          "resourceType" : "Condition",
+          "patient": {
+        		"reference": "urn:uuid:61ebe359-bfdc-4613-8bf2-c5e300945f2a"
+        	},
+          "code" : {
+              "coding" : [
+                  {"system" : "http://snomed.info/sct", "code" : "14183003"},
+                  {"system" : "http://hl7.org/fhir/sid/icd-9", "code" : "296.21"},
+                  {"system" : "http://hl7.org/fhir/sid/icd-10", "code" : "F32.0"}
+              ],
+              "text" : "Diagnosis, Active: Major Depression (Code List: 2.16.840.1.113883.3.464.1003.105.12.1007)"
+          },
+          "onsetDateTime": "2015-04-01T00:00:00-04:00",
+          "verificationStatus": "confirmed"
+      },
+      "request": {
+        "method": "POST",
+        "url": "Condition"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:61ebe359-bfdc-4613-8bf2-c5e30054dae5",
+      "resource": {
+          "resourceType" : "Condition",
+          "patient": {
+        		"reference": "urn:uuid:61ebe359-bfdc-4613-8bf2-c5e300945f2a"
+        	},
+          "code" : {
+              "coding" : [
+                  {"system" : "http://snomed.info/sct", "code" : "426749004"},
+                  {"system" : "http://hl7.org/fhir/sid/icd-9", "code" : "427.31"},
+                  {"system" : "http://hl7.org/fhir/sid/icd-10", "code" : "I48.2"}
+              ],
+              "text" : "Diagnosis, Active: Atrial Fibrillation"
+          },
+          "onsetDateTime": "2014-02-01T00:00:00-04:00",
+          "verificationStatus": "refuted"
+      },
+      "request": {
+        "method": "POST",
+        "url": "Condition"
+      }
+    }
+  ]
+}
