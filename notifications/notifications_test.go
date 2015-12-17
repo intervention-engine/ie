@@ -134,10 +134,10 @@ func IsRegistered(n NotificationDefinition) bool {
 
 func UnmarshallEncounter(file string) (*models.Encounter, error) {
 	data, err := os.Open(file)
-	defer data.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer data.Close()
 
 	decoder := json.NewDecoder(data)
 	encounter := &models.Encounter{}

@@ -66,8 +66,8 @@ func (n *NotificationHandlerSuite) TestNotificationTriggers(c *C) {
 	n.Handler.Registry.Register(new(PlannedEncounterNotificationDefinition))
 	//load fixture
 	data, err := os.Open("../fixtures/encounter-planned.json")
-	defer data.Close()
 	util.CheckErr(err)
+	defer data.Close()
 
 	//post fixture
 	client := &http.Client{}
@@ -94,8 +94,8 @@ func (n *NotificationHandlerSuite) TestNotificationDoesNotTrigger(c *C) {
 
 	//load fixture
 	data, err := os.Open("../fixtures/encounter-office-visit.json")
-	defer data.Close()
 	util.CheckErr(err)
+	defer data.Close()
 
 	//post fixture
 	client := &http.Client{}
