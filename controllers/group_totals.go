@@ -72,16 +72,23 @@ func groupListResolver(group fhirmodels.Group) []string {
 	}
 
 	//We only need to query for conditions if the group contains a condition criteria
+	//NOTE: We can't prefilter unconfirmed conditions (FHIR doesn't have a search parameter for
+	//verificationStatus) and our API doesn't let us insert non-FHIR criteria, so we must
+	// post-process the results to filter them out.
 	if hasConditionCriteria {
-		var cResultIDs []struct {
+		var cResults []struct {
 			Patient patientContainer `bson:"patient"`
+			Status  string           `bson:"verificationStatus"`
 		}
 		cSearchQuery := search.Query{Resource: "Condition", Query: cquery}
 		cQ := searcher.CreateQueryWithoutOptions(cSearchQuery)
-		cQ.Select(bson.M{"patient.referenceid": 1}).All(&cResultIDs)
-		cids = make([]string, len(cResultIDs))
-		for i := range cResultIDs {
-			cids[i] = cResultIDs[i].Patient.ID
+
+		cQ.Select(bson.M{"patient.referenceid": 1, "verificationStatus": 1}).All(&cResults)
+		cids = make([]string, 0, len(cResults))
+		for i := range cResults {
+			if cResults[i].Status == "confirmed" {
+				cids = append(cids, cResults[i].Patient.ID)
+			}
 		}
 	}
 
@@ -174,7 +181,12 @@ func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
 	pCount := len(pids)
 
 	cCollection := server.Database.C("conditions")
-	cCount, err := cCollection.Find(bson.M{"patient.referenceid": bson.M{"$in": pids}}).Count()
+	// Only count the confirmed conditions
+	cCriteria := bson.M{
+		"patient.referenceid": bson.M{"$in": pids},
+		"verificationStatus":  "confirmed",
+	}
+	cCount, err := cCollection.Find(cCriteria).Count()
 
 	eCollection := server.Database.C("encounters")
 	eCount, err := eCollection.Find(bson.M{"patient.referenceid": bson.M{"$in": pids}}).Count()

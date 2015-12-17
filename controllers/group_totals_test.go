@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"os"
 
-	fhirmodels "github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/pebbe/util"
 	. "gopkg.in/check.v1"
@@ -25,47 +24,18 @@ func (q *QueryTotalsSuite) SetUpSuite(c *C) {
 }
 
 func (q *QueryTotalsSuite) SetUpTest(c *C) {
-	patientFile, err := os.Open("../fixtures/patient-example-a.json")
-	util.CheckErr(err)
-	defer patientFile.Close()
-
-	encounterFile, err := os.Open("../fixtures/encounter-example.json")
-	util.CheckErr(err)
-	defer encounterFile.Close()
-
-	conditionFile, err := os.Open("../fixtures/condition-example.json")
-	util.CheckErr(err)
-	defer conditionFile.Close()
-
 	// Setup the database
 	session := q.DBServer.Session()
-
-	patientCollection := session.DB("ie-test").C("patients")
-	encounterCollection := session.DB("ie-test").C("encounters")
-	conditionCollection := session.DB("ie-test").C("conditions")
-
-	patientDecoder := json.NewDecoder(patientFile)
-	encounterDecoder := json.NewDecoder(encounterFile)
-	conditionDecoder := json.NewDecoder(conditionFile)
-
-	patient := &fhirmodels.Patient{}
-	encounter := &fhirmodels.Encounter{}
-	condition := &fhirmodels.Condition{}
-
-	err = patientDecoder.Decode(patient)
-	util.CheckErr(err)
-	err = encounterDecoder.Decode(encounter)
-	util.CheckErr(err)
-	err = conditionDecoder.Decode(condition)
-	util.CheckErr(err)
-
-	patient.Id = "TESTID"
-
-	patientCollection.Insert(patient)
-	encounterCollection.Insert(encounter)
-	conditionCollection.Insert(condition)
-
 	server.Database = session.DB("ie-test")
+
+	// Store the bundle
+	bundleFile, err := os.Open("../fixtures/sample-group-data-bundle.json")
+	util.CheckErr(err)
+	r, err := http.NewRequest("POST", "http://ie-server/", bundleFile)
+	util.CheckErr(err)
+	rw := httptest.NewRecorder()
+	server.BatchHandler(rw, r, nil)
+	c.Assert(rw.Code, Equals, 200)
 }
 
 func (q *QueryTotalsSuite) TearDownTest(c *C) {
@@ -96,4 +66,25 @@ func (q *QueryTotalsSuite) TestInstaCountAllHandler(c *C) {
 	c.Assert(counts["patients"], Equals, 1)
 	c.Assert(counts["conditions"], Equals, 1)
 	c.Assert(counts["encounters"], Equals, 1)
+}
+
+func (q *QueryTotalsSuite) TestInstaCountAllHandlerWithRefutedCondition(c *C) {
+	handler := InstaCountAllHandler
+	groupFile, _ := os.Open("../fixtures/sample-group-afib.json")
+	req, _ := http.NewRequest("POST", "/InstaCountAll", groupFile)
+	w := httptest.NewRecorder()
+	handler(w, req)
+	if w.Code != http.StatusOK {
+		c.Fatal("Non-OK response code received: %v", w.Code)
+	}
+
+	counts := make(map[string]int)
+	err := json.NewDecoder(w.Body).Decode(&counts)
+
+	util.CheckErr(err)
+
+	//TODO: These tests should be made more robust once we have better fixtures and test helpers
+	c.Assert(counts["patients"], Equals, 0)
+	c.Assert(counts["conditions"], Equals, 0)
+	c.Assert(counts["encounters"], Equals, 0)
 }
