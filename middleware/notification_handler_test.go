@@ -121,7 +121,9 @@ func (def *PlannedEncounterNotificationDefinition) Triggers(resource interface{}
 func (def *PlannedEncounterNotificationDefinition) GetNotification(resource interface{}, action string, baseURL string) *models.CommunicationRequest {
 	if def.Triggers(resource, action) {
 		enc := resource.(*models.Encounter)
-		return &models.CommunicationRequest{Id: "123", Subject: enc.Patient}
+		cr := &models.CommunicationRequest{}
+		cr.Id = "123"
+		cr.Subject = enc.Patient
 	}
 	return nil
 }
