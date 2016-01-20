@@ -5,11 +5,10 @@ import (
 	"net/http/httptest"
 	"os"
 
-	"github.com/codegangsta/negroni"
-	"github.com/gorilla/mux"
 	"github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/notifications"
+	"github.com/labstack/echo"
 	"github.com/pebbe/util"
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2"
@@ -31,17 +30,16 @@ func (n *NotificationHandlerSuite) SetUpSuite(c *C) {
 
 	//register notification handler middleware
 	n.Handler = &NotificationHandler{Registry: &notifications.NotificationDefinitionRegistry{}}
-	mwConfig := map[string][]negroni.Handler{
-		"EncounterCreate": []negroni.Handler{negroni.HandlerFunc(n.Handler.Handle)}}
+	mwConfig := map[string][]echo.Middleware{
+		"Encounter": []echo.Middleware{n.Handler.Handle()}}
 
 	//set up routes and middleware
-	router := mux.NewRouter()
-	router.StrictSlash(true)
-	router.KeepContext = true
-	server.RegisterRoutes(router, mwConfig)
+	e := echo.New()
+
+	server.RegisterRoutes(e, mwConfig)
 
 	//create test server
-	n.Server = httptest.NewServer(router)
+	n.Server = httptest.NewServer(e.Router())
 }
 
 func (n *NotificationHandlerSuite) SetUpTest(c *C) {

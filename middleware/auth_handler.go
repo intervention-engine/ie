@@ -2,28 +2,28 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/intervention-engine/fhir/server"
-	"github.com/intervention-engine/ie/models"
-	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"time"
+
+	"github.com/intervention-engine/fhir/server"
+	"github.com/intervention-engine/ie/models"
+	"github.com/labstack/echo"
+	"gopkg.in/mgo.v2/bson"
 )
 
-func AuthHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	client_token := r.Header.Get("Authorization")
+func AuthHandler(c *echo.Context) error {
+	clientToken := c.Request().Header.Get("Authorization")
 
 	sessionCollection := server.Database.C("sessions")
 	usersession := models.UserSession{}
 
-	err := sessionCollection.Find(bson.M{"token": client_token}).One(&usersession)
+	err := sessionCollection.Find(bson.M{"token": clientToken}).One(&usersession)
 
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusUnauthorized)
+		return err
 	} else if usersession.Expiration.Before(time.Now()) {
-		http.Error(rw, "Session Expired", http.StatusUnauthorized)
-	} else {
-		fmt.Println("User found and token matched")
-		next(rw, r)
+		return c.String(http.StatusUnauthorized, "Session Expired")
 	}
-
+	fmt.Println("User found and token matched")
+	return nil
 }

@@ -1,27 +1,26 @@
 package controllers
 
 import (
-	"encoding/json"
+	"net/http"
+
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/utilities"
+	"github.com/labstack/echo"
 	"gopkg.in/mgo.v2/bson"
-	"net/http"
 )
 
-type code_request_form struct {
+type codeRequestForm struct {
 	CodeSystem  string `json:"codesystem"`
 	Query       string `json:"query"`
 	ResultLimit int    `json:"limit"`
 }
 
-func CodeLookup(rw http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
+func CodeLookup(c *echo.Context) error {
+	var f codeRequestForm
 
-	var f code_request_form
-
-	err := decoder.Decode(&f)
+	err := c.Bind(&f)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return err
 	}
 
 	codecollection := server.Database.C("codelookup")
@@ -37,11 +36,9 @@ func CodeLookup(rw http.ResponseWriter, r *http.Request) {
 
 	err = query.All(&result)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return err
 	}
 
-	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-	rw.Header().Set("Access-Control-Allow-Origin", "*")
-	json.NewEncoder(rw).Encode(&result)
-
+	c.Response().Header().Set("Access-Control-Allow-Origin", "*")
+	return c.JSON(http.StatusOK, result)
 }

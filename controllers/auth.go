@@ -4,13 +4,13 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/gob"
-	"encoding/json"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/sessions"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/models"
+	"github.com/labstack/echo"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -20,40 +20,38 @@ func init() {
 	gob.Register(bson.ObjectId(""))
 }
 
-type request_form struct {
-	Session session_request_form
+type requestForm struct {
+	Session sessionRequestForm
 }
 
-type session_request_form struct {
+type sessionRequestForm struct {
 	Identification string
 	Password       string
 }
 
-type response_form struct {
-	Session session_response_form `json:"session"`
+type responseForm struct {
+	Session sessionResponseForm `json:"session"`
 }
 
-type session_response_form struct {
+type sessionResponseForm struct {
 	Token string `json:"token"`
 }
 
-type error_form struct {
+type errorForm struct {
 	Error string `json:"error"`
 }
 
-type registration_request_form struct {
+type registrationRequestForm struct {
 	Identification string
 	Password       string
 	Confirmation   string
 }
 
-func LoginHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-
-	decoder := json.NewDecoder(r.Body)
-	var reqform request_form
-	err := decoder.Decode(&reqform)
+func LoginHandler(c *echo.Context) error {
+	var reqform requestForm
+	err := c.Bind(&reqform)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return err
 	}
 
 	//grab the username and password from the form
@@ -64,15 +62,14 @@ func LoginHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc
 	if err != nil {
 		//var errform error_form
 		//errform.Error = "invalid credentials"
-		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-		//json.NewEncoder(rw).Encode(errform)
-		http.Error(rw, "{\"error\":\"invalid credentials\"}", 422)
-		return
+		c.Response().Header().Set("Content-Type", "application/json; charset=utf-8")
+		ef := errorForm{Error: "Invalid Credentials"}
+		return c.JSON(http.StatusUnauthorized, ef)
 	}
 
 	if user != nil {
-		var respform response_form
-		token := generate_token()
+		var respform responseForm
+		token := generateToken()
 
 		var usersession models.UserSession
 		usersession.User = *user
@@ -81,12 +78,12 @@ func LoginHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc
 		server.Database.C("sessions").Insert(usersession)
 
 		respform.Session.Token = token
-		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-		json.NewEncoder(rw).Encode(respform)
+		return c.JSON(http.StatusOK, respform)
 	}
+	return c.String(http.StatusInternalServerError, "Somehow reached here")
 }
 
-func generate_token() string {
+func generateToken() string {
 	rb := make([]byte, 32)
 	_, err := rand.Read(rb)
 
@@ -98,24 +95,23 @@ func generate_token() string {
 	return token
 }
 
-func LogoutHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	client_token := r.Header.Get("Authorization")
+func LogoutHandler(c *echo.Context) error {
+	clientToken := c.Request().Header.Get("Authorization")
 	sessionCollection := server.Database.C("sessions")
 
-	err := sessionCollection.Remove(bson.M{"token": client_token})
+	err := sessionCollection.Remove(bson.M{"token": clientToken})
 
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return err
 	}
+	return nil
 }
 
-func RegisterHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-
-	decoder := json.NewDecoder(r.Body)
-	var regform registration_request_form
-	err := decoder.Decode(&regform)
+func RegisterHandler(c *echo.Context) error {
+	var regform registrationRequestForm
+	err := c.Bind(&regform)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return err
 	}
 
 	//grab username, password, and password confirmation from object
@@ -123,15 +119,11 @@ func RegisterHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerF
 
 	count, err := server.Database.C("users").Find(bson.M{"username": username}).Count()
 	if count != 0 {
-		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-		http.Error(rw, "{\"error\":\"username already exists\"}", 422)
-		return
+		return c.JSON(http.StatusConflict, errorForm{Error: "Username already exists"})
 	}
 
 	if password != confirmation {
-		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-		http.Error(rw, "{\"error\":\"password and confirmation must match\"}", 422)
-		return
+		return c.JSON(http.StatusBadRequest, errorForm{Error: "Password and confirmation must match"})
 	}
 
 	newuser := &models.User{
@@ -142,7 +134,7 @@ func RegisterHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerF
 
 	err = server.Database.C("users").Insert(newuser)
 	if err != nil {
-		http.Error(rw, "{\"error\":\"problem registering user\"}", http.StatusInternalServerError)
-		return
+		return err
 	}
+	return c.String(http.StatusOK, "User registered")
 }

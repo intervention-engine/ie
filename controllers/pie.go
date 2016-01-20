@@ -1,22 +1,24 @@
 package controllers
 
 import (
-	"github.com/gorilla/mux"
 	"io"
 	"net/http"
+
+	"github.com/labstack/echo"
 )
 
-func GeneratePieHandler(riskEndpoint string) func(http.ResponseWriter, *http.Request) {
-	f := func(rw http.ResponseWriter, r *http.Request) {
-		idString := mux.Vars(r)["id"]
+func GeneratePieHandler(riskEndpoint string) func(c *echo.Context) error {
+	f := func(c *echo.Context) error {
+		idString := c.Param("id")
 		piesEndpoint := riskEndpoint + "/pies/" + idString
 		resp, err := http.Get(piesEndpoint)
 
 		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return err
 		}
 
-		io.Copy(rw, resp.Body)
+		_, err = io.Copy(c.Response(), resp.Body)
+		return err
 	}
 	return f
 }

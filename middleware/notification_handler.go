@@ -6,37 +6,43 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/gorilla/context"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/notifications"
+	"github.com/labstack/echo"
 )
 
 type NotificationHandler struct {
 	Registry *notifications.NotificationDefinitionRegistry
 }
 
-func (h *NotificationHandler) Handle(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	next(rw, r)
-	resourceType, ok := context.GetOk(r, "Resource")
-	if ok {
-		resource := context.Get(r, resourceType)
-		actionType := context.Get(r, "Action")
+func (h *NotificationHandler) Handle() echo.MiddlewareFunc {
+	return func(hf echo.HandlerFunc) echo.HandlerFunc {
+		return func(c *echo.Context) error {
+			hf(c)
+			resourceType := c.Get("Resource")
+			if resourceType != nil {
+				rs := resourceType.(string)
+				resource := c.Get(rs)
+				actionType := c.Get("Action")
 
-		var reg *notifications.NotificationDefinitionRegistry
-		if h.Registry != nil {
-			reg = h.Registry
-		} else {
-			reg = notifications.DefaultNotificationDefinitionRegistry
-		}
-		for _, def := range reg.GetAll() {
-			if def.Triggers(resource, actionType.(string)) {
-				notification := def.GetNotification(resource, actionType.(string), h.getBaseURL(r))
-				err := server.Database.C("communicationrequests").Insert(notification)
-				if err != nil {
-					log.Printf("Error creating notification.\n\tNotification: %#v\n\tResource: %#v\n\tError: %#v", notification, resource, err)
-					http.Error(rw, err.Error(), http.StatusInternalServerError)
+				var reg *notifications.NotificationDefinitionRegistry
+				if h.Registry != nil {
+					reg = h.Registry
+				} else {
+					reg = notifications.DefaultNotificationDefinitionRegistry
+				}
+				for _, def := range reg.GetAll() {
+					if def.Triggers(resource, actionType.(string)) {
+						notification := def.GetNotification(resource, actionType.(string), h.getBaseURL(c.Request()))
+						err := server.Database.C("communicationrequests").Insert(notification)
+						if err != nil {
+							log.Printf("Error creating notification.\n\tNotification: %#v\n\tResource: %#v\n\tError: %#v", notification, resource, err)
+							return err
+						}
+					}
 				}
 			}
+			return nil
 		}
 	}
 }
