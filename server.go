@@ -68,9 +68,9 @@ func main() {
 	wg.Add(1)
 	go subscription.NotifySubscribers(workerChannel, selfURL, &wg)
 	defer stopNotifier(workerChannel, &wg)
-	s.AddMiddleware("Group", middleware.AuthHandler)
+	s.AddMiddleware("Group", middleware.AuthHandler())
 
-	s.AddMiddleware("Patient", middleware.AuthHandler)
+	s.AddMiddleware("Patient", middleware.AuthHandler())
 
 	s.AddMiddleware("Condition", watch)
 
@@ -82,10 +82,10 @@ func main() {
 
 	// Setup the notification handler to use the default notification definitions (and then register it)
 	notificationHandler := &middleware.NotificationHandler{Registry: notifications.DefaultNotificationDefinitionRegistry}
-	s.AddMiddleware("Encounter", notificationHandler.Handle)
+	s.AddMiddleware("Encounter", notificationHandler.Handle())
 
-	s.Echo.Get("/GroupList/id", controllers.PatientListHandler)
-	s.Echo.Get("/InstaCountAll", controllers.InstaCountAllHandler)
+	s.Echo.Get("/GroupList/:id", controllers.PatientListHandler)
+	s.Echo.Post("/InstaCountAll", controllers.InstaCountAllHandler)
 	s.Echo.Get("/NotificationCount", controllers.NotificationCountHandler)
 	s.Echo.Get("/Pie/:id", controllers.GeneratePieHandler(riskServiceEndpoint))
 	s.Echo.Post("/CodeLookup", controllers.CodeLookup)
