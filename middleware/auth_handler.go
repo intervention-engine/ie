@@ -11,19 +11,27 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func AuthHandler(c *echo.Context) error {
-	clientToken := c.Request().Header.Get("Authorization")
+func AuthHandler() echo.MiddlewareFunc {
+	return func(hf echo.HandlerFunc) echo.HandlerFunc {
+		return func(c *echo.Context) error {
+			clientToken := c.Request().Header.Get("Authorization")
 
-	sessionCollection := server.Database.C("sessions")
-	usersession := models.UserSession{}
+			if clientToken == "" {
+				return c.String(http.StatusUnauthorized, "No authorization provided")
+			}
 
-	err := sessionCollection.Find(bson.M{"token": clientToken}).One(&usersession)
+			sessionCollection := server.Database.C("sessions")
+			usersession := models.UserSession{}
 
-	if err != nil {
-		return err
-	} else if usersession.Expiration.Before(time.Now()) {
-		return c.String(http.StatusUnauthorized, "Session Expired")
+			err := sessionCollection.Find(bson.M{"token": clientToken}).One(&usersession)
+
+			if err != nil {
+				return c.String(http.StatusUnauthorized, "Unable to validate authorization token")
+			} else if usersession.Expiration.Before(time.Now()) {
+				return c.String(http.StatusUnauthorized, "Session Expired")
+			}
+			fmt.Println("User found and token matched")
+			return hf(c)
+		}
 	}
-	fmt.Println("User found and token matched")
-	return nil
 }
