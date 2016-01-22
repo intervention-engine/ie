@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -14,6 +13,12 @@ import (
 func AuthHandler() echo.MiddlewareFunc {
 	return func(hf echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
+			// For now, only authenticate on GET.  Need to lock it down more later, but will need to update
+			// the generate and upload tools at the same time.
+			if c.Request().Method != "GET" {
+				return hf(c)
+			}
+
 			clientToken := c.Request().Header.Get("Authorization")
 
 			if clientToken == "" {
@@ -30,7 +35,6 @@ func AuthHandler() echo.MiddlewareFunc {
 			} else if usersession.Expiration.Before(time.Now()) {
 				return c.String(http.StatusUnauthorized, "Session Expired")
 			}
-			fmt.Println("User found and token matched")
 			return hf(c)
 		}
 	}
