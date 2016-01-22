@@ -14,6 +14,9 @@ func GenerateResourceWatch(subUpdateQueue chan<- ResourceUpdateMessage) echo.Mid
 			if err != nil {
 				return err
 			}
+			if c.Request().Method == "GET" {
+				return nil
+			}
 			resourceType := c.Get("Resource")
 			if resourceType != nil {
 				resource := c.Get(resourceType.(string))
