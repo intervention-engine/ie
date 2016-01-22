@@ -19,6 +19,10 @@ func (h *NotificationHandler) Handle() echo.MiddlewareFunc {
 	return func(hf echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
 			hf(c)
+			if c.Request().Method != "POST" {
+				return nil
+			}
+
 			resourceType := c.Get("Resource")
 			if resourceType != nil {
 				rs := resourceType.(string)
