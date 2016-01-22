@@ -6,9 +6,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/codegangsta/negroni"
-	"github.com/gorilla/mux"
 	"github.com/intervention-engine/fhir/server"
+	"github.com/labstack/echo"
 	"github.com/pebbe/util"
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2/dbtest"
@@ -30,19 +29,16 @@ func (r *ResourceWatchSuite) SetUpSuite(c *C) {
 	r.DBServer.SetPath(c.MkDir())
 
 	//set up empty router
-	router := mux.NewRouter()
-	router.StrictSlash(true)
-	router.KeepContext = true
+	e := echo.New()
 
-	//create test server
-	r.Server = httptest.NewUnstartedServer(router)
-
-	r.Server.Start()
 	r.WorkerChannel = make(chan ResourceUpdateMessage, 1)
 	//create and add middleware config to test server
-	mwConfig := map[string][]negroni.Handler{
-		"MedicationStatementCreate": []negroni.Handler{GenerateResourceWatch(r.WorkerChannel)}}
-	server.RegisterRoutes(router, mwConfig)
+	mwConfig := map[string][]echo.Middleware{
+		"MedicationStatement": []echo.Middleware{GenerateResourceWatch(r.WorkerChannel)}}
+	server.RegisterRoutes(e, mwConfig)
+	//create test server
+	r.Server = httptest.NewUnstartedServer(e)
+	r.Server.Start()
 }
 
 func (r *ResourceWatchSuite) SetUpTest(c *C) {
@@ -69,7 +65,9 @@ func (r *ResourceWatchSuite) TestGenerateResourceWatch(c *C) {
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", r.Server.URL+"/MedicationStatement", data)
 	util.CheckErr(err)
+	req.Header.Add("Content-Type", "application/json")
 	_, err = client.Do(req)
+
 	util.CheckErr(err)
 	c.Assert(len(r.WorkerChannel), Equals, 1)
 	rum := <-r.WorkerChannel

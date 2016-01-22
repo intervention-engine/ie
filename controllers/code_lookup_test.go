@@ -10,6 +10,7 @@ import (
 
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/utilities"
+	"github.com/labstack/echo"
 	"github.com/pebbe/util"
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2/dbtest"
@@ -17,6 +18,7 @@ import (
 
 type CodeLookupSuite struct {
 	DBServer *dbtest.DBServer
+	Echo     *echo.Echo
 }
 
 var _ = Suite(&CodeLookupSuite{})
@@ -24,6 +26,7 @@ var _ = Suite(&CodeLookupSuite{})
 func (l *CodeLookupSuite) SetUpSuite(c *C) {
 	l.DBServer = &dbtest.DBServer{}
 	l.DBServer.SetPath(c.MkDir())
+	l.Echo = echo.New()
 
 	file, err := os.Open("../fixtures/code-lookup.json")
 	util.CheckErr(err)
@@ -53,33 +56,39 @@ func (l *CodeLookupSuite) TearDownSuite(c *C) {
 func (l *CodeLookupSuite) TestCodeLookupByName(c *C) {
 	handler := CodeLookup
 	namelookupFile, _ := os.Open("../fixtures/sample-lookup-request-by-name.json")
-	name_req, _ := http.NewRequest("POST", "/CodeLookup", namelookupFile)
+	nameReq, _ := http.NewRequest("POST", "/CodeLookup", namelookupFile)
+	nameReq.Header.Add("Content-Type", "application/json")
 	w := httptest.NewRecorder()
-	handler(w, name_req)
+	ctx := echo.NewContext(nameReq, echo.NewResponse(w, l.Echo), l.Echo)
+	handler(ctx)
 	if w.Code != http.StatusOK {
 		c.Fatal("Non-OK response code received: ", w.Code)
 	}
 
-	name_response_codes := []utilities.CodeEntry{}
-	err := json.NewDecoder(w.Body).Decode(&name_response_codes)
+	nameResponseCodes := []utilities.CodeEntry{}
+	err := json.NewDecoder(w.Body).Decode(&nameResponseCodes)
 	util.CheckErr(err)
 
-	c.Assert(len(name_response_codes), Equals, 10)
+	c.Assert(len(nameResponseCodes), Equals, 10)
 }
 
 func (l *CodeLookupSuite) TestCodeLookupByCode(c *C) {
 	handler := CodeLookup
-	codelookupFile, _ := os.Open("../fixtures/sample-lookup-request-by-code.json")
-	code_req, _ := http.NewRequest("POST", "/CodeLookup", codelookupFile)
+	codeLookupFile, _ := os.Open("../fixtures/sample-lookup-request-by-code.json")
+	codeReq, _ := http.NewRequest("POST", "/CodeLookup", codeLookupFile)
 	w := httptest.NewRecorder()
-	handler(w, code_req)
+	codeReq.Header.Add("Content-Type", "application/json")
+	ctx := echo.NewContext(codeReq, echo.NewResponse(w, l.Echo), l.Echo)
+
+	err := handler(ctx)
+	util.CheckErr(err)
 	if w.Code != http.StatusOK {
 		c.Fatal("Non-OK response code received: ", w.Code)
 	}
 
-	code_response_codes := []utilities.CodeEntry{}
-	err := json.NewDecoder(w.Body).Decode(&code_response_codes)
+	codeResponseCodes := []utilities.CodeEntry{}
+	err = json.NewDecoder(w.Body).Decode(&codeResponseCodes)
 	util.CheckErr(err)
 
-	c.Assert(len(code_response_codes), Equals, 6)
+	c.Assert(len(codeResponseCodes), Equals, 6)
 }

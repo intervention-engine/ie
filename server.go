@@ -7,7 +7,6 @@ import (
 	"os"
 	"sync"
 
-	"github.com/codegangsta/negroni"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/controllers"
 	"github.com/intervention-engine/ie/middleware"
@@ -69,31 +68,31 @@ func main() {
 	wg.Add(1)
 	go subscription.NotifySubscribers(workerChannel, selfURL, &wg)
 	defer stopNotifier(workerChannel, &wg)
-	s.AddMiddleware("GroupCreate", negroni.HandlerFunc(middleware.AuthHandler))
+	s.AddMiddleware("Group", middleware.AuthHandler())
 
-	s.AddMiddleware("PatientIndex", negroni.HandlerFunc(middleware.AuthHandler))
+	s.AddMiddleware("Patient", middleware.AuthHandler())
 
-	s.AddMiddleware("ConditionCreate", watch)
+	s.AddMiddleware("Condition", watch)
 
-	s.AddMiddleware("MedicationStatementCreate", watch)
+	s.AddMiddleware("MedicationStatement", watch)
 
-	s.AddMiddleware("EncounterCreate", watch)
+	s.AddMiddleware("Encounter", watch)
 
 	s.AddMiddleware("Batch", watch)
 
 	// Setup the notification handler to use the default notification definitions (and then register it)
 	notificationHandler := &middleware.NotificationHandler{Registry: notifications.DefaultNotificationDefinitionRegistry}
-	s.AddMiddleware("EncounterCreate", negroni.HandlerFunc(notificationHandler.Handle))
+	s.AddMiddleware("Encounter", notificationHandler.Handle())
 
-	s.Router.HandleFunc("/GroupList/{id}", controllers.PatientListHandler)
-	s.Router.HandleFunc("/InstaCountAll", controllers.InstaCountAllHandler)
-	s.Router.HandleFunc("/NotificationCount", controllers.NotificationCountHandler)
-	s.Router.HandleFunc("/Pie/{id}", controllers.GeneratePieHandler(riskServiceEndpoint))
-	s.Router.HandleFunc("/CodeLookup", controllers.CodeLookup)
+	s.Echo.Get("/GroupList/:id", controllers.PatientListHandler)
+	s.Echo.Post("/InstaCountAll", controllers.InstaCountAllHandler)
+	s.Echo.Get("/NotificationCount", controllers.NotificationCountHandler)
+	s.Echo.Get("/Pie/:id", controllers.GeneratePieHandler(riskServiceEndpoint))
+	s.Echo.Post("/CodeLookup", controllers.CodeLookup)
 
-	login := s.Router.Path("/login").Subrouter()
-	login.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.LoginHandler)))
-	login.Methods("DELETE").Handler(negroni.New(negroni.HandlerFunc(controllers.LogoutHandler)))
+	login := s.Echo.Group("/login")
+	login.Post("", controllers.LoginHandler)
+	login.Delete("", controllers.LogoutHandler)
 
 	// Registration is currently disabled.
 	// register := s.Router.Path("/register").Subrouter()

@@ -1,24 +1,30 @@
 package subscription
 
 import (
-	"net/http"
 	"time"
 
-	"github.com/codegangsta/negroni"
-	"github.com/gorilla/context"
 	fhirmodels "github.com/intervention-engine/fhir/models"
+	"github.com/labstack/echo"
 )
 
-func GenerateResourceWatch(subUpdateQueue chan<- ResourceUpdateMessage) negroni.HandlerFunc {
-	f := func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-		next(rw, r)
-		resourceType, ok := context.GetOk(r, "Resource")
-		if ok {
-			resource := context.Get(r, resourceType)
-			HandleResourceUpdate(subUpdateQueue, resource)
+func GenerateResourceWatch(subUpdateQueue chan<- ResourceUpdateMessage) echo.MiddlewareFunc {
+	return func(hf echo.HandlerFunc) echo.HandlerFunc {
+		return func(c *echo.Context) error {
+			err := hf(c)
+			if err != nil {
+				return err
+			}
+			if c.Request().Method == "GET" {
+				return nil
+			}
+			resourceType := c.Get("Resource")
+			if resourceType != nil {
+				resource := c.Get(resourceType.(string))
+				HandleResourceUpdate(subUpdateQueue, resource)
+			}
+			return nil
 		}
 	}
-	return f
 }
 
 func HandleResourceUpdate(subUpdateQueue chan<- ResourceUpdateMessage, resource interface{}) {

@@ -1,29 +1,41 @@
 package middleware
 
 import (
-	"fmt"
-	"github.com/intervention-engine/fhir/server"
-	"github.com/intervention-engine/ie/models"
-	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"time"
+
+	"github.com/intervention-engine/fhir/server"
+	"github.com/intervention-engine/ie/models"
+	"github.com/labstack/echo"
+	"gopkg.in/mgo.v2/bson"
 )
 
-func AuthHandler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	client_token := r.Header.Get("Authorization")
+func AuthHandler() echo.MiddlewareFunc {
+	return func(hf echo.HandlerFunc) echo.HandlerFunc {
+		return func(c *echo.Context) error {
+			// For now, only authenticate on GET.  Need to lock it down more later, but will need to update
+			// the generate and upload tools at the same time.
+			if c.Request().Method != "GET" {
+				return hf(c)
+			}
 
-	sessionCollection := server.Database.C("sessions")
-	usersession := models.UserSession{}
+			clientToken := c.Request().Header.Get("Authorization")
 
-	err := sessionCollection.Find(bson.M{"token": client_token}).One(&usersession)
+			if clientToken == "" {
+				return c.String(http.StatusUnauthorized, "No authorization provided")
+			}
 
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusUnauthorized)
-	} else if usersession.Expiration.Before(time.Now()) {
-		http.Error(rw, "Session Expired", http.StatusUnauthorized)
-	} else {
-		fmt.Println("User found and token matched")
-		next(rw, r)
+			sessionCollection := server.Database.C("sessions")
+			usersession := models.UserSession{}
+
+			err := sessionCollection.Find(bson.M{"token": clientToken}).One(&usersession)
+
+			if err != nil {
+				return c.String(http.StatusUnauthorized, "Unable to validate authorization token")
+			} else if usersession.Expiration.Before(time.Now()) {
+				return c.String(http.StatusUnauthorized, "Session Expired")
+			}
+			return hf(c)
+		}
 	}
-
 }

@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"encoding/json"
-
 	"net/http"
 	"strings"
 	"time"
@@ -10,6 +8,7 @@ import (
 	fhirmodels "github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/search"
 	"github.com/intervention-engine/fhir/server"
+	"github.com/labstack/echo"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -149,17 +148,17 @@ func groupListResolver(group fhirmodels.Group) []string {
 	return pids
 }
 
-func PatientListHandler(rw http.ResponseWriter, r *http.Request) {
+func PatientListHandler(c *echo.Context) error {
 	groupController := server.ResourceController{Name: "Group"}
-	group, err := groupController.LoadResource(r)
+	group, err := groupController.LoadResource(c)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return err
 	}
 	patientIds := groupListResolver(*group.(*fhirmodels.Group))
 	responseMap := map[string][]string{
 		"patientids": patientIds,
 	}
-	json.NewEncoder(rw).Encode(responseMap)
+	return c.JSON(http.StatusOK, responseMap)
 }
 
 func trimSuffix(s, suffix string) string {
@@ -169,12 +168,11 @@ func trimSuffix(s, suffix string) string {
 	return s
 }
 
-func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
+func InstaCountAllHandler(c *echo.Context) error {
 	group := &fhirmodels.Group{}
-	err := decoder.Decode(group)
+	err := c.Bind(group)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return err
 	}
 
 	pids := groupListResolver(*group)
@@ -197,5 +195,5 @@ func InstaCountAllHandler(rw http.ResponseWriter, r *http.Request) {
 		"encounters": eCount,
 	}
 
-	json.NewEncoder(rw).Encode(newResultMap)
+	return c.JSON(http.StatusOK, newResultMap)
 }
