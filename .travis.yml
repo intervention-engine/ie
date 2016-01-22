@@ -1,14 +1,12 @@
+sudo: false
 language: go
 go:
-  - 1.5.1
+- 1.5.3
+services:
+- mongodb
 branches:
   only:
   - master
-sudo: false
-addons:
-  apt:
-    packages:
-    - mongodb-org-server
 notifications:
   slack:
-    secure: V9+O3D5/NAjvLnkWbUI0nQv+GuEAVJGEpl+BrpSzrxeGyU2OGV+nOm+76Z7bTgpdcwOdPvooGAMqR2ahbIwvh8Q8LZYAaF3u3memCTiyhHapqx+mUKMyV+AyPLnPQeksNbPasfUuNllqyD1/Sws5zfYWWLGep0YcmN3DFCHbcxs=
+    secure: Sz0HRgIE23pnsneB/jfKP01E2mRLgPUO72bIiCpTkeRZs3GeMso+eijCDSNwiR+429jK0/LlJhMS2c6CqQDuluMk+GvmQuRgqmj7kB0FDGqCqPpPeU7SsotOt27NRa73nyz8wj1ffmSitvL5emjrZsSIS4nIQF6GEobRI1p3xbY=
