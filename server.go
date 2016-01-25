@@ -5,13 +5,9 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"sync"
 
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/controllers"
-	"github.com/intervention-engine/ie/middleware"
-	"github.com/intervention-engine/ie/notifications"
-	"github.com/intervention-engine/ie/subscription"
 	"github.com/intervention-engine/ie/utilities"
 )
 
@@ -62,46 +58,7 @@ func main() {
 
 	s := server.NewServer(mongoHost)
 
-	workerChannel := make(chan subscription.ResourceUpdateMessage)
-	watch := subscription.GenerateResourceWatch(workerChannel)
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go subscription.NotifySubscribers(workerChannel, selfURL, &wg)
-	defer stopNotifier(workerChannel, &wg)
-	s.AddMiddleware("Group", middleware.AuthHandler())
-
-	s.AddMiddleware("Patient", middleware.AuthHandler())
-
-	s.AddMiddleware("Condition", watch)
-
-	s.AddMiddleware("MedicationStatement", watch)
-
-	s.AddMiddleware("Encounter", watch)
-
-	s.AddMiddleware("Batch", watch)
-
-	// Setup the notification handler to use the default notification definitions (and then register it)
-	notificationHandler := &middleware.NotificationHandler{Registry: notifications.DefaultNotificationDefinitionRegistry}
-	s.AddMiddleware("Encounter", notificationHandler.Handle())
-
-	s.Echo.Get("/GroupList/:id", controllers.PatientListHandler)
-	s.Echo.Post("/InstaCountAll", controllers.InstaCountAllHandler)
-	s.Echo.Get("/NotificationCount", controllers.NotificationCountHandler)
-	s.Echo.Get("/Pie/:id", controllers.GeneratePieHandler(riskServiceEndpoint))
-	s.Echo.Post("/CodeLookup", controllers.CodeLookup)
-
-	login := s.Echo.Group("/login")
-	login.Post("", controllers.LoginHandler)
-	login.Delete("", controllers.LogoutHandler)
-
-	// Registration is currently disabled.
-	// register := s.Router.Path("/register").Subrouter()
-	// register.Methods("POST").Handler(negroni.New(negroni.HandlerFunc(controllers.RegisterHandler)))
+	controllers.RegisterRoutes(s, selfURL, riskServiceEndpoint)
 
 	s.Run()
-}
-
-func stopNotifier(wc chan subscription.ResourceUpdateMessage, wg *sync.WaitGroup) {
-	close(wc)
-	wg.Wait()
 }
