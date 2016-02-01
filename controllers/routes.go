@@ -9,13 +9,13 @@ import (
 	"github.com/intervention-engine/ie/subscription"
 )
 
-func RegisterRoutes(s *server.FHIRServer, selfURL, riskServiceEndpoint string) {
+func RegisterRoutes(s *server.FHIRServer, selfURL, riskServiceEndpoint string) func() {
 	workerChannel := make(chan subscription.ResourceUpdateMessage)
 	watch := subscription.GenerateResourceWatch(workerChannel)
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go subscription.NotifySubscribers(workerChannel, selfURL, &wg)
-	defer stopNotifier(workerChannel, &wg)
+
 	s.AddMiddleware("Group", middleware.AuthHandler())
 
 	s.AddMiddleware("Patient", middleware.AuthHandler())
@@ -41,6 +41,10 @@ func RegisterRoutes(s *server.FHIRServer, selfURL, riskServiceEndpoint string) {
 	login := s.Echo.Group("/login")
 	login.Post("", LoginHandler)
 	login.Delete("", LogoutHandler)
+
+	return func() {
+		stopNotifier(workerChannel, &wg)
+	}
 }
 
 func stopNotifier(wc chan subscription.ResourceUpdateMessage, wg *sync.WaitGroup) {
