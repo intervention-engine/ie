@@ -9,6 +9,7 @@ import (
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/controllers"
 	"github.com/intervention-engine/ie/utilities"
+	"github.com/labstack/echo/middleware"
 )
 
 //var Store sessions.Store
@@ -57,8 +58,11 @@ func main() {
 	}
 
 	s := server.NewServer(mongoHost)
+	s.Echo.Use(middleware.Logger())
+	s.Echo.Use(middleware.Recover())
 
-	controllers.RegisterRoutes(s, selfURL, riskServiceEndpoint)
+	closer := controllers.RegisterRoutes(s, selfURL, riskServiceEndpoint)
+	defer closer()
 
 	s.Run()
 }
