@@ -5,11 +5,11 @@ Intervention Engine is a collection of tools and technologies. Intervention Engi
 
 In short, the steps are as follows:
 
-1.	Install prerequisite tools and servers
-2.	Clone Intervention Engine GitHub repositories locally
-3.	Build and run Intervention Engine servers
-4.	Populate Intervention Engine data
-5.	Test
+1.	[Install Prerequisite Tools and Servers](#install-prerequisite-tools-and-servers)
+2.	[Clone Intervention Engine GitHub Repositories Locally](#clone-intervention-engine-github-repositories-locally)
+3.	[Build and Run Intervention Engine Servers](#build-and-run-intervention-engine-servers)
+4.	[Populate Intervention Engine Data](#populate-intervention-engine-data)
+5.	[Test](#test)
 
 These instructions are written for the Mac OS X operating system. Some steps may vary for other operating systems.
 
@@ -26,7 +26,6 @@ Building and running the Intervention Engine frontend (web UI server) additional
 
 -	Node.js 0.12+ / 5.0+
 -	Bower
--	Ember CLI
 -	PhantomJS (testing only)
 
 Install Go
@@ -96,17 +95,6 @@ To install Bower, use `npm` (which is installed with Node.js):
 
 ```
 $ npm install -g bower
-```
-
-Install Ember CLI
------------------
-
-The Intervention Engine frontend server uses Ember CLI to run the server in development. At the time this documentation was written, Ember CLI 1.13.15 was the latest available release.
-
-To install Ember CLI, use `npm` (which is installed with Node.js):
-
-```
-$ npm install -g ember-cli
 ```
 
 Install PhantomJS
@@ -373,10 +361,22 @@ $ npm install
 $ bower install
 ```
 
-To run the frontend server, use the Ember CLI client and pass along the `--proxy` flag to indicate the URL of the *ie* server:
+To run the frontend server, use the Ember CLI client (which was automatically installed as part of `npm install` above) and pass along the `--proxy` flag to indicate the URL of the *ie* server:
 
 ```
-$ ember s --proxy http://localhost:3001
+$ node_modules/.bin/ember s --proxy http://localhost:3001
+```
+
+Frequent npm users often define an `npm-exec` alias to allow them to more easily execute npm-installed local executables:
+
+```
+alias npm-exec='PATH=$(npm bin):$PATH'
+```
+
+With the `npm-exec` alias defined, you can run the frontend using the following command:
+
+```
+npm-exec ember s --proxy http://localhost:3001
 ```
 
 The *frontend* server accepts connections on port 4200 by default.
