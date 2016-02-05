@@ -1,51 +1,53 @@
-Intervention Engine
-===================
-[![Build Status](https://travis-ci.org/intervention-engine/ie.svg?branch=master)](https://travis-ci.org/intervention-engine/ie)
-The goal of this project is to allow providers to easily interact with their own clinical data to enable the creation of “homegrown” clinical quality measures. After providers have created their own measures, they will be able to use Intervention Engine to track their performance over time and make adjustments to their measures.
+Intervention Engine [![Build Status](https://travis-ci.org/intervention-engine/ie.svg?branch=master)](https://travis-ci.org/intervention-engine/ie)
+===================================================================================================================================================
 
-This repository contains the intervention-engine-specific functionality that makes use of the [generic FHIR server](http://github.com/intervention-engine/fhir). Specifically, it contains middleware handlers for fact creation and management to support query execution in MongoDB.
+The Intervention Engine project provides a web-application for *data-driven team huddles*. Many care teams use team huddles to improve patient outcomes via efficient team communications and a holistic view of patients (due to the interdisciplinary nature of team huddles). Intervention Engine leverages electronic clinical records and clinical risk assessments to assist care teams in selecting patients for their huddles and providing the tools necessary to promote effective discussions and interventions.
 
-Environment
------------
+Intervention Engine is a work in progress. Current Intervention Engine features:
 
-This project currently uses Go 1.3.3 and is built using the Go toolchain.
+-	custom population filters based on age, gender, conditions, and encounter types
+-	clinical risk assessment integration via an open API
+	-	prototype stroke risk calculation service (based on CHA2DS2-VASc)
+	-	prototype "negative outcomes" risk calculation service (condition count + medication count)
+-	patient views w/ summary data, risk trends, and risk component visualization
+-	FHIR-based REST server
+-	C-CDA import
 
-To install Go, follow the instructions found at the [Go Website](http://golang.org/doc/install).
+Still to come:
 
-Following standard Go practices, you should clone this project to:
+-	Near term: huddle management (scheduling, viewing, progressing)
+-	Near term: automated patient selection for huddles
+-	Longer term: intervention planning & tracking
+-	Longer term: population views and visualizations
 
-    $GOPATH/src/github.com/intervention-engine/ie
+The ie Repository
+-----------------
 
-To get all of the dependencies for this project, run:
+The *ie* repository contains the source code for the backend Intervention Engine server. The *ie* server provides RESTful services needed by other components of the Intervention Engine stack. In addition to custom Intervention Engine features (such as authentication, notifications, and insta-count), it also doubles as a FHIR server (by integrating code from the [fhir](https://github.com/intervention-engine/fhir) repository).
 
-    go get
+Building and Running ie Locally
+-------------------------------
 
-In this directory.
+Intervention Engine is a stack of tools and technologies. For information on installing and running the full stack, please see [Building and Running the Intervention Engine Stack in a Development Environment](https://github.com/intervention-engine/ie/blob/master/docs/dev_install.md).
 
-This project also requires MongoDB 2.6.* or higher. To install MongoDB, refer to the [MongoDB installation guide](http://docs.mongodb.org/manual/installation/).
+For information related specifically to building and running the code in this repository (*ie*), please refer to the following sections in the above guide:
 
-To start the server, simply run server.go:
-
-    go run server.go
-
-Creating a User
----------------
-
-To use the web application, you must register a user account using the `ie-user` tool.  For more info see the [intervention-engine/tools](https://github.com/intervention-engine/tools) repo.
+-	(Prerequisite) [Install Git](https://github.com/intervention-engine/ie/blob/master/docs/dev_install.md#install-git)
+-	(Prerequisite) [Install Go](https://github.com/intervention-engine/ie/blob/master/docs/dev_install.md#install-go)
+-	(Prerequisite) [Install MongoDB](https://github.com/intervention-engine/ie/blob/master/docs/dev_install.md#install-mongodb)
+-	(Prerequisite) [Run MongoDB](https://github.com/intervention-engine/ie/blob/master/docs/dev_install.md#run-mongodb)
+-	[Clone ie Repository](https://github.com/intervention-engine/ie/blob/master/docs/dev_install.md#clone-ie-repository)
+-	[Build and Run Intervention Engine Server](https://github.com/intervention-engine/ie/blob/master/docs/dev_install.md#build-and-run-intervention-engine-server)
+-	(Optional) [Create Intervention Engine User](https://github.com/intervention-engine/ie/blob/master/docs/dev_install.md#create-intervention-engine-user)
+-	(Optional) [Generate and Upload Synthetic Patient Data](https://github.com/intervention-engine/ie/blob/master/docs/dev_install.md#generate-and-upload-synthetic-patient-data)
 
 License
 -------
 
-Copyright 2014 The MITRE Corporation
+Copyright 2016 The MITRE Corporation
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
 
 http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
