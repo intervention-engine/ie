@@ -238,7 +238,7 @@ $ git clone https://github.com/intervention-engine/ember-fhir-adapter.git
 Clone fhir-golang-generator Repository
 --------------------------------------
 
-The *fhir-golang-generator* repository is a fork of the HL7 FHIR DSTU2 source code, with additions and modifications to support the generation of FHIR code for Go and Ember. This respository is only needed if you intend to make changes to the code generation logic. In that case, the re-generated code should also be committed in the corresponding *fhir* or *ember-fhir-adapter* repository.
+The *fhir-golang-generator* repository is a fork of the HL7 FHIR DSTU2 source code, with additions and modifications to support the generation of FHIR code for Go and Ember. This repository is only needed if you intend to make changes to the code generation logic. In that case, the re-generated code should also be committed in the corresponding *fhir* or *ember-fhir-adapter* repository.
 
 Since this is not a Go project, it should not be cloned under the $GOPATH. Instead, we recommend you create an *intervention-engine* folder within your favorite development location and clone the *fhir-golang-generator* repository there. For this documentation, we'll assume that "your favorite development location" is `~/development`.
 
@@ -250,6 +250,7 @@ $ git clone https://github.com/intervention-engine/fhir-golang-generator.git
 Currently, *fhir* and *ember-fhir-adapter* code is generated off the *dstu2\_refresh* branch, so you should create a local *dstu2\_refresh* branch:
 
 ```
+$ cd ~/development/intervention-engine/fhir-golang-generator
 $ git checkout -b dstu2_refresh origin/dstu2_refresh
 ```
 
