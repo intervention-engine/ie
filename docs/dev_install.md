@@ -247,13 +247,6 @@ $ cd ~/development/intervention-engine
 $ git clone https://github.com/intervention-engine/fhir-golang-generator.git
 ```
 
-Currently, *fhir* and *ember-fhir-adapter* code is generated off the *dstu2\_refresh* branch, so you should create a local *dstu2\_refresh* branch:
-
-```
-$ cd ~/development/intervention-engine/fhir-golang-generator
-$ git checkout -b dstu2_refresh origin/dstu2_refresh
-```
-
 Build and Run Intervention Engine Servers
 =========================================
 
