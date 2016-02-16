@@ -1,4 +1,5 @@
 {
+	"resourceType": "CommunicationRequest",
 	"category": {
 		"coding": [{
 			"system": "http://snomed.info/sct",

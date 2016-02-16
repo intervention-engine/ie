@@ -1,8 +1,8 @@
 {
   "resourceType": "Group",
   "type": "person",
-  "actual": true,
-  "name": "Males with major depression",
+  "actual": false,
+  "name": "Males under age 10",
   "characteristic": [
     {
       "code": {

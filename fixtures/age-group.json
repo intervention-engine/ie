@@ -1,7 +1,7 @@
 {
   "resourceType": "Group",
   "type": "person",
-  "actual": true,
+  "actual": false,
   "name": "People between 14 and 18",
   "characteristic": [
     {
@@ -9,7 +9,8 @@
         "coding": [{"system": "http://loinc.org", "code": "21612-7"}],
         "text": "age"
       },
-      "valueRange": {"high": {"value": 18}, "low": {"value": 14}}
+      "valueRange": {"high": {"value": 18}, "low": {"value": 14}},
+      "exclude": false
     }
   ]
 }

@@ -1,5 +1,6 @@
 {
 	"resourceType": "Encounter",
+	"status": "finished",
 	"type": [{
 		"coding": [{
 			"system": "http://www.ama-assn.org/go/cpt",

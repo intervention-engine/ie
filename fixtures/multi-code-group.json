@@ -1,7 +1,7 @@
 {
   "resourceType": "Group",
   "type": "person",
-  "actual": true,
+  "actual": false,
   "name": "Males with major depression",
   "characteristic": [
     {
@@ -11,7 +11,8 @@
       },
       "valueCodeableConcept": {
         "coding": [{"system": "http://hl7.org/fhir/administrative-gender", "code": "male"}]
-      }
+      },
+      "exclude": false
     },
     {
       "code": {
@@ -28,7 +29,8 @@
                 "system" : "http://snomed.info/sct",
                 "code" : "111513000"
             }]
-      }
+      },
+      "exclude": false
     }
   ]
 }

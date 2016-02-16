@@ -1,7 +1,7 @@
 {
   "resourceType": "Group",
   "type": "person",
-  "actual": true,
+  "actual": false,
   "name": "People with risk assessments",
   "characteristic": [
     {
@@ -11,7 +11,8 @@
       },
       "valueCodeableConcept": {
         "coding": [{"system": "http://loinc.org", "code": "75492-9"}]
-      }
+      },
+      "exclude": false
     }
   ]
 }
