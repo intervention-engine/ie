@@ -1,15 +1,16 @@
 {
   "resourceType": "Group",
   "type": "person",
-  "actual": true,
-  "name": "Males with major depression",
+  "actual": false,
+  "name": "Males over age 10",
   "characteristic": [
     {
       "code": {
         "coding": [{"system": "http://loinc.org", "code": "21612-7"}],
         "text": "age"
       },
-      "valueRange": {"low": {"value": 10}}
+      "valueRange": {"low": {"value": 10}},
+      "exclude": false
     }
   ]
 }
