@@ -1,0 +1,105 @@
+{
+  "resourceType": "Group",
+  "meta": {
+    "profile": ["http://interventionengine.org/fhir/profile/huddle"]
+  },
+  "extension": [{
+    "url": "http://interventionengine.org/fhir/extension/group/activeDateTime",
+    "valueDateTime": "2016-02-02T09:00:00Z"
+  },{
+    "url": "http://interventionengine.org/fhir/extension/group/leader",
+    "valueReference": {
+      "reference": "Practitioner/5555"
+    }
+  }],
+  "type": "person",
+  "actual": true,
+  "code": {
+    "coding": [{
+      "system": "http://interventionengine.org/fhir/cs/huddle",
+      "code": "HUDDLE"
+    }],
+    "text": "Huddle"
+  },
+  "name": "Dr. Smith's Huddle for February 2, 2016",
+  "member": [{
+    "extension": [{
+      "url": "http://interventionengine.org/fhir/extension/group/member/reason",
+      "valueCodeableConcept": {
+        "coding": [{
+          "system": "http://interventionengine.org/fhir/cs/huddle-member-reason",
+          "code": "RECENT_ADMISSION"
+        }],
+        "text": "Recent Inpatient Admission"
+      }
+    },{
+      "url": "http://interventionengine.org/fhir/extension/group/member/reviewed",
+      "valueDateTime": "2016-02-02T09:08:15Z"
+    }],
+    "entity": {
+      "reference": "Patient/9839"
+    }
+  }, {
+    "extension": [{
+      "url": "http://interventionengine.org/fhir/extension/group/member/reason",
+      "valueCodeableConcept": {
+        "coding": [{
+          "system": "http://interventionengine.org/fhir/cs/huddle-member-reason",
+          "code": "RISK_SCORE"
+        }],
+        "text": "Risk Score Warrants Discussion"
+      }
+    },{
+      "url": "http://interventionengine.org/fhir/extension/group/member/reviewed",
+      "valueDateTime": "2016-02-02T09:15:46Z"
+    }],
+    "entity": {
+      "reference": "Patient/5462"
+    }
+  }, {
+    "extension": [{
+      "url": "http://interventionengine.org/fhir/extension/group/member/reason",
+      "valueCodeableConcept": {
+        "coding": [{
+          "system": "http://interventionengine.org/fhir/cs/huddle-member-reason",
+          "code": "MANUAL_ADDITION"
+        }],
+        "text": "Manually Added"
+      }
+    },{
+      "url": "http://interventionengine.org/fhir/extension/group/member/reviewed",
+      "valueDateTime": "2016-02-02T09:32:15Z"
+    }],
+    "entity": {
+      "reference": "Patient/1285"
+    }
+  }, {
+    "extension": [{
+      "url": "http://interventionengine.org/fhir/extension/group/member/reason",
+      "valueCodeableConcept": {
+        "coding": [{
+          "system": "http://interventionengine.org/fhir/cs/huddle-member-reason",
+          "code": "RECENT_ED_VISIT"
+        }],
+        "text": "Recent Emergency Department Visit"
+      }
+    }],
+    "entity": {
+      "reference": "Patient/4565"
+    }
+  }, {
+    "extension": [{
+      "url": "http://interventionengine.org/fhir/extension/group/member/reason",
+      "valueCodeableConcept": {
+        "coding": [{
+          "system": "http://interventionengine.org/fhir/cs/huddle-member-reason",
+          "code": "RECENT_READMISSION"
+        }],
+        "text": "Recent Inpatient Readmission"
+      }
+    }],
+    "entity": {
+      "reference": "Patient/3868"
+    }
+  }]
+}
