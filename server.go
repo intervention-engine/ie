@@ -8,6 +8,7 @@ import (
 
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/controllers"
+	"github.com/intervention-engine/ie/huddles"
 	"github.com/intervention-engine/ie/utilities"
 	"github.com/labstack/echo/middleware"
 )
@@ -38,6 +39,8 @@ func main() {
 	} else {
 		riskServiceEndpoint = "http://" + riskServiceEndpoint + ":9000"
 	}
+
+	huddles.RegisterCustomSearchDefinitions()
 
 	var ip net.IP
 	var selfURL string

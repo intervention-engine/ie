@@ -1,4 +1,4 @@
-package models
+package huddles
 
 import (
 	"encoding/json"
@@ -23,8 +23,112 @@ func Test(t *testing.T) { TestingT(t) }
 var _ = Suite(&HuddleProfileSuite{})
 
 func (h *HuddleProfileSuite) SetUpTest(c *C) {
+	h.Huddle = newExampleHuddle()
+	h.HuddleBSONM = newExampleHuddleBSONM()
+
+	data, err := ioutil.ReadFile("../fixtures/huddle.json")
+	util.CheckErr(err)
+	h.HuddleJSON = data
+}
+
+func (h *HuddleProfileSuite) TearDownTest(c *C) {
+	h.Huddle = nil
+	h.HuddleBSONM = bson.M{}
+	h.HuddleJSON = make([]byte, 0)
+}
+
+func (h *HuddleProfileSuite) TestMarshalJSON(c *C) {
+	// First unmarshal the expected JSON into a map for easier comparison
+	var expected map[string]interface{}
+	err := json.Unmarshal(h.HuddleJSON, &expected)
+	util.CheckErr(err)
+
+	// Now marshal the huddle struct into JSON data
+	data, err := json.Marshal(h.Huddle)
+	util.CheckErr(err)
+
+	// In order to compare it, unmarshal the new JSON data to a map
+	var obtained map[string]interface{}
+	err = json.Unmarshal(data, &obtained)
+	util.CheckErr(err)
+
+	c.Assert(obtained, DeepEquals, expected)
+}
+
+func (h *HuddleProfileSuite) TestUnmarshalJSON(c *C) {
+	obtained := &models.Group{}
+	err := json.Unmarshal(h.HuddleJSON, &obtained)
+	util.CheckErr(err)
+
+	assertDeepEqualHuddles(c, obtained, h.Huddle)
+}
+
+func (h *HuddleProfileSuite) TestRoundTripJSON(c *C) {
+	// First we need to marshal it, just so we can get our bytes to unmarshal
+	data, err := json.Marshal(h.Huddle)
+	util.CheckErr(err)
+
+	// Now we'll try unmarshalling.  If everything is working it should survive the round trip.
+	var obtained models.Group
+	err = json.Unmarshal(data, &obtained)
+
+	assertDeepEqualHuddles(c, &obtained, h.Huddle)
+}
+
+func (h *HuddleProfileSuite) TestMarshalBSON(c *C) {
+	// Now marshal the huddle struct into BSON data
+	data, err := bson.Marshal(h.Huddle)
+	util.CheckErr(err)
+
+	// In order to compare it, unmarshal the new BSON data to a map
+	var obtained bson.M
+	err = bson.Unmarshal(data, &obtained)
+	util.CheckErr(err)
+
+	// Since times don't work in DeepEquals (due to timezoney shenanigans in Go), first check the times directly.
+	// After confirming they represent the same moment, set the expected to the obtained so we pass DeepEquals
+	c.Assert(obtained["extension"].([]interface{})[0].(bson.M)["activeDateTime"].(bson.M)["time"].(time.Time).Unix(), Equals,
+		h.HuddleBSONM["extension"].([]interface{})[0].(bson.M)["activeDateTime"].(bson.M)["time"].(time.Time).Unix())
+	h.HuddleBSONM["extension"].([]interface{})[0].(bson.M)["activeDateTime"].(bson.M)["time"] =
+		obtained["extension"].([]interface{})[0].(bson.M)["activeDateTime"].(bson.M)["time"]
+	for i := 0; i < 3; i++ {
+		c.Assert(obtained["member"].([]interface{})[i].(bson.M)["extension"].([]interface{})[1].(bson.M)["reviewed"].(bson.M)["time"].(time.Time).Unix(), Equals,
+			h.HuddleBSONM["member"].([]interface{})[i].(bson.M)["extension"].([]interface{})[1].(bson.M)["reviewed"].(bson.M)["time"].(time.Time).Unix())
+		h.HuddleBSONM["member"].([]interface{})[i].(bson.M)["extension"].([]interface{})[1].(bson.M)["reviewed"].(bson.M)["time"] =
+			obtained["member"].([]interface{})[i].(bson.M)["extension"].([]interface{})[1].(bson.M)["reviewed"].(bson.M)["time"]
+	}
+
+	c.Assert(obtained, DeepEquals, h.HuddleBSONM)
+}
+
+func (h *HuddleProfileSuite) TestUnmarshalBSON(c *C) {
+	// First we need to marshal the expected BSON into BSON data
+	data, err := bson.Marshal(h.HuddleBSONM)
+	util.CheckErr(err)
+
+	// Then unmarshal the BSON data into the Huddle struct
+	obtained := &models.Group{}
+	err = bson.Unmarshal(data, &obtained)
+	util.CheckErr(err)
+
+	assertDeepEqualHuddles(c, obtained, h.Huddle)
+}
+
+func (h *HuddleProfileSuite) TestRoundTripBSON(c *C) {
+	// First we need to marshal it, just so we can get our bytes to unmarshal
+	data, err := bson.Marshal(h.Huddle)
+	util.CheckErr(err)
+
+	// Now we'll try unmarshalling.  If everything is working it should survive the round trip.
+	var obtained models.Group
+	err = bson.Unmarshal(data, &obtained)
+
+	assertDeepEqualHuddles(c, &obtained, h.Huddle)
+}
+
+func newExampleHuddle() *models.Group {
 	tru := true
-	h.Huddle = &models.Group{
+	return &models.Group{
 		DomainResource: models.DomainResource{
 			Resource: models.Resource{
 				ResourceType: "Group",
@@ -40,8 +144,8 @@ func (h *HuddleProfileSuite) SetUpTest(c *C) {
 				{
 					Url: "http://interventionengine.org/fhir/extension/group/leader",
 					ValueReference: &models.Reference{
-						Reference:    "Practitioner/5555",
-						ReferencedID: "5555",
+						Reference:    "Practitioner/9999999999999999999",
+						ReferencedID: "9999999999999999999",
 						Type:         "Practitioner",
 						External:     new(bool),
 					},
@@ -79,8 +183,8 @@ func (h *HuddleProfileSuite) SetUpTest(c *C) {
 					},
 				},
 				Entity: &models.Reference{
-					Reference:    "Patient/9839",
-					ReferencedID: "9839",
+					Reference:    "Patient/1111111111111111111",
+					ReferencedID: "1111111111111111111",
 					Type:         "Patient",
 					External:     new(bool),
 				},
@@ -106,8 +210,8 @@ func (h *HuddleProfileSuite) SetUpTest(c *C) {
 					},
 				},
 				Entity: &models.Reference{
-					Reference:    "Patient/5462",
-					ReferencedID: "5462",
+					Reference:    "Patient/2222222222222222222",
+					ReferencedID: "2222222222222222222",
 					Type:         "Patient",
 					External:     new(bool),
 				},
@@ -133,8 +237,8 @@ func (h *HuddleProfileSuite) SetUpTest(c *C) {
 					},
 				},
 				Entity: &models.Reference{
-					Reference:    "Patient/1285",
-					ReferencedID: "1285",
+					Reference:    "Patient/3333333333333333333",
+					ReferencedID: "3333333333333333333",
 					Type:         "Patient",
 					External:     new(bool),
 				},
@@ -156,8 +260,8 @@ func (h *HuddleProfileSuite) SetUpTest(c *C) {
 					},
 				},
 				Entity: &models.Reference{
-					Reference:    "Patient/4565",
-					ReferencedID: "4565",
+					Reference:    "Patient/4444444444444444444",
+					ReferencedID: "4444444444444444444",
 					Type:         "Patient",
 					External:     new(bool),
 				},
@@ -179,16 +283,18 @@ func (h *HuddleProfileSuite) SetUpTest(c *C) {
 					},
 				},
 				Entity: &models.Reference{
-					Reference:    "Patient/3868",
-					ReferencedID: "3868",
+					Reference:    "Patient/5555555555555555555",
+					ReferencedID: "5555555555555555555",
 					Type:         "Patient",
 					External:     new(bool),
 				},
 			},
 		},
 	}
+}
 
-	h.HuddleBSONM = bson.M{
+func newExampleHuddleBSONM() bson.M {
+	return bson.M{
 		"resourceType": "Group",
 		"meta": bson.M{
 			"profile": []interface{}{"http://interventionengine.org/fhir/profile/huddle"},
@@ -214,8 +320,8 @@ func (h *HuddleProfileSuite) SetUpTest(c *C) {
 					},
 				},
 				"leader": bson.M{
-					"reference":   "Practitioner/5555",
-					"referenceid": "5555",
+					"reference":   "Practitioner/9999999999999999999",
+					"referenceid": "9999999999999999999",
 					"type":        "Practitioner",
 					"external":    false,
 				},
@@ -267,8 +373,8 @@ func (h *HuddleProfileSuite) SetUpTest(c *C) {
 					},
 				},
 				"entity": bson.M{
-					"reference":   "Patient/9839",
-					"referenceid": "9839",
+					"reference":   "Patient/1111111111111111111",
+					"referenceid": "1111111111111111111",
 					"type":        "Patient",
 					"external":    false,
 				},
@@ -306,8 +412,8 @@ func (h *HuddleProfileSuite) SetUpTest(c *C) {
 					},
 				},
 				"entity": bson.M{
-					"reference":   "Patient/5462",
-					"referenceid": "5462",
+					"reference":   "Patient/2222222222222222222",
+					"referenceid": "2222222222222222222",
 					"type":        "Patient",
 					"external":    false,
 				},
@@ -345,8 +451,8 @@ func (h *HuddleProfileSuite) SetUpTest(c *C) {
 					},
 				},
 				"entity": bson.M{
-					"reference":   "Patient/1285",
-					"referenceid": "1285",
+					"reference":   "Patient/3333333333333333333",
+					"referenceid": "3333333333333333333",
 					"type":        "Patient",
 					"external":    false,
 				},
@@ -372,8 +478,8 @@ func (h *HuddleProfileSuite) SetUpTest(c *C) {
 					},
 				},
 				"entity": bson.M{
-					"reference":   "Patient/4565",
-					"referenceid": "4565",
+					"reference":   "Patient/4444444444444444444",
+					"referenceid": "4444444444444444444",
 					"type":        "Patient",
 					"external":    false,
 				},
@@ -399,131 +505,34 @@ func (h *HuddleProfileSuite) SetUpTest(c *C) {
 					},
 				},
 				"entity": bson.M{
-					"reference":   "Patient/3868",
-					"referenceid": "3868",
+					"reference":   "Patient/5555555555555555555",
+					"referenceid": "5555555555555555555",
 					"type":        "Patient",
 					"external":    false,
 				},
 			},
 		},
 	}
-
-	data, err := ioutil.ReadFile("../fixtures/huddle.json")
-	util.CheckErr(err)
-	h.HuddleJSON = data
 }
 
-func (h *HuddleProfileSuite) TearDownTest(c *C) {
-	h.Huddle = nil
-	h.HuddleBSONM = bson.M{}
-	h.HuddleJSON = make([]byte, 0)
-}
-
-func (h *HuddleProfileSuite) TestMarshalJSON(c *C) {
-	// First unmarshal the expected JSON into a map for easier comparison
-	var expected map[string]interface{}
-	err := json.Unmarshal(h.HuddleJSON, &expected)
-	util.CheckErr(err)
-
-	// Now marshal the huddle struct into JSON data
-	data, err := json.Marshal(h.Huddle)
-	util.CheckErr(err)
-
-	// In order to compare it, unmarshal the new JSON data to a map
-	var obtained map[string]interface{}
-	err = json.Unmarshal(data, &obtained)
-	util.CheckErr(err)
-
+func assertDeepEqualHuddles(c *C, obtained *models.Group, expected *models.Group) {
+	// Since times don't work in DeepEquals (due to timezoney shenanigans in Go), first check the times directly.
+	// After confirming they represent the same moment, set the expected to the obtained so we pass DeepEquals
+	assertAndFixDeepEqualExtensions(c, obtained.Extension, expected.Extension)
+	for i := 0; i < len(obtained.Member) && i < len(expected.Member); i++ {
+		assertAndFixDeepEqualExtensions(c, obtained.Member[i].Extension, expected.Member[i].Extension)
+	}
 	c.Assert(obtained, DeepEquals, expected)
 }
 
-func (h *HuddleProfileSuite) TestUnmarshalJSON(c *C) {
-	obtained := &models.Group{}
-	err := json.Unmarshal(h.HuddleJSON, &obtained)
-	util.CheckErr(err)
-
-	// And now test the whole shebang
-	c.Assert(obtained, DeepEquals, h.Huddle)
-}
-
-func (h *HuddleProfileSuite) TestRoundTripJSON(c *C) {
-	// First we need to marshal it, just so we can get our bytes to unmarshal
-	data, err := json.Marshal(h.Huddle)
-	util.CheckErr(err)
-
-	// Now we'll try unmarshalling.  If everything is working it should survive the round trip.
-	var obtained models.Group
-	err = json.Unmarshal(data, &obtained)
-
-	c.Assert(&obtained, DeepEquals, h.Huddle)
-}
-
-func (h *HuddleProfileSuite) TestMarshalBSON(c *C) {
-	// Now marshal the huddle struct into BSON data
-	data, err := bson.Marshal(h.Huddle)
-	util.CheckErr(err)
-
-	// In order to compare it, unmarshal the new BSON data to a map
-	var obtained bson.M
-	err = bson.Unmarshal(data, &obtained)
-	util.CheckErr(err)
-
+func assertAndFixDeepEqualExtensions(c *C, obtained []models.Extension, expected []models.Extension) {
 	// Since times don't work in DeepEquals (due to timezoney shenanigans in Go), first check the times directly.
 	// After confirming they represent the same moment, set the expected to the obtained so we pass DeepEquals
-	c.Assert(obtained["extension"].([]interface{})[0].(bson.M)["activeDateTime"].(bson.M)["time"].(time.Time).Unix(), Equals,
-		h.HuddleBSONM["extension"].([]interface{})[0].(bson.M)["activeDateTime"].(bson.M)["time"].(time.Time).Unix())
-	h.HuddleBSONM["extension"].([]interface{})[0].(bson.M)["activeDateTime"].(bson.M)["time"] =
-		obtained["extension"].([]interface{})[0].(bson.M)["activeDateTime"].(bson.M)["time"]
-	for i := 0; i < 3; i++ {
-		c.Assert(obtained["member"].([]interface{})[i].(bson.M)["extension"].([]interface{})[1].(bson.M)["reviewed"].(bson.M)["time"].(time.Time).Unix(), Equals,
-			h.HuddleBSONM["member"].([]interface{})[i].(bson.M)["extension"].([]interface{})[1].(bson.M)["reviewed"].(bson.M)["time"].(time.Time).Unix())
-		h.HuddleBSONM["member"].([]interface{})[i].(bson.M)["extension"].([]interface{})[1].(bson.M)["reviewed"].(bson.M)["time"] =
-			obtained["member"].([]interface{})[i].(bson.M)["extension"].([]interface{})[1].(bson.M)["reviewed"].(bson.M)["time"]
+	for i := 0; i < len(obtained) && i < len(expected); i++ {
+		if obtained[i].ValueDateTime != nil && expected[i].ValueDateTime != nil {
+			c.Assert(obtained[i].ValueDateTime.Time.Unix(), Equals, expected[i].ValueDateTime.Time.Unix())
+			expected[i].ValueDateTime.Time = obtained[i].ValueDateTime.Time
+		}
 	}
-
-	c.Assert(obtained, DeepEquals, h.HuddleBSONM)
-}
-
-func (h *HuddleProfileSuite) TestUnmarshalBSON(c *C) {
-	// First we need to marshal the expected BSON into BSON data
-	data, err := bson.Marshal(h.HuddleBSONM)
-	util.CheckErr(err)
-
-	// Then unmarshal the BSON data into the Huddle struct
-	obtained := &models.Group{}
-	err = bson.Unmarshal(data, &obtained)
-	util.CheckErr(err)
-
-	// Since times don't work in DeepEquals (due to timezoney shenanigans in Go), first check the times directly.
-	// After confirming they represent the same moment, set the expected to the obtained so we pass DeepEquals
-	c.Assert(obtained.Extension[0].ValueDateTime.Time.Unix(), Equals, h.Huddle.Extension[0].ValueDateTime.Time.Unix())
-	h.Huddle.Extension[0].ValueDateTime.Time = obtained.Extension[0].ValueDateTime.Time
-	for i := 0; i < 3; i++ {
-		c.Assert(obtained.Member[i].Extension[1].ValueDateTime.Time.Unix(), Equals, h.Huddle.Member[i].Extension[1].ValueDateTime.Time.Unix())
-		h.Huddle.Member[i].Extension[1].ValueDateTime.Time = obtained.Member[i].Extension[1].ValueDateTime.Time
-	}
-
-	// And now test the whole shebang
-	c.Assert(obtained, DeepEquals, h.Huddle)
-}
-
-func (h *HuddleProfileSuite) TestRoundTripBSON(c *C) {
-	// First we need to marshal it, just so we can get our bytes to unmarshal
-	data, err := bson.Marshal(h.Huddle)
-	util.CheckErr(err)
-
-	// Now we'll try unmarshalling.  If everything is working it should survive the round trip.
-	var obtained models.Group
-	err = bson.Unmarshal(data, &obtained)
-
-	// Since times don't work in DeepEquals (due to timezoney shenanigans in Go), first check the times directly.
-	// After confirming they represent the same moment, set the expected to the obtained so we pass DeepEquals
-	c.Assert(obtained.Extension[0].ValueDateTime.Time.Unix(), Equals, h.Huddle.Extension[0].ValueDateTime.Time.Unix())
-	h.Huddle.Extension[0].ValueDateTime.Time = obtained.Extension[0].ValueDateTime.Time
-	for i := 0; i < 3; i++ {
-		c.Assert(obtained.Member[i].Extension[1].ValueDateTime.Time.Unix(), Equals, h.Huddle.Member[i].Extension[1].ValueDateTime.Time.Unix())
-		h.Huddle.Member[i].Extension[1].ValueDateTime.Time = obtained.Member[i].Extension[1].ValueDateTime.Time
-	}
-
-	c.Assert(&obtained, DeepEquals, h.Huddle)
+	c.Assert(obtained, DeepEquals, expected)
 }
