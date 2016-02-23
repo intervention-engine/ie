@@ -33,18 +33,17 @@ func (n *NotificationCountSuite) SetUpSuite(c *C) {
 }
 
 func (n *NotificationCountSuite) SetUpTest(c *C) {
-	session := n.DBServer.Session()
-	server.Database = session.DB("ie-test")
-	n.NotificationCollection = session.DB("ie-test").C("communicationrequests")
-}
-
-func (n *NotificationCountSuite) TearDownSuite(c *C) {
-	n.DBServer.Stop()
+	server.Database = n.DBServer.Session().DB("ie-test")
+	n.NotificationCollection = server.Database.C("communicationrequests")
 }
 
 func (n *NotificationCountSuite) TearDownTest(c *C) {
 	server.Database.Session.Close()
 	n.DBServer.Wipe()
+}
+
+func (n *NotificationCountSuite) TearDownSuite(c *C) {
+	n.DBServer.Stop()
 }
 
 func (n *NotificationCountSuite) TestEmptyNotificationCount(c *C) {

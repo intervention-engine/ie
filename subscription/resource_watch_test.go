@@ -42,8 +42,7 @@ func (r *ResourceWatchSuite) SetUpSuite(c *C) {
 }
 
 func (r *ResourceWatchSuite) SetUpTest(c *C) {
-	session := r.DBServer.Session()
-	server.Database = session.DB("ie-test")
+	server.Database = r.DBServer.Session().DB("ie-test")
 }
 
 func (r *ResourceWatchSuite) TearDownTest(c *C) {
@@ -52,6 +51,7 @@ func (r *ResourceWatchSuite) TearDownTest(c *C) {
 }
 
 func (r *ResourceWatchSuite) TearDownSuite(c *C) {
+	r.DBServer.Stop()
 	r.Server.Close()
 }
 

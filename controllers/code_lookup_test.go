@@ -32,9 +32,8 @@ func (l *CodeLookupSuite) SetUpSuite(c *C) {
 	util.CheckErr(err)
 	defer file.Close()
 
-	session := l.DBServer.Session()
-	lookupCollection := session.DB("ie-test").C("codelookup")
-	lookupCollection.DropCollection()
+	server.Database = l.DBServer.Session().DB("ie-test")
+	lookupCollection := server.Database.C("codelookup")
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		decoder := json.NewDecoder(strings.NewReader(scanner.Text()))
@@ -44,13 +43,11 @@ func (l *CodeLookupSuite) SetUpSuite(c *C) {
 		lookupCollection.Insert(entry)
 	}
 	util.CheckErr(scanner.Err())
-
-	server.Database = session.DB("ie-test")
 }
 
 func (l *CodeLookupSuite) TearDownSuite(c *C) {
 	server.Database.Session.Close()
-	l.DBServer.Wipe()
+	l.DBServer.Stop()
 }
 
 func (l *CodeLookupSuite) TestCodeLookupByName(c *C) {

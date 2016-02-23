@@ -28,8 +28,7 @@ func (q *QueryTotalsSuite) SetUpSuite(c *C) {
 
 func (q *QueryTotalsSuite) SetUpTest(c *C) {
 	// Setup the database
-	session := q.DBServer.Session()
-	server.Database = session.DB("ie-test")
+	server.Database = q.DBServer.Session().DB("ie-test")
 
 	// Store the bundle
 	bundleFile, err := os.Open("../fixtures/sample-group-data-bundle.json")
