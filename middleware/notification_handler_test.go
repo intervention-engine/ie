@@ -43,9 +43,8 @@ func (n *NotificationHandlerSuite) SetUpSuite(c *C) {
 }
 
 func (n *NotificationHandlerSuite) SetUpTest(c *C) {
-	session := n.DBServer.Session()
-	server.Database = session.DB("ie-test")
-	n.NotificationCollection = session.DB("ie-test").C("communicationrequests")
+	server.Database = n.DBServer.Session().DB("ie-test")
+	n.NotificationCollection = n.DBServer.Session().DB("ie-test").C("communicationrequests")
 }
 
 func (n *NotificationHandlerSuite) TearDownTest(c *C) {

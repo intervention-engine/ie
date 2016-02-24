@@ -38,8 +38,7 @@ func (r *NotifierSuite) SetUpSuite(c *C) {
 }
 
 func (r *NotifierSuite) SetUpTest(c *C) {
-	session := r.DBServer.Session()
-	server.Database = session.DB("ie-test")
+	server.Database = r.DBServer.Session().DB("ie-test")
 }
 
 func (r *NotifierSuite) TearDownTest(c *C) {
@@ -48,6 +47,7 @@ func (r *NotifierSuite) TearDownTest(c *C) {
 }
 
 func (r *NotifierSuite) TearDownSuite(c *C) {
+	r.DBServer.Stop()
 	r.Server.Close()
 }
 
