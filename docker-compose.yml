@@ -1,0 +1,31 @@
+frontend:
+  build: ../frontend
+  ports:
+    - "4200:4200"
+  links:
+    - ie
+ie:
+  build: .
+  ports:
+    - "3001:3001"
+  links:
+    - mongodb:mongo
+    - riskservice:riskservice
+endpoint:
+  build: ../ie-ccda-endpoint
+  ports:
+    - "3000:3000"
+  links:
+    - ie
+mongodb:
+  image: mongo
+  volumes:
+    - /data/db:/data/db
+  ports:
+    - "27017:27017"
+riskservice:
+  build: ../riskservice
+  ports:
+    - "9000:9000"
+  links:
+    - mongodb:mongo
