@@ -35,7 +35,7 @@ func (r *ResourceWatchSuite) SetUpSuite(c *C) {
 	//create and add middleware config to test server
 	mwConfig := map[string][]echo.Middleware{
 		"MedicationStatement": []echo.Middleware{GenerateResourceWatch(r.WorkerChannel)}}
-	server.RegisterRoutes(e, mwConfig)
+	server.RegisterRoutes(e, mwConfig, server.Config{})
 	//create test server
 	r.Server = httptest.NewUnstartedServer(e)
 	r.Server.Start()

@@ -36,7 +36,7 @@ func (n *NotificationHandlerSuite) SetUpSuite(c *C) {
 	//set up routes and middleware
 	e := echo.New()
 
-	server.RegisterRoutes(e, mwConfig)
+	server.RegisterRoutes(e, mwConfig, server.Config{})
 
 	//create test server
 	n.Server = httptest.NewServer(e.Router())

@@ -61,11 +61,13 @@ func main() {
 	}
 
 	s := server.NewServer(mongoHost)
-	s.Echo.Use(middleware.Logger())
 	s.Echo.Use(middleware.Recover())
 
 	closer := controllers.RegisterRoutes(s, selfURL, riskServiceEndpoint)
 	defer closer()
 
-	s.Run()
+	s.Run(server.Config{
+		UseSmartAuth:         false,
+		UseLoggingMiddleware: true,
+	})
 }
