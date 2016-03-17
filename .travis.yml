@@ -1,7 +1,9 @@
 sudo: false
 language: go
 go:
-- 1.5.3
+- 1.6
+script: go test $(go list ./... | grep -v /vendor/)
+install: true
 services:
 - mongodb
 addons:
