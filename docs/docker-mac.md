@@ -111,7 +111,7 @@ You should then be able to run commands like `docker ps` to list running contain
 
 Configure docker-compose.yml
 ============================
-Docker-compose is part of the Docker Toolbox which allows the orchestration of multiple containers, allowing the linking of containers and definition of which ports each container exposes and which ports those are mapped to on the Docker host. Docker-compose is configured in the appropriately named docker-compose.yml file. This file currently exists in the *frontend* repository, though this is likely to change in the near future.
+Docker-compose is part of the Docker Toolbox which allows the orchestration of multiple containers, allowing the linking of containers and definition of which ports each container exposes and which ports those are mapped to on the Docker host. Docker-compose is configured in the appropriately named docker-compose.yml file. This file currently exists in the *ie* repository.
 
 The top level of the YAML in the docker-compose.yml defines each container to be built. The second level tags of the YAML define specific configuration options for specific containers. The only field that needs to be configured before deployment is the `build` field. This field specifies the local directory in which to find the `Dockerfile` with which to build its parent container.
 
@@ -133,7 +133,7 @@ Run docker-compose to Build and Launch the Containers
 =====================================================
 Once your Docker Virtual Machine and docker-compose.yml file are set up and configured, you can use docker-compose to build and launch all of the Intervention Engine containers.
 
-Navigate to the directory where the *frontend* repository was cloned and run the following command:
+Navigate to the directory where the *ie* repository was cloned and run the following command:
 
 ```
 docker-compose up
