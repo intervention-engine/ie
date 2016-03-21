@@ -43,7 +43,9 @@ func HandleResourceUpdate(subUpdateQueue chan<- ResourceUpdateMessage, resource 
 		timestamp = t.Period.Start.Time
 	case *fhirmodels.Bundle:
 		for _, entry := range t.Entry {
-			HandleResourceUpdate(subUpdateQueue, entry.Resource)
+			if entry.Resource != nil {
+				HandleResourceUpdate(subUpdateQueue, entry.Resource)
+			}
 		}
 		return
 	default:
