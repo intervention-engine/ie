@@ -16,9 +16,11 @@ func RegisterRoutes(s *server.FHIRServer, selfURL, riskServiceEndpoint string) f
 	wg.Add(1)
 	go subscription.NotifySubscribers(workerChannel, selfURL, &wg)
 
-	s.AddMiddleware("Group", middleware.AuthHandler())
-
-	s.AddMiddleware("Patient", middleware.AuthHandler())
+	// Turn off auth because risk services need to connect to Patient endpoint now.
+	// This is TEMPORARARY, as there is a story to apply auth to everything and
+	// update risk services and other tools to pass credentials through
+	//s.AddMiddleware("Group", middleware.AuthHandler())
+	//s.AddMiddleware("Patient", middleware.AuthHandler())
 
 	s.AddMiddleware("Condition", watch)
 
