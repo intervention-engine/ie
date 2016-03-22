@@ -27,6 +27,11 @@ var _ = Suite(&NotificationHandlerSuite{})
 func (n *NotificationHandlerSuite) SetUpSuite(c *C) {
 	n.DBServer = &dbtest.DBServer{}
 	n.DBServer.SetPath(c.MkDir())
+}
+
+func (n *NotificationHandlerSuite) SetUpTest(c *C) {
+	server.Database = n.DBServer.Session().DB("ie-test")
+	n.NotificationCollection = n.DBServer.Session().DB("ie-test").C("communicationrequests")
 
 	//register notification handler middleware
 	n.Handler = &NotificationHandler{Registry: &notifications.NotificationDefinitionRegistry{}}
@@ -36,15 +41,10 @@ func (n *NotificationHandlerSuite) SetUpSuite(c *C) {
 	//set up routes and middleware
 	e := echo.New()
 
-	server.RegisterRoutes(e, mwConfig, server.Config{})
+	server.RegisterRoutes(e, mwConfig, server.NewMongoDataAccessLayer(server.Database), server.Config{})
 
 	//create test server
 	n.Server = httptest.NewServer(e.Router())
-}
-
-func (n *NotificationHandlerSuite) SetUpTest(c *C) {
-	server.Database = n.DBServer.Session().DB("ie-test")
-	n.NotificationCollection = n.DBServer.Session().DB("ie-test").C("communicationrequests")
 }
 
 func (n *NotificationHandlerSuite) TearDownTest(c *C) {
@@ -52,11 +52,11 @@ func (n *NotificationHandlerSuite) TearDownTest(c *C) {
 	n.Handler.Registry = &notifications.NotificationDefinitionRegistry{}
 	server.Database.Session.Close()
 	n.DBServer.Wipe()
+	n.Server.Close()
 }
 
 func (n *NotificationHandlerSuite) TearDownSuite(c *C) {
 	n.DBServer.Stop()
-	n.Server.Close()
 }
 
 func (n *NotificationHandlerSuite) TestNotificationTriggers(c *C) {

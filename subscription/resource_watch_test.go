@@ -27,6 +27,10 @@ func (r *ResourceWatchSuite) SetUpSuite(c *C) {
 	//set up dbtest server
 	r.DBServer = &dbtest.DBServer{}
 	r.DBServer.SetPath(c.MkDir())
+}
+
+func (r *ResourceWatchSuite) SetUpTest(c *C) {
+	server.Database = r.DBServer.Session().DB("ie-test")
 
 	//set up empty router
 	e := echo.New()
@@ -35,24 +39,21 @@ func (r *ResourceWatchSuite) SetUpSuite(c *C) {
 	//create and add middleware config to test server
 	mwConfig := map[string][]echo.Middleware{
 		"MedicationStatement": []echo.Middleware{GenerateResourceWatch(r.WorkerChannel)}}
-	server.RegisterRoutes(e, mwConfig, server.Config{})
+	server.RegisterRoutes(e, mwConfig, server.NewMongoDataAccessLayer(server.Database), server.Config{})
 	//create test server
 	r.Server = httptest.NewUnstartedServer(e)
 	r.Server.Start()
 }
 
-func (r *ResourceWatchSuite) SetUpTest(c *C) {
-	server.Database = r.DBServer.Session().DB("ie-test")
-}
-
 func (r *ResourceWatchSuite) TearDownTest(c *C) {
+	close(r.WorkerChannel)
 	server.Database.Session.Close()
 	r.DBServer.Wipe()
+	r.Server.Close()
 }
 
 func (r *ResourceWatchSuite) TearDownSuite(c *C) {
 	r.DBServer.Stop()
-	r.Server.Close()
 }
 
 func (r *ResourceWatchSuite) TestGenerateResourceWatch(c *C) {

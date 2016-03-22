@@ -38,7 +38,7 @@ func (q *QueryTotalsSuite) SetUpTest(c *C) {
 	r.Header.Add("Content-Type", "application/json")
 	rw := httptest.NewRecorder()
 	ctx := echo.NewContext(r, echo.NewResponse(rw, q.Echo), q.Echo)
-	server.BatchHandler(ctx)
+	server.NewBatchController(server.NewMongoDataAccessLayer(server.Database)).Post(ctx)
 	c.Assert(rw.Code, Equals, 200)
 }
 

@@ -149,7 +149,7 @@ func groupListResolver(group fhirmodels.Group) []string {
 }
 
 func PatientListHandler(c *echo.Context) error {
-	groupController := server.ResourceController{Name: "Group"}
+	groupController := server.NewResourceController("Group", server.NewMongoDataAccessLayer(server.Database))
 	group, err := groupController.LoadResource(c)
 	if err != nil {
 		return err
