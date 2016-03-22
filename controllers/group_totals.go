@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -159,6 +160,46 @@ func PatientListHandler(c *echo.Context) error {
 		"patientids": patientIds,
 	}
 	return c.JSON(http.StatusOK, responseMap)
+}
+
+// PatientListMiddleware is a tremendous hack just to get a custom _query=group working quickly so the UI team
+// can use it.  Aside from being ugly and non-general, one major shortcoming is that the navigation links that are
+// returned have the expanded id set rather than the _query and groupId.
+func PatientListMiddleware() echo.MiddlewareFunc {
+	return func(hf echo.HandlerFunc) echo.HandlerFunc {
+		return func(c *echo.Context) error {
+			if c.Request().Method == "GET" && c.Request().URL.Query().Get("_query") == "group" {
+				qv := c.Request().URL.Query()
+
+				// First get the group
+				var groupId bson.ObjectId
+				if bson.IsObjectIdHex(qv.Get("groupId")) {
+					groupId = bson.ObjectIdHex(qv.Get("groupId"))
+				} else {
+					return errors.New("Invalid id")
+				}
+				var group fhirmodels.Group
+				err := server.Database.C("groups").Find(bson.M{"_id": groupId.Hex()}).One(&group)
+				if err != nil {
+					return err
+				}
+				patientIds := groupListResolver(group)
+
+				// Since we're going to pass the context on to another controller, fixup the query, substituting
+				// the _query and groupId with an expanded list of ids
+				qv.Del("_query")
+				qv.Del("groupId")
+				qv.Add("_id", strings.Join(patientIds, ","))
+				c.Request().URL.RawQuery = qv.Encode()
+
+				// Pass it on to the patient controller
+				patientController := server.NewResourceController("Patient", server.NewMongoDataAccessLayer(server.Database))
+				return patientController.IndexHandler(c)
+			}
+
+			return hf(c)
+		}
+	}
 }
 
 func trimSuffix(s, suffix string) string {
