@@ -70,7 +70,7 @@ func turnOnDebugLog() {
 func (m *MongoSearchSuite) TestSearchHuddleByLeader(c *C) {
 	var huddles []*models.Group
 
-	q := search.Query{"Group", "leader=Practitioner/9999999999999999999"}
+	q := search.Query{Resource: "Group", Query: "leader=Practitioner/9999999999999999999"}
 	mq := m.MongoSearcher.CreateQuery(q)
 	err := mq.All(&huddles)
 	util.CheckErr(err)
@@ -83,7 +83,7 @@ func (m *MongoSearchSuite) TestSearchHuddleByLeader(c *C) {
 	assertDeepEqualHuddles(c, huddles[0], expected)
 
 	// This should not match anything
-	q = search.Query{"Group", "leader=Practitioner/8888888888888888888"}
+	q = search.Query{Resource: "Group", Query: "leader=Practitioner/8888888888888888888"}
 	mq = m.MongoSearcher.CreateQuery(q)
 	count, err := mq.Count()
 	util.CheckErr(err)
@@ -91,31 +91,31 @@ func (m *MongoSearchSuite) TestSearchHuddleByLeader(c *C) {
 }
 
 func (m *MongoSearchSuite) TestSearchHuddleByActiveDateTime(c *C) {
-	q := search.Query{"Group", "activedatetime=2016"}
+	q := search.Query{Resource: "Group", Query: "activedatetime=2016"}
 	mq := m.MongoSearcher.CreateQuery(q)
 	count, err := mq.Count()
 	util.CheckErr(err)
 	c.Assert(count, Equals, 1)
 
-	q = search.Query{"Group", "activedatetime=2016-02"}
+	q = search.Query{Resource: "Group", Query: "activedatetime=2016-02"}
 	mq = m.MongoSearcher.CreateQuery(q)
 	count, err = mq.Count()
 	util.CheckErr(err)
 	c.Assert(count, Equals, 1)
 
-	q = search.Query{"Group", "activedatetime=2016-02-02"}
+	q = search.Query{Resource: "Group", Query: "activedatetime=2016-02-02"}
 	mq = m.MongoSearcher.CreateQuery(q)
 	count, err = mq.Count()
 	util.CheckErr(err)
 	c.Assert(count, Equals, 1)
 
-	q = search.Query{"Group", "activedatetime=lt2016-02-15"}
+	q = search.Query{Resource: "Group", Query: "activedatetime=lt2016-02-15"}
 	mq = m.MongoSearcher.CreateQuery(q)
 	count, err = mq.Count()
 	util.CheckErr(err)
 	c.Assert(count, Equals, 1)
 
-	q = search.Query{"Group", "activedatetime=lt2016-02-01"}
+	q = search.Query{Resource: "Group", Query: "activedatetime=lt2016-02-01"}
 	mq = m.MongoSearcher.CreateQuery(q)
 	count, err = mq.Count()
 	util.CheckErr(err)
@@ -123,37 +123,37 @@ func (m *MongoSearchSuite) TestSearchHuddleByActiveDateTime(c *C) {
 }
 
 func (m *MongoSearchSuite) TestSearchHuddleByMemberReviewedDate(c *C) {
-	q := search.Query{"Group", "member-reviewed=2016-02-02"}
+	q := search.Query{Resource: "Group", Query: "member-reviewed=2016-02-02"}
 	mq := m.MongoSearcher.CreateQuery(q)
 	count, err := mq.Count()
 	util.CheckErr(err)
 	c.Assert(count, Equals, 1)
 
-	q = search.Query{"Group", "member-reviewed=2016-02-02T09:08:15Z"}
+	q = search.Query{Resource: "Group", Query: "member-reviewed=2016-02-02T09:08:15Z"}
 	mq = m.MongoSearcher.CreateQuery(q)
 	count, err = mq.Count()
 	util.CheckErr(err)
 	c.Assert(count, Equals, 1)
 
-	q = search.Query{"Group", "member-reviewed=lte2016-02-02T09:20:00Z"}
+	q = search.Query{Resource: "Group", Query: "member-reviewed=lte2016-02-02T09:20:00Z"}
 	mq = m.MongoSearcher.CreateQuery(q)
 	count, err = mq.Count()
 	util.CheckErr(err)
 	c.Assert(count, Equals, 1)
 
-	q = search.Query{"Group", "member-reviewed=gte2016-02-02T09:20:00Z"}
+	q = search.Query{Resource: "Group", Query: "member-reviewed=gte2016-02-02T09:20:00Z"}
 	mq = m.MongoSearcher.CreateQuery(q)
 	count, err = mq.Count()
 	util.CheckErr(err)
 	c.Assert(count, Equals, 1)
 
-	q = search.Query{"Group", "member-reviewed=lt2016-02-02T09:00:00Z"}
+	q = search.Query{Resource: "Group", Query: "member-reviewed=lt2016-02-02T09:00:00Z"}
 	mq = m.MongoSearcher.CreateQuery(q)
 	count, err = mq.Count()
 	util.CheckErr(err)
 	c.Assert(count, Equals, 0)
 
-	q = search.Query{"Group", "member-reviewed=gt2016-02-02T10:00:00Z"}
+	q = search.Query{Resource: "Group", Query: "member-reviewed=gt2016-02-02T10:00:00Z"}
 	mq = m.MongoSearcher.CreateQuery(q)
 	count, err = mq.Count()
 	util.CheckErr(err)

@@ -71,6 +71,7 @@ func (h *HuddleProfileSuite) TestRoundTripJSON(c *C) {
 	// Now we'll try unmarshalling.  If everything is working it should survive the round trip.
 	var obtained models.Group
 	err = json.Unmarshal(data, &obtained)
+	util.CheckErr(err)
 
 	assertDeepEqualHuddles(c, &obtained, h.Huddle)
 }
@@ -122,6 +123,7 @@ func (h *HuddleProfileSuite) TestRoundTripBSON(c *C) {
 	// Now we'll try unmarshalling.  If everything is working it should survive the round trip.
 	var obtained models.Group
 	err = bson.Unmarshal(data, &obtained)
+	util.CheckErr(err)
 
 	assertDeepEqualHuddles(c, &obtained, h.Huddle)
 }

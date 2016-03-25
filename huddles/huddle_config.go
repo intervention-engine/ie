@@ -16,15 +16,15 @@ type HuddleConfig struct {
 
 // ScheduleByRiskConfig represents how a risk assessment should influence huddle population
 type ScheduleByRiskConfig struct {
-	RiskCode         string
+	RiskCode         models.Coding
 	FrequencyConfigs []RiskScoreFrequencyConfig
-	EncounterCodes   []models.Coding
+	//EncounterCodes   []models.Coding
 }
 
 // RiskScoreFrequencyConfig represents the relationship between risk scores and frequency of huddle discussion
 type RiskScoreFrequencyConfig struct {
-	MinScore              int
-	MaxScore              int
+	MinScore              float64
+	MaxScore              float64
 	MinTimeBetweenHuddles time.Duration
 	MaxTimeBetweenHuddles time.Duration
 }
