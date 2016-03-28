@@ -3,6 +3,7 @@ package huddles
 import (
 	"fmt"
 	"math"
+	"sort"
 	"time"
 
 	"gopkg.in/mgo.v2/bson"
@@ -104,7 +105,7 @@ func findExistingHuddle(date time.Time, config *HuddleConfig) *models.Group {
 }
 
 func findEligiblePatientIDsByRiskScore(date time.Time, config *HuddleConfig) ([]string, error) {
-	var patientIDs []string
+	var patientInfos []patientHuddleInfo
 	var firstHuddle *time.Time
 
 	// Now loop through each score-to-frequency configuration, finding the patients that are due.
@@ -114,17 +115,17 @@ func findEligiblePatientIDsByRiskScore(date time.Time, config *HuddleConfig) ([]
 			return nil, err
 		}
 
-		var huddlelessPatients []string
+		var huddlelessPatients []patientHuddleInfo
 		for _, p := range patientsInRange {
 			if p.LastHuddle == nil {
 				// collect the huddleless patients for special processing later
-				huddlelessPatients = append(huddlelessPatients, p.PatientID)
+				huddlelessPatients = append(huddlelessPatients, p)
 				continue
 			}
 			// If the elapsed time is more than the minimum time allowed, then the patient is eligible
 			elapsed := date.Sub(*p.LastHuddle)
 			if elapsed > frequency.MinTimeBetweenHuddles {
-				patientIDs = append(patientIDs, p.PatientID)
+				patientInfos = append(patientInfos, p)
 			}
 		}
 
@@ -154,8 +155,15 @@ func findEligiblePatientIDsByRiskScore(date time.Time, config *HuddleConfig) ([]
 			perHuddle := int(math.Ceil(float64(len(huddlelessPatients)) / float64(numHuddles)))
 
 			// Now add just the number of patients for this huddle
-			patientIDs = append(patientIDs, huddlelessPatients[:perHuddle]...)
+			patientInfos = append(patientInfos, huddlelessPatients[:perHuddle]...)
 		}
+	}
+
+	sort.Sort(byScoreAndHuddle(patientInfos))
+
+	patientIDs := make([]string, len(patientInfos))
+	for i := range patientInfos {
+		patientIDs[i] = patientInfos[i].PatientID
 	}
 	return patientIDs, nil
 }
@@ -175,7 +183,7 @@ func findEligibleCarriedOverPatients(date time.Time, config *HuddleConfig) []str
 // findPatientsInScoreRange finds the patients whose most recent risk assessment for the
 // given method is in the given score range, and gets their huddles too -- so we can see
 // when the most recent huddle was.
-func findPatientsInScoreRange(method models.Coding, min float64, max float64) ([]patientAndLastHuddle, error) {
+func findPatientsInScoreRange(method models.Coding, min float64, max float64) ([]patientHuddleInfo, error) {
 	// For now we go straight to the database rather than using the MongoSearcher for a few reasons:
 	// (1) The RiskAssessment resource doesn't define a search parameter for the score,
 	// (2) using a pipeline and left join will allow us to do this all in one swoop, which isn't
@@ -214,12 +222,14 @@ func findPatientsInScoreRange(method models.Coding, min float64, max float64) ([
 		{"$project": bson.M{
 			"_id":         0,
 			"patientID":   "$subject.referenceid",
+			"scores":      "$prediction.probabilityDecimal",
 			"huddleDates": "$_groups.extension.activeDateTime.time",
 		}},
 	}
 
 	var results []struct {
 		PatientID   string         `bson:"patientID"`
+		Scores      []float64      `bson:"scores"`
 		HuddleDates [][]*time.Time `bson:"huddleDates"`
 	}
 	if err := server.Database.C("riskassessments").Pipe(pipeline).All(&results); err != nil {
@@ -228,9 +238,12 @@ func findPatientsInScoreRange(method models.Coding, min float64, max float64) ([
 
 	// Take the raw results from the mgo query and translate them into a list of
 	// patients and their last huddle dates
-	patientsInScoreRange := make([]patientAndLastHuddle, len(results))
+	patientsInScoreRange := make([]patientHuddleInfo, len(results))
 	for i := range results {
-		p := patientAndLastHuddle{PatientID: results[i].PatientID}
+		p := patientHuddleInfo{PatientID: results[i].PatientID}
+		if len(results[i].Scores) > 0 {
+			p.Score = results[i].Scores[0]
+		}
 		for _, t := range results[i].HuddleDates {
 			for _, t2 := range t {
 				if p.LastHuddle == nil || t2.After(*p.LastHuddle) {
@@ -246,9 +259,33 @@ func findPatientsInScoreRange(method models.Coding, min float64, max float64) ([
 
 // patientAndLastHuddle is a simple container for holding the info we need to schedule patients
 // to huddles based on risk scores
-type patientAndLastHuddle struct {
+type patientHuddleInfo struct {
 	PatientID  string
+	Score      float64
 	LastHuddle *time.Time
+}
+
+// Support sorting by score and last huddle.  Higher scores go first.  When scores are equal,
+// then the patient who has had the longest time since the last huddle (or no huddle at all)
+// goes first.
+type byScoreAndHuddle []patientHuddleInfo
+
+func (s byScoreAndHuddle) Len() int {
+	return len(s)
+}
+func (s byScoreAndHuddle) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+func (s byScoreAndHuddle) Less(i, j int) bool {
+	if s[i].Score == s[j].Score {
+		if s[i].LastHuddle == nil || s[j].LastHuddle == nil {
+			return s[j].LastHuddle != nil
+		}
+		return s[i].LastHuddle.Before(*s[j].LastHuddle)
+	}
+
+	// Don't get tricked.  A higher score means you are earlier in the sort order.
+	return s[i].Score > s[j].Score
 }
 
 // findFirstHuddleDate returns the date of the first huddle for this leader.  If no

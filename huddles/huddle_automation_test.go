@@ -87,27 +87,27 @@ func (suite *HuddleAutomationSuite) TestFindEligiblePatientIDsByRiskScore() {
 	assert := assert.New(suite.T())
 	require := require.New(suite.T())
 
-	// PATIENT                                        // FREQ.   | LAST HUDDLE        | DUE BY
-	suite.storePatientAndScores(bsonID(1), 1, 1, 1)   // never   |                    |
-	suite.storePatientAndScores(bsonID(2), 1, 2, 2)   // never   |                    |
-	suite.storePatientAndScores(bsonID(3), 2, 1, 1)   // never   |                    |
-	suite.storePatientAndScores(bsonID(4), 1, 2, 1)   // never   |                    |
-	suite.storePatientAndScores(bsonID(5), 2, 3, 2)   // never   | 7 weeks ago (2/01) |
-	suite.storePatientAndScores(bsonID(6), 1, 2, 3)   // 4 weeks | 1 week ago  (3/14) | 4/11
-	suite.storePatientAndScores(bsonID(7), 6, 6, 5)   // 4 weeks | 7 weeks ago (2/01) | 3/21 (overdue)
-	suite.storePatientAndScores(bsonID(8), 5, 5, 4)   // 4 weeks |                    | 3/21 (overdue)
-	suite.storePatientAndScores(bsonID(9), 3, 3, 3)   // 4 weeks | 2 weeks ago (3/07) | 4/04
-	suite.storePatientAndScores(bsonID(10), 4, 5, 4)  // 4 weeks | 4 weeks ago (2/22) | 3/21
-	suite.storePatientAndScores(bsonID(11), 5, 4, 7)  // 2 weeks | 1 week ago  (3/14) | 3/28
-	suite.storePatientAndScores(bsonID(12), 5, 6, 6)  // 2 weeks | 3 weeks ago (2/29) | 3/21 (overdue)
-	suite.storePatientAndScores(bsonID(13), 6, 7, 6)  // 2 weeks |                    | 3/21 (overdue)
-	suite.storePatientAndScores(bsonID(14), 8, 8, 7)  // 2 weeks | 1 week ago  (3/14) | 3/28
-	suite.storePatientAndScores(bsonID(15), 5, 6, 7)  // 2 weeks | 2 weeks ago (3/07) | 3/21
-	suite.storePatientAndScores(bsonID(16), 9, 9, 9)  // 1 week  |                    | 3/21 (overdue)
-	suite.storePatientAndScores(bsonID(17), 8, 9, 10) // 1 week  | 1 week ago  (3/14) | 3/21
-	suite.storePatientAndScores(bsonID(18), 7, 7, 8)  // 1 week  | 2 weeks ago (3/07) | 3/21
-	suite.storePatientAndScores(bsonID(19), 9, 9, 9)  // 1 week  | 1 week ago  (3/14) | 3/21
-	suite.storePatientAndScores(bsonID(20), 9, 9, 10) // 1 week  | 1 week ago  (3/14) | 3/21
+	// PATIENT                                        // Hex | FREQ.   | LAST HUDDLE        | DUE BY
+	suite.storePatientAndScores(bsonID(1), 1, 1, 1)   // 01  | never   |                    |
+	suite.storePatientAndScores(bsonID(2), 1, 2, 2)   // 02  | never   |                    |
+	suite.storePatientAndScores(bsonID(3), 2, 1, 1)   // 03  | never   |                    |
+	suite.storePatientAndScores(bsonID(4), 1, 2, 1)   // 04  | never   |                    |
+	suite.storePatientAndScores(bsonID(5), 2, 3, 2)   // 05  | never   | 7 weeks ago (2/01) |
+	suite.storePatientAndScores(bsonID(6), 1, 2, 3)   // 06  | 4 weeks | 1 week ago  (3/14) | 4/11
+	suite.storePatientAndScores(bsonID(7), 6, 6, 5)   // 07  | 4 weeks | 7 weeks ago (2/01) | 3/21 (overdue)
+	suite.storePatientAndScores(bsonID(8), 5, 5, 4)   // 08  | 4 weeks |                    | 3/21 (overdue)
+	suite.storePatientAndScores(bsonID(9), 3, 3, 3)   // 09  | 4 weeks | 2 weeks ago (3/07) | 4/04
+	suite.storePatientAndScores(bsonID(10), 4, 5, 4)  // 0a  | 4 weeks | 4 weeks ago (2/22) | 3/21
+	suite.storePatientAndScores(bsonID(11), 5, 4, 6)  // 0b  | 2 weeks | 1 week ago  (3/14) | 3/28
+	suite.storePatientAndScores(bsonID(12), 5, 6, 6)  // 0c  | 2 weeks | 3 weeks ago (2/29) | 3/21 (overdue)
+	suite.storePatientAndScores(bsonID(13), 6, 7, 6)  // 0d  | 2 weeks |                    | 3/21 (overdue)
+	suite.storePatientAndScores(bsonID(14), 8, 8, 7)  // 0e  | 2 weeks | 1 week ago  (3/14) | 3/28
+	suite.storePatientAndScores(bsonID(15), 5, 6, 7)  // 0f  | 2 weeks | 2 weeks ago (3/07) | 3/21
+	suite.storePatientAndScores(bsonID(16), 9, 9, 9)  // 10  | 1 week  |                    | 3/21 (overdue)
+	suite.storePatientAndScores(bsonID(17), 8, 9, 8)  // 11  | 1 week  | 1 week ago  (3/14) | 3/21
+	suite.storePatientAndScores(bsonID(18), 7, 7, 8)  // 12  | 1 week  | 2 weeks ago (3/07) | 3/21
+	suite.storePatientAndScores(bsonID(19), 9, 9, 9)  // 13  | 1 week  | 1 week ago  (3/14) | 3/21
+	suite.storePatientAndScores(bsonID(20), 9, 9, 10) // 14  | 1 week  | 1 week ago  (3/14) | 3/21
 
 	config := createHuddleConfig()
 
@@ -145,6 +145,12 @@ func (suite *HuddleAutomationSuite) TestFindEligiblePatientIDsByRiskScore() {
 	assert.Contains(eligibles, bsonID(18))
 	assert.Contains(eligibles, bsonID(19))
 	assert.Contains(eligibles, bsonID(20))
+
+	// Go ahead and check the order.  Should be highest scores first -- with the tie breaker being how long its been
+	// since the patient's last huddle.  No previous huddle at all gets highest priority in a tie-breaker.
+	assert.Equal([]string{bsonID(20), bsonID(16), bsonID(19), bsonID(18), bsonID(17), bsonID(15), bsonID(13),
+		bsonID(12), bsonID(7), bsonID(8), bsonID(10)}, eligibles)
+
 }
 
 func createHuddleConfig() *HuddleConfig {
