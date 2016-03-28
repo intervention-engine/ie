@@ -18,8 +18,12 @@ import (
 // - Risk scores (which determine frequency)
 // - Recent clinical events (such as ED visit)
 // - "Leftovers" from previous huddle
-func CreateAutoPopulatedHuddle(date time.Time, config *HuddleConfig) *models.Group {
-	group := findExistingHuddle(date, config)
+func CreateAutoPopulatedHuddle(date time.Time, config *HuddleConfig) (*models.Group, error) {
+	group, err := findExistingHuddle(date, config)
+	if err != nil {
+		return nil, err
+	}
+
 	if group == nil {
 		tru := true
 		group = &models.Group{
@@ -58,7 +62,33 @@ func CreateAutoPopulatedHuddle(date time.Time, config *HuddleConfig) *models.Gro
 		}
 	}
 
-	riskPatientIDs, _ := findEligiblePatientIDsByRiskScore(date, config)
+	// First find the manually added patients (in case this was existing) and remember them
+	var manuallyAddedPatientIDs []string
+	for i := range group.Member {
+		for j := range group.Member[i].Extension {
+			ext := group.Member[i].Extension[j]
+			if ext.Url == "http://interventionengine.org/fhir/extension/group/member/reason" &&
+				ext.ValueCodeableConcept != nil &&
+				len(ext.ValueCodeableConcept.Coding) > 0 &&
+				ext.ValueCodeableConcept.Coding[0].Code == ManualAdditionReason.Coding[0].Code {
+				manuallyAddedPatientIDs = append(manuallyAddedPatientIDs, group.Member[i].Entity.ReferencedID)
+				break
+			}
+		}
+	}
+
+	// Clear the huddle members list since we'll be repopulating it
+	group.Member = nil
+
+	// Start repopulating by adding back manually added patients (if applicable)
+	for _, pid := range manuallyAddedPatientIDs {
+		addPatientToHuddle(group, pid, &ManualAdditionReason)
+	}
+
+	riskPatientIDs, err := findEligiblePatientIDsByRiskScore(date, config)
+	if err != nil {
+		return nil, err
+	}
 	for _, pid := range riskPatientIDs {
 		addPatientToHuddle(group, pid, &RiskScoreReason)
 	}
@@ -71,7 +101,7 @@ func CreateAutoPopulatedHuddle(date time.Time, config *HuddleConfig) *models.Gro
 		addPatientToHuddle(group, pid, &CarriedOverReason)
 	}
 
-	return group
+	return group, nil
 }
 
 // RiskScoreReason indicates that the patient was added to the huddle because his/her risk score warrants discussion
@@ -100,8 +130,24 @@ var CarriedOverReason = models.CodeableConcept{
 	Text: "Carried Over From Last Huddle",
 }
 
-func findExistingHuddle(date time.Time, config *HuddleConfig) *models.Group {
-	return nil
+// ManualAdditionReason indicates that the patient was manually added to the huddle by a clinician.
+var ManualAdditionReason = models.CodeableConcept{
+	Coding: []models.Coding{
+		{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "MANUAL_ADDITION"},
+	},
+	Text: "Manually Added",
+}
+
+func findExistingHuddle(date time.Time, config *HuddleConfig) (*models.Group, error) {
+	searcher := search.NewMongoSearcher(server.Database)
+	queryStr := fmt.Sprintf("leader=Practitioner/%s&activedatetime=%s&_sort=activedatetime&_count=1", config.LeaderID, date.Format("2006-01-02T-07:00"))
+	var huddles []*models.Group
+	if err := searcher.CreateQuery(search.Query{Resource: "Group", Query: queryStr}).All(&huddles); err != nil {
+		return nil, err
+	} else if len(huddles) > 0 {
+		return huddles[0], nil
+	}
+	return nil, nil
 }
 
 func findEligiblePatientIDsByRiskScore(date time.Time, config *HuddleConfig) ([]string, error) {
@@ -110,7 +156,7 @@ func findEligiblePatientIDsByRiskScore(date time.Time, config *HuddleConfig) ([]
 
 	// Now loop through each score-to-frequency configuration, finding the patients that are due.
 	for _, frequency := range config.RiskConfig.FrequencyConfigs {
-		patientsInRange, err := findPatientsInScoreRange(config.RiskConfig.RiskCode, frequency.MinScore, frequency.MaxScore)
+		patientsInRange, err := findPatientsInScoreRange(date, config.RiskConfig.RiskCode, frequency.MinScore, frequency.MaxScore)
 		if err != nil {
 			return nil, err
 		}
@@ -183,7 +229,7 @@ func findEligibleCarriedOverPatients(date time.Time, config *HuddleConfig) []str
 // findPatientsInScoreRange finds the patients whose most recent risk assessment for the
 // given method is in the given score range, and gets their huddles too -- so we can see
 // when the most recent huddle was.
-func findPatientsInScoreRange(method models.Coding, min float64, max float64) ([]patientHuddleInfo, error) {
+func findPatientsInScoreRange(huddleDate time.Time, method models.Coding, min float64, max float64) ([]patientHuddleInfo, error) {
 	// For now we go straight to the database rather than using the MongoSearcher for a few reasons:
 	// (1) The RiskAssessment resource doesn't define a search parameter for the score,
 	// (2) using a pipeline and left join will allow us to do this all in one swoop, which isn't
@@ -246,7 +292,7 @@ func findPatientsInScoreRange(method models.Coding, min float64, max float64) ([
 		}
 		for _, t := range results[i].HuddleDates {
 			for _, t2 := range t {
-				if p.LastHuddle == nil || t2.After(*p.LastHuddle) {
+				if t2.Before(huddleDate) && (p.LastHuddle == nil || t2.After(*p.LastHuddle)) {
 					p.LastHuddle = t2
 				}
 			}
