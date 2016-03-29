@@ -198,9 +198,9 @@ func findEligiblePatientIDsByRiskScore(date time.Time, config *HuddleConfig) ([]
 				huddlelessPatients = append(huddlelessPatients, p)
 				continue
 			}
-			// If the elapsed time is more than the minimum time allowed, then the patient is eligible
-			elapsed := date.Sub(*p.LastHuddle)
-			if elapsed > frequency.MinTimeBetweenHuddles {
+			// Find the earliest allowed next huddle date and see if this huddle on or after it
+			earliestNext := p.LastHuddle.AddDate(0, 0, frequency.MinDaysBetweenHuddles)
+			if !date.Before(earliestNext) {
 				patientInfos = append(patientInfos, p)
 			}
 		}
@@ -222,7 +222,7 @@ func findEligiblePatientIDsByRiskScore(date time.Time, config *HuddleConfig) ([]
 			}
 
 			// Find the last possible date that is ok for the patients to be discussed
-			lastDate := firstHuddle.Add(frequency.MaxTimeBetweenHuddles)
+			lastDate := firstHuddle.AddDate(0, 0, frequency.MaxDaysBetweenHuddles)
 
 			// Now figure out how many huddles we should distribute the patients over.
 			numHuddles := calculateNumberOfHuddles(date, lastDate, config)

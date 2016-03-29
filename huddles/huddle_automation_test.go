@@ -300,25 +300,24 @@ func createHuddleConfig() *HuddleConfig {
 	c.LookAhead = 4
 	c.RiskConfig = new(ScheduleByRiskConfig)
 	c.RiskConfig.RiskMethod = models.Coding{System: "http://interventionengine.org/risk-assessments", Code: "Test"}
-	day := 24 * time.Hour
 	c.RiskConfig.FrequencyConfigs = []RiskScoreFrequencyConfig{
 		{
 			MinScore:              8,
 			MaxScore:              10,
-			MinTimeBetweenHuddles: 5 * day,
-			MaxTimeBetweenHuddles: 7 * day,
+			MinDaysBetweenHuddles: 5,
+			MaxDaysBetweenHuddles: 7,
 		},
 		{
 			MinScore:              6,
 			MaxScore:              7,
-			MinTimeBetweenHuddles: 12 * day,
-			MaxTimeBetweenHuddles: 14 * day,
+			MinDaysBetweenHuddles: 12,
+			MaxDaysBetweenHuddles: 14,
 		},
 		{
 			MinScore:              3,
 			MaxScore:              5,
-			MinTimeBetweenHuddles: 25 * day,
-			MaxTimeBetweenHuddles: 28 * day,
+			MinDaysBetweenHuddles: 25,
+			MaxDaysBetweenHuddles: 28,
 		},
 	}
 	return c

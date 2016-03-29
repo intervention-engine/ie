@@ -38,6 +38,6 @@ type ScheduleByRiskConfig struct {
 type RiskScoreFrequencyConfig struct {
 	MinScore              float64
 	MaxScore              float64
-	MinTimeBetweenHuddles time.Duration
-	MaxTimeBetweenHuddles time.Duration
+	MinDaysBetweenHuddles int
+	MaxDaysBetweenHuddles int
 }
