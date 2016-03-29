@@ -105,49 +105,17 @@ func (suite *HuddleAutomationSuite) TestAutoPopulateNewHuddle() {
 
 	group, err := CreateAutoPopulatedHuddle(time.Date(2016, time.March, 21, 9, 0, 0, 0, time.UTC), config)
 	require.NoError(err)
-	assert.Contains(group.Meta.Profile, "http://interventionengine.org/fhir/profile/huddle")
-	assert.Contains(group.Extension, models.Extension{
-		Url:           "http://interventionengine.org/fhir/extension/group/activeDateTime",
-		ValueDateTime: &models.FHIRDateTime{Time: time.Date(2016, time.March, 21, 9, 0, 0, 0, time.UTC), Precision: models.Precision(models.Date)},
-	})
-	assert.Contains(group.Extension, models.Extension{
-		Url: "http://interventionengine.org/fhir/extension/group/leader",
-		ValueReference: &models.Reference{
-			Reference:    "Practitioner/123",
-			ReferencedID: "123",
-			Type:         "Practitioner",
-			External:     new(bool),
-		},
-	})
-	assert.Equal("person", group.Type)
-	assert.True(*group.Actual)
-	assert.Equal(&models.CodeableConcept{
-		Coding: []models.Coding{
-			{System: "http://interventionengine.org/fhir/cs/huddle", Code: "HUDDLE"},
-		},
-		Text: "Huddle",
-	}, group.Code)
-	assert.Equal("Test Huddle Config", group.Name)
+	ha := NewHuddleAssertions(group, assert)
+	ha.AssertValidHuddleProfile()
+	ha.AssertActiveDateTimeEqual(time.Date(2016, time.March, 21, 9, 0, 0, 0, time.UTC))
+	ha.AssertLeaderIdEqual("123")
+	ha.AssertNameEqual("Test Huddle Config")
 	assert.Len(group.Member, 11)
 
 	expectedIDs := []string{bsonID(20), bsonID(16), bsonID(19), bsonID(18), bsonID(17), bsonID(15), bsonID(13),
 		bsonID(12), bsonID(7), bsonID(8), bsonID(10)}
 	for i, expectedID := range expectedIDs {
-		assert.Contains(group.Member[i].Extension, models.Extension{
-			Url: "http://interventionengine.org/fhir/extension/group/member/reason",
-			ValueCodeableConcept: &models.CodeableConcept{
-				Coding: []models.Coding{
-					{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "RISK_SCORE"},
-				},
-				Text: "Risk Score Warrants Discussion",
-			},
-		})
-		assert.Equal(&models.Reference{
-			Reference:    "Patient/" + expectedID,
-			ReferencedID: expectedID,
-			Type:         "Patient",
-			External:     new(bool),
-		}, group.Member[i].Entity)
+		ha.AssertMember(i, expectedID, &RiskScoreReason)
 	}
 }
 
@@ -170,54 +138,66 @@ func (suite *HuddleAutomationSuite) TestAutoPopulateExistingHuddle() {
 
 	group, err := CreateAutoPopulatedHuddle(time.Date(2016, time.March, 21, 0, 0, 0, 0, time.Local), config)
 	require.NoError(err)
-	assert.Contains(group.Meta.Profile, "http://interventionengine.org/fhir/profile/huddle")
 
-	assert.Contains(group.Extension, models.Extension{
-		Url:           "http://interventionengine.org/fhir/extension/group/activeDateTime",
-		ValueDateTime: &models.FHIRDateTime{Time: time.Date(2016, time.March, 21, 0, 0, 0, 0, time.Local), Precision: models.Precision(models.Date)},
-	})
-	assert.Contains(group.Extension, models.Extension{
-		Url: "http://interventionengine.org/fhir/extension/group/leader",
-		ValueReference: &models.Reference{
-			Reference:    "Practitioner/123",
-			ReferencedID: "123",
-			Type:         "Practitioner",
-			External:     new(bool),
-		},
-	})
-	assert.Equal("person", group.Type)
-	assert.True(*group.Actual)
-	assert.Equal(&models.CodeableConcept{
-		Coding: []models.Coding{
-			{System: "http://interventionengine.org/fhir/cs/huddle", Code: "HUDDLE"},
-		},
-		Text: "Huddle",
-	}, group.Code)
-	assert.True(strings.HasPrefix(group.Name, "Test Huddle"))
-	require.Len(group.Member, 3)
+	ha := NewHuddleAssertions(group, assert)
+	ha.AssertValidHuddleProfile()
+	ha.AssertActiveDateTimeEqual(time.Date(2016, time.March, 21, 0, 0, 0, 0, time.Local))
+	ha.AssertLeaderIdEqual("123")
+	assert.True(strings.HasPrefix(ha.Name, "Test Huddle"))
 
-	expectedIDs := []string{bsonID(1), bsonID(4), bsonID(2)}
-	for i, expectedID := range expectedIDs {
-		if assert.Len(group.Member[i].Extension, 1) {
-			assert.Equal("http://interventionengine.org/fhir/extension/group/member/reason", group.Member[i].Extension[0].Url)
-			if assert.NotNil(group.Member[i].Extension[0].ValueCodeableConcept) {
-				assert.Equal("http://interventionengine.org/fhir/cs/huddle-member-reason", group.Member[i].Extension[0].ValueCodeableConcept.Coding[0].System)
-				if expectedID == bsonID(1) {
-					assert.Equal("MANUAL_ADDITION", group.Member[i].Extension[0].ValueCodeableConcept.Coding[0].Code)
-					assert.Equal("Manually Added", group.Member[i].Extension[0].ValueCodeableConcept.Text)
-				} else {
-					assert.Equal("RISK_SCORE", group.Member[i].Extension[0].ValueCodeableConcept.Coding[0].Code)
-					assert.Equal("Risk Score Warrants Discussion", group.Member[i].Extension[0].ValueCodeableConcept.Text)
-				}
-			}
-		}
-		assert.Equal(&models.Reference{
-			Reference:    "Patient/" + expectedID,
-			ReferencedID: expectedID,
-			Type:         "Patient",
-			External:     new(bool),
-		}, group.Member[i].Entity)
+	require.Len(ha.Member, 3)
+	ha.AssertMember(0, bsonID(1), &ManualAdditionReason)
+	ha.AssertMember(1, bsonID(4), &RiskScoreReason)
+	ha.AssertMember(2, bsonID(2), &RiskScoreReason)
+}
+
+func (suite *HuddleAutomationSuite) TestAutoScheduleHuddles() {
+	assert := assert.New(suite.T())
+	require := require.New(suite.T())
+
+	suite.storePatientAndScores(bsonID(1), 5, 4, 7)  // every 2 weeks
+	suite.storePatientAndScores(bsonID(2), 1, 1, 1)  // never
+	suite.storePatientAndScores(bsonID(3), 1, 2, 3)  // every 4 weeks
+	suite.storePatientAndScores(bsonID(4), 9, 9, 10) // every week
+	suite.storePatientAndScores(bsonID(5), 7, 6, 5)  // every 4 weeks
+
+	config := createHuddleConfig()
+	huddles, err := AutoScheduleHuddles(config)
+	require.NoError(err)
+	assert.Len(huddles, 4)
+	for i := range huddles {
+		ha := NewHuddleAssertions(huddles[i], assert)
+		ha.AssertValidHuddleProfile()
+		ha.AssertLeaderIdEqual("123")
+		ha.AssertNameEqual("Test Huddle Config")
 	}
+
+	// Find next Monday @ 10am to start checking dates
+	t := time.Now()
+	for ; t.Weekday() != time.Monday; t = t.AddDate(0, 0, 1) {
+	}
+	t = time.Date(t.Year(), t.Month(), t.Day(), 10, 0, 0, 0, t.Location())
+	// Now check each one individually
+	ha := NewHuddleAssertions(huddles[0], assert)
+	ha.AssertActiveDateTimeEqual(t)
+	ha.AssertMemberIDs(bsonID(4), bsonID(1), bsonID(5))
+
+	ha = NewHuddleAssertions(huddles[1], assert)
+	ha.AssertActiveDateTimeEqual(t.AddDate(0, 0, 7))
+	ha.AssertMemberIDs(bsonID(4), bsonID(3))
+
+	ha = NewHuddleAssertions(huddles[2], assert)
+	ha.AssertActiveDateTimeEqual(t.AddDate(0, 0, 14))
+	ha.AssertMemberIDs(bsonID(4), bsonID(1))
+
+	ha = NewHuddleAssertions(huddles[3], assert)
+	ha.AssertActiveDateTimeEqual(t.AddDate(0, 0, 21))
+	ha.AssertMemberIDs(bsonID(4))
+
+	// Now just make sure they were really stored to the db
+	var storedHuddles []*models.Group
+	server.Database.C("groups").Find(bson.M{}).Sort("extension.activeDateTime").All(&storedHuddles)
+	assert.Equal(huddles, storedHuddles, "Stored huddles should match returned huddles")
 }
 
 func (suite *HuddleAutomationSuite) TestFindEligiblePatientIDsByRiskScoreWithNoPreviousHuddles() {
@@ -317,8 +297,9 @@ func createHuddleConfig() *HuddleConfig {
 	c.Name = "Test Huddle Config"
 	c.LeaderID = "123"
 	c.Days = []time.Weekday{time.Monday}
+	c.LookAhead = 4
 	c.RiskConfig = new(ScheduleByRiskConfig)
-	c.RiskConfig.RiskCode = models.Coding{System: "http://interventionengine.org/risk-assessments", Code: "Test"}
+	c.RiskConfig.RiskMethod = models.Coding{System: "http://interventionengine.org/risk-assessments", Code: "Test"}
 	day := 24 * time.Hour
 	c.RiskConfig.FrequencyConfigs = []RiskScoreFrequencyConfig{
 		{
@@ -458,4 +439,126 @@ func (suite *HuddleAutomationSuite) storeHuddle(date time.Time, leaderID string,
 
 func bsonID(id int) string {
 	return fmt.Sprintf("%024x", id)
+}
+
+type HuddleAssertions struct {
+	*models.Group
+	assert *assert.Assertions
+}
+
+func NewHuddleAssertions(group *models.Group, assertions *assert.Assertions) *HuddleAssertions {
+	return &HuddleAssertions{
+		Group:  group,
+		assert: assertions,
+	}
+}
+
+func (h *HuddleAssertions) AssertValidHuddleProfile() bool {
+	status := true
+
+	status = status && h.assert.Contains(h.Meta.Profile, "http://interventionengine.org/fhir/profile/huddle")
+	var foundActiveDateTime, foundLeader bool
+	for _, ext := range h.Extension {
+		switch ext.Url {
+		case "http://interventionengine.org/fhir/extension/group/activeDateTime":
+			status = status && h.assert.NotNil(ext.ValueDateTime)
+			foundActiveDateTime = true
+		case "http://interventionengine.org/fhir/extension/group/leader":
+			status = status && h.assert.NotNil(ext.ValueReference)
+			status = status && h.assert.Equal("Practitioner", ext.ValueReference.Type)
+			status = status && h.assert.False(*ext.ValueReference.External)
+			foundLeader = true
+		}
+	}
+	status = status && h.assert.True(foundActiveDateTime, "activeDateTime extension should be populated")
+	status = status && h.assert.True(foundLeader, "leader extension should be populated")
+	status = status && h.assert.Equal("person", h.Type)
+	status = status && h.assert.True(*h.Actual)
+	status = status && h.assert.Equal(&models.CodeableConcept{
+		Coding: []models.Coding{
+			{System: "http://interventionengine.org/fhir/cs/huddle", Code: "HUDDLE"},
+		},
+		Text: "Huddle",
+	}, h.Code)
+	status = status && h.assert.NotEmpty(h.Name)
+	for _, mem := range h.Member {
+		var foundReason bool
+		for _, ext := range mem.Extension {
+			if ext.Url == "http://interventionengine.org/fhir/extension/group/member/reason" {
+				status = status && h.assert.NotNil(ext.ValueCodeableConcept)
+				status = status && h.assert.Len(ext.ValueCodeableConcept.Coding, 1)
+				status = status && h.assert.Equal("http://interventionengine.org/fhir/cs/huddle-member-reason", ext.ValueCodeableConcept.Coding[0].System)
+				status = status && h.assert.NotEmpty(ext.ValueCodeableConcept.Text)
+				foundReason = true
+			}
+		}
+		status = status && h.assert.True(foundReason, "Member reason extension should be populated")
+		status = status && h.assert.NotNil(mem.Entity)
+		status = status && h.assert.Equal("Patient", mem.Entity.Type)
+		status = status && h.assert.False(*mem.Entity.External)
+	}
+
+	return status
+}
+
+func (h *HuddleAssertions) AssertActiveDateTimeEqual(date time.Time) bool {
+	for i := range h.Extension {
+		if h.Extension[i].Url == "http://interventionengine.org/fhir/extension/group/activeDateTime" {
+			return h.assert.True(h.Extension[i].ValueDateTime.Time.Equal(date), "Expected <", date, ">, Got <", h.Extension[i].ValueDateTime.Time, ">")
+		}
+	}
+	return h.assert.Fail("Expected ActiveDateTime but did not find one")
+}
+
+func (h *HuddleAssertions) AssertLeaderIdEqual(leaderID string) bool {
+	for i := range h.Extension {
+		if h.Extension[i].Url == "http://interventionengine.org/fhir/extension/group/leader" {
+			return h.assert.Equal(&models.Reference{
+				Reference:    "Practitioner/" + leaderID,
+				ReferencedID: leaderID,
+				Type:         "Practitioner",
+				External:     new(bool),
+			}, h.Extension[i].ValueReference)
+		}
+	}
+	return h.assert.Fail("Expected Leader but did not find one")
+}
+
+func (h *HuddleAssertions) AssertNameEqual(name string) bool {
+	return h.assert.Equal(name, h.Name)
+}
+
+func (h *HuddleAssertions) AssertMember(i int, id string, reason *models.CodeableConcept) bool {
+	status := h.assert.True(i < len(h.Member), "Not enough members: ", len(h.Member))
+	if !status {
+		return status
+	}
+	status = status && h.assert.Equal(&models.Reference{
+		Reference:    "Patient/" + id,
+		ReferencedID: id,
+		Type:         "Patient",
+		External:     new(bool),
+	}, h.Member[i].Entity)
+	if reason != nil {
+		status = status && h.assert.Len(h.Member[i].Extension, 1)
+		status = status && h.assert.Equal(h.Member[i].Extension[0], models.Extension{
+			Url:                  "http://interventionengine.org/fhir/extension/group/member/reason",
+			ValueCodeableConcept: reason,
+		})
+	}
+	return status
+}
+
+func (h *HuddleAssertions) AssertMemberIDs(id ...string) bool {
+	h.assert.Len(h.Member, len(id))
+	status := true
+	for i := range h.Member {
+		status = status && h.assert.Equal(&models.Reference{
+			Reference:    "Patient/" + id[i],
+			ReferencedID: id[i],
+			Type:         "Patient",
+			External:     new(bool),
+		}, h.Member[i].Entity)
+	}
+	return status
 }

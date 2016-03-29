@@ -13,6 +13,35 @@ import (
 	"github.com/intervention-engine/fhir/server"
 )
 
+// AutoScheduleHuddles schedules future huddles based on the passed in config.  It will schedule out the number
+// of future huddles as specified in the config.LookAhead.
+func AutoScheduleHuddles(config *HuddleConfig) ([]*models.Group, error) {
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day(), 10, 0, 0, 0, time.Local)
+
+	// Step through one day at a time, starting today, until we have scheduled the requested number of huddles
+	huddles := make([]*models.Group, 0, config.LookAhead)
+	for t := start; len(huddles) < config.LookAhead; t = t.AddDate(0, 0, 1) {
+		if !config.IsHuddleDay(t) {
+			continue
+		}
+
+		// Create the huddle
+		huddle, err := CreateAutoPopulatedHuddle(t, config)
+		if err != nil {
+			return nil, err
+		}
+
+		// Store the huddle
+		if _, err := server.Database.C("groups").UpsertId(huddle.Id, huddle); err != nil {
+			return huddles, err
+		}
+		huddles = append(huddles, huddle)
+	}
+
+	return huddles, nil
+}
+
 // CreateAutoPopulatedHuddle returns a Group resource representing the patients that should be automatically considered
 // for a huddle for the specific date.  Currently it is based on three criteria:
 // - Risk scores (which determine frequency)
@@ -29,6 +58,7 @@ func CreateAutoPopulatedHuddle(date time.Time, config *HuddleConfig) (*models.Gr
 		group = &models.Group{
 			DomainResource: models.DomainResource{
 				Resource: models.Resource{
+					Id:           bson.NewObjectId().Hex(),
 					ResourceType: "Group",
 					Meta: &models.Meta{
 						Profile: []string{"http://interventionengine.org/fhir/profile/huddle"},
@@ -156,7 +186,7 @@ func findEligiblePatientIDsByRiskScore(date time.Time, config *HuddleConfig) ([]
 
 	// Now loop through each score-to-frequency configuration, finding the patients that are due.
 	for _, frequency := range config.RiskConfig.FrequencyConfigs {
-		patientsInRange, err := findPatientsInScoreRange(date, config.RiskConfig.RiskCode, frequency.MinScore, frequency.MaxScore)
+		patientsInRange, err := findPatientsInScoreRange(date, config.RiskConfig.RiskMethod, frequency.MinScore, frequency.MaxScore)
 		if err != nil {
 			return nil, err
 		}
@@ -195,7 +225,7 @@ func findEligiblePatientIDsByRiskScore(date time.Time, config *HuddleConfig) ([]
 			lastDate := firstHuddle.Add(frequency.MaxTimeBetweenHuddles)
 
 			// Now figure out how many huddles we should distribute the patients over.
-			numHuddles := calculateNumberOfHuddles(date, lastDate, config.Days)
+			numHuddles := calculateNumberOfHuddles(date, lastDate, config)
 
 			// Divide patients by huddles.  If it's not even, round up.
 			perHuddle := int(math.Ceil(float64(len(huddlelessPatients)) / float64(numHuddles)))
@@ -358,14 +388,11 @@ func findFirstHuddleDate(leaderRef string, defaultDate *time.Time) *time.Time {
 // calculateNumberOfHuddles figures out how many huddles there are between a starting huddle and an
 // ending date, given the days of the week on which huddles occur.  There's a more efficient algorithm
 // for this, but this one wins for simplicity!
-func calculateNumberOfHuddles(startingHuddleDate time.Time, endingDate time.Time, days []time.Weekday) int {
+func calculateNumberOfHuddles(startingHuddleDate time.Time, endingDate time.Time, config *HuddleConfig) int {
 	numHuddles := 1 // start at 1 for the first huddle, regardless if its on a huddle day
-	for d := startingHuddleDate.Add(24 * time.Hour); !d.After(endingDate); d = d.Add(24 * time.Hour) {
-		for _, wd := range days {
-			if d.Weekday() == wd {
-				numHuddles++
-				break
-			}
+	for d := startingHuddleDate.AddDate(0, 0, 1); !d.After(endingDate); d = d.AddDate(0, 0, 1) {
+		if config.IsHuddleDay(d) {
+			numHuddles++
 		}
 	}
 	return numHuddles
