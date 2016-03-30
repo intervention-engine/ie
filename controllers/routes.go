@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"github.com/intervention-engine/fhir/server"
-	"github.com/intervention-engine/ie/huddles"
 	"github.com/intervention-engine/ie/middleware"
 	"github.com/intervention-engine/ie/notifications"
 	"github.com/intervention-engine/ie/subscription"
@@ -37,7 +36,6 @@ func RegisterRoutes(s *server.FHIRServer, selfURL, riskServiceEndpoint string) f
 	notificationHandler := &middleware.NotificationHandler{Registry: notifications.DefaultNotificationDefinitionRegistry}
 	s.AddMiddleware("Encounter", notificationHandler.Handle())
 
-	s.Echo.Get("/AutoScheduleHuddles", huddles.AutoScheduleHuddlesHandler)
 	s.Echo.Get("/GroupList/:id", PatientListHandler)
 	s.Echo.Post("/InstaCountAll", InstaCountAllHandler)
 	s.Echo.Get("/NotificationCount", NotificationCountHandler)

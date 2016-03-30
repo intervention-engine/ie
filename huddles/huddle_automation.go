@@ -39,6 +39,8 @@ func AutoScheduleHuddles(config *HuddleConfig) ([]*models.Group, error) {
 		huddles = append(huddles, huddle)
 	}
 
+	printInfo(huddles, config.Name)
+
 	return huddles, nil
 }
 
@@ -425,4 +427,21 @@ func addPatientToHuddle(group *models.Group, id string, reason *models.CodeableC
 			External:     new(bool),
 		},
 	})
+}
+
+func printInfo(huddles []*models.Group, name string) {
+	fmt.Printf("Scheduled %d huddles with name %s\n", len(huddles), name)
+	for i := range huddles {
+		fmt.Printf("\t%s: %d patients\n", getStringDate(huddles[i]), len(huddles[i].Member))
+	}
+}
+
+func getStringDate(huddle *models.Group) string {
+	for i := range huddle.Extension {
+		if huddle.Extension[i].Url == "http://interventionengine.org/fhir/extension/group/activeDateTime" {
+			t := huddle.Extension[i].ValueDateTime.Time
+			return t.Format("01/02/2006")
+		}
+	}
+	return ""
 }

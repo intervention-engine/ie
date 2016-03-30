@@ -1,0 +1,28 @@
+{
+  "name": "Simple Huddle",
+  "leaderID": "1",
+  "days": [1],
+  "lookAhead": 4,
+  "riskConfig": {
+    "riskMethod": {"system": "http://interventionengine.org/risk-assessments", "code": "Simple"},
+    "frequencyConfigs": [
+      {
+        "minScore": 6,
+        "maxScore": 10,
+        "minDaysBetweenHuddles": 5,
+        "maxDaysBetweenHuddles": 7
+      }, {
+        "minScore": 4,
+        "maxScore": 5,
+        "minDaysBetweenHuddles": 12,
+        "maxDaysBetweenHuddles": 14
+      }, {
+        "minScore": 1,
+        "maxScore": 3,
+        "minDaysBetweenHuddles": 25,
+        "maxDaysBetweenHuddles": 28
+      }
+    ]
+  },
+  "schedulerCronSpec": "@midnight"
+}

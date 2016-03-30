@@ -1,19 +1,38 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
+	"time"
 
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/controllers"
 	"github.com/intervention-engine/ie/huddles"
 	"github.com/intervention-engine/ie/utilities"
 	"github.com/labstack/echo/middleware"
+	"github.com/robfig/cron"
 )
 
-//var Store sessions.Store
+// Setup the huddle flag to accumulate huddle config file paths
+type huddleSlice []string
+
+func (h *huddleSlice) String() string {
+	return fmt.Sprint(*h)
+}
+func (h *huddleSlice) Set(value string) error {
+	*h = append(*h, value)
+	return nil
+}
+
+var huddleFlag huddleSlice
+
+func init() {
+	flag.Var(&huddleFlag, "huddle", "path to a huddle configuration file (repeat flag for multiple paths)")
+}
 
 func main() {
 	// Check for a linked MongoDB container if we are running in Docker
@@ -62,6 +81,52 @@ func main() {
 
 	s := server.NewServer(mongoHost)
 	s.Echo.Use(middleware.Recover())
+
+	// Since the huddle controller needs info from the command line, set it up here.  When IE is refactored
+	// to take out globals (and other stuff), this should be rethought.
+	c := cron.New()
+	huddleController := new(huddles.HuddleSchedulerController)
+	for _, huddlePath := range huddleFlag {
+		data, err := ioutil.ReadFile(huddlePath)
+		if err != nil {
+			panic(err)
+		}
+		config := new(huddles.HuddleConfig)
+		if err := json.Unmarshal(data, config); err != nil {
+			panic(err)
+		}
+		huddleController.AddConfig(config)
+
+		// Wait 1 minute before doing initial runs or setting up cron jobs.  This allows the server to get
+		// started (since it needs to initiate the db connection, etc).
+		time.AfterFunc(1*time.Minute, func() {
+			// Do an initial run
+			fmt.Println("Initial scheduling for huddle with name ", config.Name)
+			huddles.AutoScheduleHuddles(config)
+
+			// Set up the cron job for future runs
+			if config.SchedulerCronSpec != "" {
+				err := c.AddFunc(config.SchedulerCronSpec, func() {
+					_, err := huddles.AutoScheduleHuddles(config)
+					if err != nil {
+						fmt.Printf("ERROR: Could not schedule huddles for huddle with name %s: %v", config.Name, err)
+					}
+				})
+				if err != nil {
+					panic(err)
+				}
+				fmt.Printf("Huddle with name %s scheduled with cron spec: %s\n", config.Name, config.SchedulerCronSpec)
+			} else {
+				fmt.Printf("Warning: Huddle with name %s is not configured with a scheduler cron job.\n", config.Name)
+			}
+		})
+	}
+	s.Echo.Get("/ScheduleHuddles", huddleController.ScheduleHandler)
+
+	if len(huddleFlag) > 0 {
+		c.Start()
+		defer c.Stop()
+	}
 
 	closer := controllers.RegisterRoutes(s, selfURL, riskServiceEndpoint)
 	defer closer()
