@@ -18,11 +18,11 @@ import (
 
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
-func TestMongoSearchSuite(t *testing.T) {
-	suite.Run(t, new(MongoSearchSuite))
+func TestHuddleSearchSuite(t *testing.T) {
+	suite.Run(t, new(HuddleSearchSuite))
 }
 
-type MongoSearchSuite struct {
+type HuddleSearchSuite struct {
 	suite.Suite
 	DBServer      *dbtest.DBServer
 	DBServerPath  string
@@ -32,7 +32,7 @@ type MongoSearchSuite struct {
 	Local         *time.Location
 }
 
-func (m *MongoSearchSuite) SetupSuite() {
+func (m *HuddleSearchSuite) SetupSuite() {
 	require := m.Require()
 
 	m.EST = time.FixedZone("EST", -5*60*60)
@@ -66,7 +66,7 @@ func (m *MongoSearchSuite) SetupSuite() {
 	require.NoError(err)
 }
 
-func (m *MongoSearchSuite) TearDownSuite() {
+func (m *HuddleSearchSuite) TearDownSuite() {
 	m.Session.Close()
 	m.DBServer.Wipe()
 	m.DBServer.Stop()
@@ -83,7 +83,7 @@ func turnOnDebugLog() {
 	mgo.SetLogger(aLogger)
 }
 
-func (m *MongoSearchSuite) TestSearchHuddleByLeader() {
+func (m *HuddleSearchSuite) TestSearchHuddleByLeader() {
 	assert := m.Assert()
 	require := m.Require()
 
@@ -109,7 +109,7 @@ func (m *MongoSearchSuite) TestSearchHuddleByLeader() {
 	assert.Equal(0, count)
 }
 
-func (m *MongoSearchSuite) TestSearchHuddleByActiveDateTime() {
+func (m *HuddleSearchSuite) TestSearchHuddleByActiveDateTime() {
 	assert := m.Assert()
 	require := m.Require()
 
@@ -144,7 +144,7 @@ func (m *MongoSearchSuite) TestSearchHuddleByActiveDateTime() {
 	assert.Equal(0, count)
 }
 
-func (m *MongoSearchSuite) TestSearchHuddleByMemberReviewedDate() {
+func (m *HuddleSearchSuite) TestSearchHuddleByMemberReviewedDate() {
 	assert := m.Assert()
 	require := m.Require()
 

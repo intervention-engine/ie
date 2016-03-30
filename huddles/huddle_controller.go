@@ -18,7 +18,7 @@ func (h *HuddleSchedulerController) AddConfig(config *HuddleConfig) {
 func (h *HuddleSchedulerController) ScheduleHandler(c *echo.Context) error {
 	var scheduledHuddles []*models.Group
 	for i := range h.configs {
-		huddles, err := AutoScheduleHuddles(&h.configs[i])
+		huddles, err := ScheduleHuddles(&h.configs[i])
 		if err != nil {
 			return err
 		}

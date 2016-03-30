@@ -102,12 +102,12 @@ func main() {
 		time.AfterFunc(1*time.Minute, func() {
 			// Do an initial run
 			fmt.Println("Initial scheduling for huddle with name ", config.Name)
-			huddles.AutoScheduleHuddles(config)
+			huddles.ScheduleHuddles(config)
 
 			// Set up the cron job for future runs
 			if config.SchedulerCronSpec != "" {
 				err := c.AddFunc(config.SchedulerCronSpec, func() {
-					_, err := huddles.AutoScheduleHuddles(config)
+					_, err := huddles.ScheduleHuddles(config)
 					if err != nil {
 						fmt.Printf("ERROR: Could not schedule huddles for huddle with name %s: %v", config.Name, err)
 					}

@@ -13,9 +13,9 @@ import (
 	"github.com/intervention-engine/fhir/server"
 )
 
-// AutoScheduleHuddles schedules future huddles based on the passed in config.  It will schedule out the number
+// ScheduleHuddles schedules future huddles based on the passed in config.  It will schedule out the number
 // of future huddles as specified in the config.LookAhead.
-func AutoScheduleHuddles(config *HuddleConfig) ([]*models.Group, error) {
+func ScheduleHuddles(config *HuddleConfig) ([]*models.Group, error) {
 	now := time.Now()
 	start := time.Date(now.Year(), now.Month(), now.Day(), 10, 0, 0, 0, time.Local)
 
@@ -27,7 +27,7 @@ func AutoScheduleHuddles(config *HuddleConfig) ([]*models.Group, error) {
 		}
 
 		// Create the huddle
-		huddle, err := CreateAutoPopulatedHuddle(t, config)
+		huddle, err := CreatePopulatedHuddle(t, config)
 		if err != nil {
 			return nil, err
 		}
@@ -44,12 +44,12 @@ func AutoScheduleHuddles(config *HuddleConfig) ([]*models.Group, error) {
 	return huddles, nil
 }
 
-// CreateAutoPopulatedHuddle returns a Group resource representing the patients that should be automatically considered
+// CreatePopulatedHuddle returns a Group resource representing the patients that should be automatically considered
 // for a huddle for the specific date.  Currently it is based on three criteria:
 // - Risk scores (which determine frequency)
 // - Recent clinical events (such as ED visit)
 // - "Leftovers" from previous huddle
-func CreateAutoPopulatedHuddle(date time.Time, config *HuddleConfig) (*models.Group, error) {
+func CreatePopulatedHuddle(date time.Time, config *HuddleConfig) (*models.Group, error) {
 	group, err := findExistingHuddle(date, config)
 	if err != nil {
 		return nil, err

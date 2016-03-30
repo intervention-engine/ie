@@ -20,11 +20,11 @@ import (
 
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
-func TestHuddleAutomationSuite(t *testing.T) {
-	suite.Run(t, new(HuddleAutomationSuite))
+func TestHuddleSchedulerSuite(t *testing.T) {
+	suite.Run(t, new(HuddleSchedulerSuite))
 }
 
-type HuddleAutomationSuite struct {
+type HuddleSchedulerSuite struct {
 	suite.Suite
 	DBServer     *dbtest.DBServer
 	DBServerPath string
@@ -32,7 +32,7 @@ type HuddleAutomationSuite struct {
 	Database     *mgo.Database
 }
 
-func (suite *HuddleAutomationSuite) SetupSuite() {
+func (suite *HuddleSchedulerSuite) SetupSuite() {
 	// Set up the database
 	suite.DBServer = &dbtest.DBServer{}
 	var err error
@@ -44,18 +44,18 @@ func (suite *HuddleAutomationSuite) SetupSuite() {
 	RegisterCustomSearchDefinitions()
 }
 
-func (suite *HuddleAutomationSuite) SetupTest() {
+func (suite *HuddleSchedulerSuite) SetupTest() {
 	suite.Session = suite.DBServer.Session()
 	suite.Database = suite.Session.DB("riskservice-test")
 	server.Database = suite.Database
 }
 
-func (suite *HuddleAutomationSuite) TearDownTest() {
+func (suite *HuddleSchedulerSuite) TearDownTest() {
 	suite.Session.Close()
 	suite.DBServer.Wipe()
 }
 
-func (suite *HuddleAutomationSuite) TearDownSuite() {
+func (suite *HuddleSchedulerSuite) TearDownSuite() {
 	suite.DBServer.Stop()
 	if err := os.RemoveAll(suite.DBServerPath); err != nil {
 		fmt.Fprintf(os.Stderr, "WARNING: Error cleaning up temp directory: %s", err.Error())
@@ -64,7 +64,7 @@ func (suite *HuddleAutomationSuite) TearDownSuite() {
 
 // For now, this test just uses risk scores, but it should be expanded as we add support for autopopulating
 // based on other criteria.
-func (suite *HuddleAutomationSuite) TestAutoPopulateNewHuddle() {
+func (suite *HuddleSchedulerSuite) TestCreatePopulatedHuddleForNewHuddle() {
 	assert := assert.New(suite.T())
 	require := require.New(suite.T())
 
@@ -103,7 +103,7 @@ func (suite *HuddleAutomationSuite) TestAutoPopulateNewHuddle() {
 	suite.storeHuddle(time.Date(2016, time.March, 14, 0, 0, 0, 0, time.UTC), config.LeaderID, &RiskScoreReason,
 		bsonID(6), bsonID(11), bsonID(14), bsonID(17), bsonID(19), bsonID(20))
 
-	group, err := CreateAutoPopulatedHuddle(time.Date(2016, time.March, 21, 9, 0, 0, 0, time.UTC), config)
+	group, err := CreatePopulatedHuddle(time.Date(2016, time.March, 21, 9, 0, 0, 0, time.UTC), config)
 	require.NoError(err)
 	ha := NewHuddleAssertions(group, assert)
 	ha.AssertValidHuddleProfile()
@@ -121,7 +121,7 @@ func (suite *HuddleAutomationSuite) TestAutoPopulateNewHuddle() {
 
 // This test just ensures that manually added patients aren't overwritten by the huddle population
 // algorithm.
-func (suite *HuddleAutomationSuite) TestAutoPopulateExistingHuddle() {
+func (suite *HuddleSchedulerSuite) TestCreatePopulatedHuddleForExistingHuddle() {
 	assert := assert.New(suite.T())
 	require := require.New(suite.T())
 
@@ -136,7 +136,7 @@ func (suite *HuddleAutomationSuite) TestAutoPopulateExistingHuddle() {
 	suite.storeHuddleWithReasons(time.Date(2016, time.March, 21, 0, 0, 0, 0, time.Local), config.LeaderID, &RiskScoreReason,
 		map[string]*models.CodeableConcept{bsonID(1): &ManualAdditionReason}, bsonID(1), bsonID(2), bsonID(3), bsonID(4))
 
-	group, err := CreateAutoPopulatedHuddle(time.Date(2016, time.March, 21, 0, 0, 0, 0, time.Local), config)
+	group, err := CreatePopulatedHuddle(time.Date(2016, time.March, 21, 0, 0, 0, 0, time.Local), config)
 	require.NoError(err)
 
 	ha := NewHuddleAssertions(group, assert)
@@ -151,7 +151,7 @@ func (suite *HuddleAutomationSuite) TestAutoPopulateExistingHuddle() {
 	ha.AssertMember(2, bsonID(2), &RiskScoreReason)
 }
 
-func (suite *HuddleAutomationSuite) TestAutoScheduleHuddles() {
+func (suite *HuddleSchedulerSuite) TestScheduleHuddles() {
 	assert := assert.New(suite.T())
 	require := require.New(suite.T())
 
@@ -162,7 +162,7 @@ func (suite *HuddleAutomationSuite) TestAutoScheduleHuddles() {
 	suite.storePatientAndScores(bsonID(5), 7, 6, 5)  // every 4 weeks
 
 	config := createHuddleConfig()
-	huddles, err := AutoScheduleHuddles(config)
+	huddles, err := ScheduleHuddles(config)
 	require.NoError(err)
 	assert.Len(huddles, 4)
 	for i := range huddles {
@@ -200,7 +200,7 @@ func (suite *HuddleAutomationSuite) TestAutoScheduleHuddles() {
 	assert.Equal(huddles, storedHuddles, "Stored huddles should match returned huddles")
 }
 
-func (suite *HuddleAutomationSuite) TestFindEligiblePatientIDsByRiskScoreWithNoPreviousHuddles() {
+func (suite *HuddleSchedulerSuite) TestFindEligiblePatientIDsByRiskScoreWithNoPreviousHuddles() {
 	assert := assert.New(suite.T())
 	require := require.New(suite.T())
 
@@ -222,7 +222,7 @@ func (suite *HuddleAutomationSuite) TestFindEligiblePatientIDsByRiskScoreWithNoP
 	assert.Contains(eligibles, bsonID(5))
 }
 
-func (suite *HuddleAutomationSuite) TestFindEligiblePatientIDsByRiskScore() {
+func (suite *HuddleSchedulerSuite) TestFindEligiblePatientIDsByRiskScore() {
 	assert := assert.New(suite.T())
 	require := require.New(suite.T())
 
@@ -326,7 +326,7 @@ func createHuddleConfig() *HuddleConfig {
 // storePatientAndScores creates a new patient with the given ID and a set of risk
 // scores.  The scores are assumed to be in chronological order, so the last score
 // passed in is the MOST_RECENT.
-func (suite *HuddleAutomationSuite) storePatientAndScores(id string, scores ...int) {
+func (suite *HuddleSchedulerSuite) storePatientAndScores(id string, scores ...int) {
 	require := require.New(suite.T())
 
 	p := new(models.Patient)
@@ -375,7 +375,7 @@ func (suite *HuddleAutomationSuite) storePatientAndScores(id string, scores ...i
 	}
 }
 
-func (suite *HuddleAutomationSuite) storeHuddleWithReasons(date time.Time, leaderID string, defaultReason *models.CodeableConcept, reasonMap map[string]*models.CodeableConcept, patients ...string) {
+func (suite *HuddleSchedulerSuite) storeHuddleWithReasons(date time.Time, leaderID string, defaultReason *models.CodeableConcept, reasonMap map[string]*models.CodeableConcept, patients ...string) {
 	require := require.New(suite.T())
 
 	g := new(models.Group)
@@ -432,7 +432,7 @@ func (suite *HuddleAutomationSuite) storeHuddleWithReasons(date time.Time, leade
 	require.NoError(suite.Database.C("groups").Insert(g))
 }
 
-func (suite *HuddleAutomationSuite) storeHuddle(date time.Time, leaderID string, reason *models.CodeableConcept, patients ...string) {
+func (suite *HuddleSchedulerSuite) storeHuddle(date time.Time, leaderID string, reason *models.CodeableConcept, patients ...string) {
 	suite.storeHuddleWithReasons(date, leaderID, reason, nil, patients...)
 }
 
