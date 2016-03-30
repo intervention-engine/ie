@@ -7,125 +7,148 @@ import (
 	"time"
 
 	"github.com/intervention-engine/fhir/models"
-	"github.com/pebbe/util"
-	. "gopkg.in/check.v1"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 	"gopkg.in/mgo.v2/bson"
 )
 
+// In order for 'go test' to run this suite, we need to create
+// a normal test function and pass our suite to suite.Run
+func TestHuddleProfileSuite(t *testing.T) {
+	suite.Run(t, new(HuddleProfileSuite))
+}
+
 type HuddleProfileSuite struct {
+	suite.Suite
 	Huddle      *models.Group
 	HuddleBSONM bson.M
 	HuddleJSON  []byte
 }
 
-func Test(t *testing.T) { TestingT(t) }
+func (h *HuddleProfileSuite) SetupTest() {
+	require := h.Require()
 
-var _ = Suite(&HuddleProfileSuite{})
-
-func (h *HuddleProfileSuite) SetUpTest(c *C) {
 	h.Huddle = newExampleHuddle()
 	h.HuddleBSONM = newExampleHuddleBSONM()
 
 	data, err := ioutil.ReadFile("../fixtures/huddle.json")
-	util.CheckErr(err)
+	require.NoError(err)
 	h.HuddleJSON = data
 }
 
-func (h *HuddleProfileSuite) TearDownTest(c *C) {
+func (h *HuddleProfileSuite) TearDownTest() {
 	h.Huddle = nil
 	h.HuddleBSONM = bson.M{}
 	h.HuddleJSON = make([]byte, 0)
 }
 
-func (h *HuddleProfileSuite) TestMarshalJSON(c *C) {
+func (h *HuddleProfileSuite) TestMarshalJSON() {
+	assert := h.Assert()
+	require := h.Require()
+
 	// First unmarshal the expected JSON into a map for easier comparison
 	var expected map[string]interface{}
 	err := json.Unmarshal(h.HuddleJSON, &expected)
-	util.CheckErr(err)
+	require.NoError(err)
 
 	// Now marshal the huddle struct into JSON data
 	data, err := json.Marshal(h.Huddle)
-	util.CheckErr(err)
+	require.NoError(err)
 
 	// In order to compare it, unmarshal the new JSON data to a map
 	var obtained map[string]interface{}
 	err = json.Unmarshal(data, &obtained)
-	util.CheckErr(err)
+	require.NoError(err)
 
-	c.Assert(obtained, DeepEquals, expected)
+	assert.Equal(expected, obtained)
 }
 
-func (h *HuddleProfileSuite) TestUnmarshalJSON(c *C) {
+func (h *HuddleProfileSuite) TestUnmarshalJSON() {
+	assert := h.Assert()
+	require := h.Require()
+
 	obtained := &models.Group{}
 	err := json.Unmarshal(h.HuddleJSON, &obtained)
-	util.CheckErr(err)
+	require.NoError(err)
 
-	assertDeepEqualHuddles(c, obtained, h.Huddle)
+	assertDeepEqualHuddles(assert, h.Huddle, obtained)
 }
 
-func (h *HuddleProfileSuite) TestRoundTripJSON(c *C) {
+func (h *HuddleProfileSuite) TestRoundTripJSON() {
+	assert := h.Assert()
+	require := h.Require()
+
 	// First we need to marshal it, just so we can get our bytes to unmarshal
 	data, err := json.Marshal(h.Huddle)
-	util.CheckErr(err)
+	require.NoError(err)
 
 	// Now we'll try unmarshalling.  If everything is working it should survive the round trip.
 	var obtained models.Group
 	err = json.Unmarshal(data, &obtained)
-	util.CheckErr(err)
+	require.NoError(err)
 
-	assertDeepEqualHuddles(c, &obtained, h.Huddle)
+	assertDeepEqualHuddles(assert, h.Huddle, &obtained)
 }
 
-func (h *HuddleProfileSuite) TestMarshalBSON(c *C) {
+func (h *HuddleProfileSuite) TestMarshalBSON() {
+	assert := h.Assert()
+	require := h.Require()
+
 	// Now marshal the huddle struct into BSON data
 	data, err := bson.Marshal(h.Huddle)
-	util.CheckErr(err)
+	require.NoError(err)
 
 	// In order to compare it, unmarshal the new BSON data to a map
 	var obtained bson.M
 	err = bson.Unmarshal(data, &obtained)
-	util.CheckErr(err)
+	require.NoError(err)
 
 	// Since times don't work in DeepEquals (due to timezoney shenanigans in Go), first check the times directly.
 	// After confirming they represent the same moment, set the expected to the obtained so we pass DeepEquals
-	c.Assert(obtained["extension"].([]interface{})[0].(bson.M)["activeDateTime"].(bson.M)["time"].(time.Time).Unix(), Equals,
-		h.HuddleBSONM["extension"].([]interface{})[0].(bson.M)["activeDateTime"].(bson.M)["time"].(time.Time).Unix())
+	assert.Equal(h.HuddleBSONM["extension"].([]interface{})[0].(bson.M)["activeDateTime"].(bson.M)["time"].(time.Time).Unix(),
+		obtained["extension"].([]interface{})[0].(bson.M)["activeDateTime"].(bson.M)["time"].(time.Time).Unix())
 	h.HuddleBSONM["extension"].([]interface{})[0].(bson.M)["activeDateTime"].(bson.M)["time"] =
 		obtained["extension"].([]interface{})[0].(bson.M)["activeDateTime"].(bson.M)["time"]
 	for i := 0; i < 3; i++ {
-		c.Assert(obtained["member"].([]interface{})[i].(bson.M)["extension"].([]interface{})[1].(bson.M)["reviewed"].(bson.M)["time"].(time.Time).Unix(), Equals,
-			h.HuddleBSONM["member"].([]interface{})[i].(bson.M)["extension"].([]interface{})[1].(bson.M)["reviewed"].(bson.M)["time"].(time.Time).Unix())
+		assert.Equal(h.HuddleBSONM["member"].([]interface{})[i].(bson.M)["extension"].([]interface{})[1].(bson.M)["reviewed"].(bson.M)["time"].(time.Time).Unix(),
+			obtained["member"].([]interface{})[i].(bson.M)["extension"].([]interface{})[1].(bson.M)["reviewed"].(bson.M)["time"].(time.Time).Unix())
 		h.HuddleBSONM["member"].([]interface{})[i].(bson.M)["extension"].([]interface{})[1].(bson.M)["reviewed"].(bson.M)["time"] =
 			obtained["member"].([]interface{})[i].(bson.M)["extension"].([]interface{})[1].(bson.M)["reviewed"].(bson.M)["time"]
 	}
 
-	c.Assert(obtained, DeepEquals, h.HuddleBSONM)
+	assert.Equal(h.HuddleBSONM, obtained)
 }
 
-func (h *HuddleProfileSuite) TestUnmarshalBSON(c *C) {
+func (h *HuddleProfileSuite) TestUnmarshalBSON() {
+	assert := h.Assert()
+	require := h.Require()
+
 	// First we need to marshal the expected BSON into BSON data
 	data, err := bson.Marshal(h.HuddleBSONM)
-	util.CheckErr(err)
+	require.NoError(err)
 
 	// Then unmarshal the BSON data into the Huddle struct
 	obtained := &models.Group{}
 	err = bson.Unmarshal(data, &obtained)
-	util.CheckErr(err)
+	require.NoError(err)
 
-	assertDeepEqualHuddles(c, obtained, h.Huddle)
+	assertDeepEqualHuddles(assert, h.Huddle, obtained)
 }
 
-func (h *HuddleProfileSuite) TestRoundTripBSON(c *C) {
+func (h *HuddleProfileSuite) TestRoundTripBSON() {
+	assert := h.Assert()
+	require := h.Require()
+
 	// First we need to marshal it, just so we can get our bytes to unmarshal
 	data, err := bson.Marshal(h.Huddle)
-	util.CheckErr(err)
+	require.NoError(err)
 
 	// Now we'll try unmarshalling.  If everything is working it should survive the round trip.
 	var obtained models.Group
 	err = bson.Unmarshal(data, &obtained)
-	util.CheckErr(err)
+	require.NoError(err)
 
-	assertDeepEqualHuddles(c, &obtained, h.Huddle)
+	assertDeepEqualHuddles(assert, h.Huddle, &obtained)
 }
 
 func newExampleHuddle() *models.Group {
@@ -517,24 +540,24 @@ func newExampleHuddleBSONM() bson.M {
 	}
 }
 
-func assertDeepEqualHuddles(c *C, obtained *models.Group, expected *models.Group) {
+func assertDeepEqualHuddles(assert *assert.Assertions, expected *models.Group, obtained *models.Group) {
 	// Since times don't work in DeepEquals (due to timezoney shenanigans in Go), first check the times directly.
 	// After confirming they represent the same moment, set the expected to the obtained so we pass DeepEquals
-	assertAndFixDeepEqualExtensions(c, obtained.Extension, expected.Extension)
+	assertAndFixDeepEqualExtensions(assert, expected.Extension, obtained.Extension)
 	for i := 0; i < len(obtained.Member) && i < len(expected.Member); i++ {
-		assertAndFixDeepEqualExtensions(c, obtained.Member[i].Extension, expected.Member[i].Extension)
+		assertAndFixDeepEqualExtensions(assert, expected.Member[i].Extension, obtained.Member[i].Extension)
 	}
-	c.Assert(obtained, DeepEquals, expected)
+	assert.Equal(expected, obtained)
 }
 
-func assertAndFixDeepEqualExtensions(c *C, obtained []models.Extension, expected []models.Extension) {
+func assertAndFixDeepEqualExtensions(assert *assert.Assertions, expected []models.Extension, obtained []models.Extension) {
 	// Since times don't work in DeepEquals (due to timezoney shenanigans in Go), first check the times directly.
 	// After confirming they represent the same moment, set the expected to the obtained so we pass DeepEquals
 	for i := 0; i < len(obtained) && i < len(expected); i++ {
 		if obtained[i].ValueDateTime != nil && expected[i].ValueDateTime != nil {
-			c.Assert(obtained[i].ValueDateTime.Time.Unix(), Equals, expected[i].ValueDateTime.Time.Unix())
+			assert.Equal(expected[i].ValueDateTime.Time.Unix(), obtained[i].ValueDateTime.Time.Unix())
 			expected[i].ValueDateTime.Time = obtained[i].ValueDateTime.Time
 		}
 	}
-	c.Assert(obtained, DeepEquals, expected)
+	assert.Equal(expected, obtained)
 }
