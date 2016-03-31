@@ -4,13 +4,12 @@ import (
 	"bufio"
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"strings"
 
+	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/utilities"
-	"github.com/labstack/echo"
 	"github.com/pebbe/util"
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2/dbtest"
@@ -18,7 +17,6 @@ import (
 
 type CodeLookupSuite struct {
 	DBServer *dbtest.DBServer
-	Echo     *echo.Echo
 }
 
 var _ = Suite(&CodeLookupSuite{})
@@ -26,7 +24,6 @@ var _ = Suite(&CodeLookupSuite{})
 func (l *CodeLookupSuite) SetUpSuite(c *C) {
 	l.DBServer = &dbtest.DBServer{}
 	l.DBServer.SetPath(c.MkDir())
-	l.Echo = echo.New()
 
 	file, err := os.Open("../fixtures/code-lookup.json")
 	util.CheckErr(err)
@@ -51,13 +48,12 @@ func (l *CodeLookupSuite) TearDownSuite(c *C) {
 }
 
 func (l *CodeLookupSuite) TestCodeLookupByName(c *C) {
-	handler := CodeLookup
+	ctx, w, _ := gin.CreateTestContext()
 	namelookupFile, _ := os.Open("../fixtures/sample-lookup-request-by-name.json")
-	nameReq, _ := http.NewRequest("POST", "/CodeLookup", namelookupFile)
-	nameReq.Header.Add("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-	ctx := echo.NewContext(nameReq, echo.NewResponse(w, l.Echo), l.Echo)
-	handler(ctx)
+	ctx.Request, _ = http.NewRequest("POST", "/CodeLookup", namelookupFile)
+	ctx.Request.Header.Add("Content-Type", "application/json")
+
+	CodeLookup(ctx)
 	if w.Code != http.StatusOK {
 		c.Fatal("Non-OK response code received: ", w.Code)
 	}
@@ -70,21 +66,18 @@ func (l *CodeLookupSuite) TestCodeLookupByName(c *C) {
 }
 
 func (l *CodeLookupSuite) TestCodeLookupByCode(c *C) {
-	handler := CodeLookup
+	ctx, w, _ := gin.CreateTestContext()
 	codeLookupFile, _ := os.Open("../fixtures/sample-lookup-request-by-code.json")
-	codeReq, _ := http.NewRequest("POST", "/CodeLookup", codeLookupFile)
-	w := httptest.NewRecorder()
-	codeReq.Header.Add("Content-Type", "application/json")
-	ctx := echo.NewContext(codeReq, echo.NewResponse(w, l.Echo), l.Echo)
+	ctx.Request, _ = http.NewRequest("POST", "/CodeLookup", codeLookupFile)
+	ctx.Request.Header.Add("Content-Type", "application/json")
 
-	err := handler(ctx)
-	util.CheckErr(err)
+	CodeLookup(ctx)
 	if w.Code != http.StatusOK {
 		c.Fatal("Non-OK response code received: ", w.Code)
 	}
 
 	codeResponseCodes := []utilities.CodeEntry{}
-	err = json.NewDecoder(w.Body).Decode(&codeResponseCodes)
+	err := json.NewDecoder(w.Body).Decode(&codeResponseCodes)
 	util.CheckErr(err)
 
 	c.Assert(len(codeResponseCodes), Equals, 6)

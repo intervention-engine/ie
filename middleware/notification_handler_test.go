@@ -5,10 +5,10 @@ import (
 	"net/http/httptest"
 	"os"
 
+	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/notifications"
-	"github.com/labstack/echo"
 	"github.com/pebbe/util"
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2"
@@ -35,16 +35,16 @@ func (n *NotificationHandlerSuite) SetUpTest(c *C) {
 
 	//register notification handler middleware
 	n.Handler = &NotificationHandler{Registry: &notifications.NotificationDefinitionRegistry{}}
-	mwConfig := map[string][]echo.Middleware{
-		"Encounter": []echo.Middleware{n.Handler.Handle()}}
+	mwConfig := map[string][]gin.HandlerFunc{
+		"Encounter": []gin.HandlerFunc{n.Handler.Handle()}}
 
 	//set up routes and middleware
-	e := echo.New()
+	e := gin.New()
 
 	server.RegisterRoutes(e, mwConfig, server.NewMongoDataAccessLayer(server.Database), server.Config{})
 
 	//create test server
-	n.Server = httptest.NewServer(e.Router())
+	n.Server = httptest.NewServer(e)
 }
 
 func (n *NotificationHandlerSuite) TearDownTest(c *C) {

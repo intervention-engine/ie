@@ -22,7 +22,7 @@ func RegisterRoutes(s *server.FHIRServer, selfURL, riskServiceEndpoint string) f
 	//s.AddMiddleware("Group", middleware.AuthHandler())
 	//s.AddMiddleware("Patient", middleware.AuthHandler())
 
-	s.AddMiddleware("Patient", PatientListMiddleware())
+	s.AddMiddleware("Patient", PatientListMiddleware)
 
 	s.AddMiddleware("Condition", watch)
 
@@ -36,15 +36,15 @@ func RegisterRoutes(s *server.FHIRServer, selfURL, riskServiceEndpoint string) f
 	notificationHandler := &middleware.NotificationHandler{Registry: notifications.DefaultNotificationDefinitionRegistry}
 	s.AddMiddleware("Encounter", notificationHandler.Handle())
 
-	s.Echo.Get("/GroupList/:id", PatientListHandler)
-	s.Echo.Post("/InstaCountAll", InstaCountAllHandler)
-	s.Echo.Get("/NotificationCount", NotificationCountHandler)
-	s.Echo.Get("/Pie/:id", GeneratePieHandler(riskServiceEndpoint))
-	s.Echo.Post("/CodeLookup", CodeLookup)
+	s.Engine.GET("/GroupList/:id", PatientListHandler)
+	s.Engine.POST("/InstaCountAll", InstaCountAllHandler)
+	s.Engine.GET("/NotificationCount", NotificationCountHandler)
+	s.Engine.GET("/Pie/:id", GeneratePieHandler(riskServiceEndpoint))
+	s.Engine.POST("/CodeLookup", CodeLookup)
 
-	login := s.Echo.Group("/login")
-	login.Post("", LoginHandler)
-	login.Delete("", LogoutHandler)
+	login := s.Engine.Group("/login")
+	login.POST("", LoginHandler)
+	login.DELETE("", LogoutHandler)
 
 	return func() {
 		stopNotifier(workerChannel, &wg)

@@ -4,20 +4,20 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/server"
-	"github.com/labstack/echo"
 	"gopkg.in/mgo.v2/bson"
 )
 
-func NotificationCountHandler(c *echo.Context) error {
+func NotificationCountHandler(c *gin.Context) {
 	pipe := server.Database.C("communicationrequests").Pipe([]bson.M{{"$group": bson.M{"_id": "$subject.referenceid", "count": bson.M{"$sum": 1}}}})
 	var results []NotificationCountResult
-	err := pipe.All(&results)
-	if err != nil {
+	if err := pipe.All(&results); err != nil {
 		log.Printf("Error getting notification count: %#v", err)
-		return err
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
 	}
-	return c.JSON(http.StatusOK, results)
+	c.JSON(http.StatusOK, results)
 }
 
 type NotificationCountResult struct {

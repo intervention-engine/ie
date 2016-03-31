@@ -3,11 +3,10 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"os"
 
+	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/server"
-	"github.com/labstack/echo"
 	"github.com/pebbe/util"
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2/dbtest"
@@ -15,7 +14,6 @@ import (
 
 type QueryTotalsSuite struct {
 	DBServer *dbtest.DBServer
-	Echo     *echo.Echo
 }
 
 var _ = Suite(&QueryTotalsSuite{})
@@ -23,7 +21,6 @@ var _ = Suite(&QueryTotalsSuite{})
 func (q *QueryTotalsSuite) SetUpSuite(c *C) {
 	q.DBServer = &dbtest.DBServer{}
 	q.DBServer.SetPath(c.MkDir())
-	q.Echo = echo.New()
 }
 
 func (q *QueryTotalsSuite) SetUpTest(c *C) {
@@ -33,11 +30,11 @@ func (q *QueryTotalsSuite) SetUpTest(c *C) {
 	// Store the bundle
 	bundleFile, err := os.Open("../fixtures/sample-group-data-bundle.json")
 	util.CheckErr(err)
-	r, err := http.NewRequest("POST", "http://ie-server/", bundleFile)
+
+	ctx, rw, _ := gin.CreateTestContext()
+	ctx.Request, err = http.NewRequest("POST", "http://ie-server/", bundleFile)
 	util.CheckErr(err)
-	r.Header.Add("Content-Type", "application/json")
-	rw := httptest.NewRecorder()
-	ctx := echo.NewContext(r, echo.NewResponse(rw, q.Echo), q.Echo)
+	ctx.Request.Header.Add("Content-Type", "application/json")
 	server.NewBatchController(server.NewMongoDataAccessLayer(server.Database)).Post(ctx)
 	c.Assert(rw.Code, Equals, 200)
 }
@@ -54,18 +51,17 @@ func (q *QueryTotalsSuite) TearDownSuite(c *C) {
 func (q *QueryTotalsSuite) TestInstaCountAllHandler(c *C) {
 	handler := InstaCountAllHandler
 	groupFile, _ := os.Open("../fixtures/sample-group.json")
-	req, _ := http.NewRequest("POST", "/InstaCountAll", groupFile)
-	req.Header.Add("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-	ctx := echo.NewContext(req, echo.NewResponse(w, q.Echo), q.Echo)
-	err := handler(ctx)
-	util.CheckErr(err)
+
+	ctx, w, _ := gin.CreateTestContext()
+	ctx.Request, _ = http.NewRequest("POST", "/InstaCountAll", groupFile)
+	ctx.Request.Header.Add("Content-Type", "application/json")
+	handler(ctx)
 	if w.Code != http.StatusOK {
-		c.Fatal("Non-OK response code received: %v", w.Code)
+		c.Fatalf("Non-OK response code received: %v", w.Code)
 	}
 
 	counts := make(map[string]int)
-	err = json.NewDecoder(w.Body).Decode(&counts)
+	err := json.NewDecoder(w.Body).Decode(&counts)
 	util.CheckErr(err)
 
 	//TODO: These tests should be made more robust once we have better fixtures and test helpers
@@ -77,13 +73,12 @@ func (q *QueryTotalsSuite) TestInstaCountAllHandler(c *C) {
 func (q *QueryTotalsSuite) TestInstaCountAllHandlerWithRefutedCondition(c *C) {
 	handler := InstaCountAllHandler
 	groupFile, _ := os.Open("../fixtures/sample-group-afib.json")
-	req, _ := http.NewRequest("POST", "/InstaCountAll", groupFile)
-	req.Header.Add("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-	ctx := echo.NewContext(req, echo.NewResponse(w, q.Echo), q.Echo)
+	ctx, w, _ := gin.CreateTestContext()
+	ctx.Request, _ = http.NewRequest("POST", "/InstaCountAll", groupFile)
+	ctx.Request.Header.Add("Content-Type", "application/json")
 	handler(ctx)
 	if w.Code != http.StatusOK {
-		c.Fatal("Non-OK response code received: %v", w.Code)
+		c.Fatalf("Non-OK response code received: %v", w.Code)
 	}
 
 	counts := make(map[string]int)

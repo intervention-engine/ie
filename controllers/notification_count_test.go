@@ -3,13 +3,12 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/server"
-	"github.com/labstack/echo"
 	"github.com/pebbe/util"
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2"
@@ -19,7 +18,6 @@ import (
 type NotificationCountSuite struct {
 	DBServer               *dbtest.DBServer
 	NotificationCollection *mgo.Collection
-	Echo                   *echo.Echo
 }
 
 func Test(t *testing.T) { TestingT(t) }
@@ -29,7 +27,6 @@ var _ = Suite(&NotificationCountSuite{})
 func (n *NotificationCountSuite) SetUpSuite(c *C) {
 	n.DBServer = &dbtest.DBServer{}
 	n.DBServer.SetPath(c.MkDir())
-	n.Echo = echo.New()
 }
 
 func (n *NotificationCountSuite) SetUpTest(c *C) {
@@ -48,12 +45,11 @@ func (n *NotificationCountSuite) TearDownSuite(c *C) {
 
 func (n *NotificationCountSuite) TestEmptyNotificationCount(c *C) {
 	handler := NotificationCountHandler
-	req, _ := http.NewRequest("GET", "/NotificationCount", nil)
-	w := httptest.NewRecorder()
-	ctx := echo.NewContext(req, echo.NewResponse(w, n.Echo), n.Echo)
+	ctx, w, _ := gin.CreateTestContext()
+	ctx.Request, _ = http.NewRequest("GET", "/NotificationCount", nil)
 	handler(ctx)
 	if w.Code != http.StatusOK {
-		c.Fatal("Non-OK response code received: %v", w.Code)
+		c.Fatalf("Non-OK response code received: %v", w.Code)
 	}
 
 	var counts []NotificationCountResult
@@ -76,12 +72,11 @@ func (n *NotificationCountSuite) TestNotificationCount(c *C) {
 	}
 
 	handler := NotificationCountHandler
-	req, _ := http.NewRequest("GET", "/NotificationCount", nil)
-	w := httptest.NewRecorder()
-	ctx := echo.NewContext(req, echo.NewResponse(w, n.Echo), n.Echo)
+	ctx, w, _ := gin.CreateTestContext()
+	ctx.Request, _ = http.NewRequest("GET", "/NotificationCount", nil)
 	handler(ctx)
 	if w.Code != http.StatusOK {
-		c.Fatal("Non-OK response code received: %v", w.Code)
+		c.Fatalf("Non-OK response code received: %v", w.Code)
 	}
 
 	var counts []NotificationCountResult

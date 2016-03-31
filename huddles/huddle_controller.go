@@ -3,8 +3,8 @@ package huddles
 import (
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/models"
-	"github.com/labstack/echo"
 )
 
 type HuddleSchedulerController struct {
@@ -15,14 +15,15 @@ func (h *HuddleSchedulerController) AddConfig(config *HuddleConfig) {
 	h.configs = append(h.configs, *config)
 }
 
-func (h *HuddleSchedulerController) ScheduleHandler(c *echo.Context) error {
+func (h *HuddleSchedulerController) ScheduleHandler(c *gin.Context) {
 	var scheduledHuddles []*models.Group
 	for i := range h.configs {
 		huddles, err := ScheduleHuddles(&h.configs[i])
 		if err != nil {
-			return err
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
 		}
 		scheduledHuddles = append(scheduledHuddles, huddles...)
 	}
-	return c.JSON(http.StatusOK, scheduledHuddles)
+	c.JSON(http.StatusOK, scheduledHuddles)
 }

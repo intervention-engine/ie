@@ -3,27 +3,25 @@ package subscription
 import (
 	"time"
 
+	"github.com/gin-gonic/gin"
 	fhirmodels "github.com/intervention-engine/fhir/models"
-	"github.com/labstack/echo"
 )
 
-func GenerateResourceWatch(subUpdateQueue chan<- ResourceUpdateMessage) echo.MiddlewareFunc {
-	return func(hf echo.HandlerFunc) echo.HandlerFunc {
-		return func(c *echo.Context) error {
-			err := hf(c)
-			if err != nil {
-				return err
-			}
-			if c.Request().Method == "GET" {
-				return nil
-			}
-			resourceType := c.Get("Resource")
-			if resourceType != nil {
-				resource := c.Get(resourceType.(string))
+func GenerateResourceWatch(subUpdateQueue chan<- ResourceUpdateMessage) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+		if c.IsAborted() {
+			return
+		}
+		if c.Request.Method == "GET" {
+			return
+		}
+		if resourceType, ok := c.Get("Resource"); ok {
+			if resource, ok := c.Get(resourceType.(string)); ok {
 				HandleResourceUpdate(subUpdateQueue, resource)
 			}
-			return nil
 		}
+		return
 	}
 }
 

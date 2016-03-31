@@ -6,47 +6,53 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/notifications"
-	"github.com/labstack/echo"
 )
 
 type NotificationHandler struct {
 	Registry *notifications.NotificationDefinitionRegistry
 }
 
-func (h *NotificationHandler) Handle() echo.MiddlewareFunc {
-	return func(hf echo.HandlerFunc) echo.HandlerFunc {
-		return func(c *echo.Context) error {
-			hf(c)
-			if c.Request().Method != "POST" {
-				return nil
+func (h *NotificationHandler) Handle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+		if c.IsAborted() {
+			return
+		}
+		if c.Request.Method != "POST" {
+			return
+		}
+
+		if resourceType, ok := c.Get("Resource"); ok {
+			rs := resourceType.(string)
+			resource, ok := c.Get(rs)
+			if !ok {
+				log.Printf("Error creating notification for resource type: %#v", resourceType)
+				return
+			}
+			actionType, ok := c.Get("Action")
+			if !ok {
+				log.Printf("Error creating notification for resource: %#v", resource)
+				return
 			}
 
-			resourceType := c.Get("Resource")
-			if resourceType != nil {
-				rs := resourceType.(string)
-				resource := c.Get(rs)
-				actionType := c.Get("Action")
-
-				var reg *notifications.NotificationDefinitionRegistry
-				if h.Registry != nil {
-					reg = h.Registry
-				} else {
-					reg = notifications.DefaultNotificationDefinitionRegistry
-				}
-				for _, def := range reg.GetAll() {
-					if def.Triggers(resource, actionType.(string)) {
-						notification := def.GetNotification(resource, actionType.(string), h.getBaseURL(c.Request()))
-						err := server.Database.C("communicationrequests").Insert(notification)
-						if err != nil {
-							log.Printf("Error creating notification.\n\tNotification: %#v\n\tResource: %#v\n\tError: %#v", notification, resource, err)
-							return err
-						}
+			var reg *notifications.NotificationDefinitionRegistry
+			if h.Registry != nil {
+				reg = h.Registry
+			} else {
+				reg = notifications.DefaultNotificationDefinitionRegistry
+			}
+			for _, def := range reg.GetAll() {
+				if def.Triggers(resource, actionType.(string)) {
+					notification := def.GetNotification(resource, actionType.(string), h.getBaseURL(c.Request))
+					if err := server.Database.C("communicationrequests").Insert(notification); err != nil {
+						log.Printf("Error creating notification.\n\tNotification: %#v\n\tResource: %#v\n\tError: %#v", notification, resource, err)
+						return
 					}
 				}
 			}
-			return nil
 		}
 	}
 }
