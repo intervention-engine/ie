@@ -13,7 +13,6 @@ import (
 	"github.com/intervention-engine/ie/controllers"
 	"github.com/intervention-engine/ie/huddles"
 	"github.com/intervention-engine/ie/utilities"
-	"github.com/labstack/echo/middleware"
 	"github.com/robfig/cron"
 )
 
@@ -80,7 +79,6 @@ func main() {
 	}
 
 	s := server.NewServer(mongoHost)
-	s.Echo.Use(middleware.Recover())
 
 	// Since the huddle controller needs info from the command line, set it up here.  When IE is refactored
 	// to take out globals (and other stuff), this should be rethought.
@@ -121,7 +119,7 @@ func main() {
 			}
 		})
 	}
-	s.Echo.Get("/ScheduleHuddles", huddleController.ScheduleHandler)
+	s.Engine.GET("/ScheduleHuddles", huddleController.ScheduleHandler)
 
 	if len(huddleFlag) > 0 {
 		c.Start()

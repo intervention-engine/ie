@@ -4,13 +4,14 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/gob"
+	"errors"
 	"net/http"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/models"
-	"github.com/labstack/echo"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -47,11 +48,11 @@ type registrationRequestForm struct {
 	Confirmation   string
 }
 
-func LoginHandler(c *echo.Context) error {
+func LoginHandler(c *gin.Context) {
 	var reqform requestForm
-	err := c.Bind(&reqform)
-	if err != nil {
-		return err
+	if err := c.Bind(&reqform); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
 	}
 
 	//grab the username and password from the form
@@ -62,9 +63,10 @@ func LoginHandler(c *echo.Context) error {
 	if err != nil {
 		//var errform error_form
 		//errform.Error = "invalid credentials"
-		c.Response().Header().Set("Content-Type", "application/json; charset=utf-8")
+		c.Header("Content-Type", "application/json; charset=utf-8")
 		ef := errorForm{Error: "Invalid Credentials"}
-		return c.JSON(http.StatusUnauthorized, ef)
+		c.JSON(http.StatusUnauthorized, ef)
+		return
 	}
 
 	if user != nil {
@@ -78,9 +80,10 @@ func LoginHandler(c *echo.Context) error {
 		server.Database.C("sessions").Insert(usersession)
 
 		respform.Session.Token = token
-		return c.JSON(http.StatusOK, respform)
+		c.JSON(http.StatusOK, respform)
+		return
 	}
-	return c.String(http.StatusInternalServerError, "Somehow reached here")
+	c.AbortWithError(http.StatusInternalServerError, errors.New("Somehow reached here"))
 }
 
 func generateToken() string {
@@ -95,35 +98,36 @@ func generateToken() string {
 	return token
 }
 
-func LogoutHandler(c *echo.Context) error {
-	clientToken := c.Request().Header.Get("Authorization")
+func LogoutHandler(c *gin.Context) {
+	clientToken := c.Request.Header.Get("Authorization")
 	sessionCollection := server.Database.C("sessions")
 
-	err := sessionCollection.Remove(bson.M{"token": clientToken})
-
-	if err != nil {
-		return err
+	if err := sessionCollection.Remove(bson.M{"token": clientToken}); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
 	}
-	return nil
 }
 
-func RegisterHandler(c *echo.Context) error {
+func RegisterHandler(c *gin.Context) {
 	var regform registrationRequestForm
-	err := c.Bind(&regform)
-	if err != nil {
-		return err
+	if err := c.Bind(&regform); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
 	}
 
 	//grab username, password, and password confirmation from object
 	username, password, confirmation := regform.Identification, regform.Password, regform.Confirmation
 
-	count, err := server.Database.C("users").Find(bson.M{"username": username}).Count()
-	if count != 0 {
-		return c.JSON(http.StatusConflict, errorForm{Error: "Username already exists"})
+	if count, err := server.Database.C("users").Find(bson.M{"username": username}).Count(); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	} else if count != 0 {
+		c.JSON(http.StatusConflict, errorForm{Error: "Username already exists"})
+		return
 	}
 
 	if password != confirmation {
-		return c.JSON(http.StatusBadRequest, errorForm{Error: "Password and confirmation must match"})
+		c.JSON(http.StatusBadRequest, errorForm{Error: "Password and confirmation must match"})
+		return
 	}
 
 	newuser := &models.User{
@@ -132,9 +136,9 @@ func RegisterHandler(c *echo.Context) error {
 	}
 	newuser.SetPassword(password)
 
-	err = server.Database.C("users").Insert(newuser)
-	if err != nil {
-		return err
+	if err := server.Database.C("users").Insert(newuser); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
 	}
-	return c.String(http.StatusOK, "User registered")
+	c.String(http.StatusOK, "User registered")
 }

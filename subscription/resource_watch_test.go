@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/server"
-	"github.com/labstack/echo"
 	"github.com/pebbe/util"
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2/dbtest"
@@ -33,12 +33,12 @@ func (r *ResourceWatchSuite) SetUpTest(c *C) {
 	server.Database = r.DBServer.Session().DB("ie-test")
 
 	//set up empty router
-	e := echo.New()
+	e := gin.New()
 
 	r.WorkerChannel = make(chan ResourceUpdateMessage, 1)
 	//create and add middleware config to test server
-	mwConfig := map[string][]echo.Middleware{
-		"MedicationStatement": []echo.Middleware{GenerateResourceWatch(r.WorkerChannel)}}
+	mwConfig := map[string][]gin.HandlerFunc{
+		"MedicationStatement": []gin.HandlerFunc{GenerateResourceWatch(r.WorkerChannel)}}
 	server.RegisterRoutes(e, mwConfig, server.NewMongoDataAccessLayer(server.Database), server.Config{})
 	//create test server
 	r.Server = httptest.NewUnstartedServer(e)

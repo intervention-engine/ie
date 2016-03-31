@@ -3,9 +3,9 @@ package controllers
 import (
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/utilities"
-	"github.com/labstack/echo"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -15,12 +15,12 @@ type codeRequestForm struct {
 	ResultLimit int    `json:"limit"`
 }
 
-func CodeLookup(c *echo.Context) error {
+func CodeLookup(c *gin.Context) {
 	var f codeRequestForm
 
-	err := c.Bind(&f)
-	if err != nil {
-		return err
+	if err := c.Bind(&f); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
 	}
 
 	codecollection := server.Database.C("codelookup")
@@ -34,11 +34,11 @@ func CodeLookup(c *echo.Context) error {
 			bson.M{"name": bson.RegEx{Pattern: ".*" + f.Query + ".*", Options: "i"}},
 		}}).Limit(f.ResultLimit)
 
-	err = query.All(&result)
-	if err != nil {
-		return err
+	if err := query.All(&result); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
 	}
 
-	c.Response().Header().Set("Access-Control-Allow-Origin", "*")
-	return c.JSON(http.StatusOK, result)
+	c.Header("Access-Control-Allow-Origin", "*")
+	c.JSON(http.StatusOK, result)
 }
