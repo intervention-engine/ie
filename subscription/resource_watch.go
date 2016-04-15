@@ -26,30 +26,34 @@ func GenerateResourceWatch(subUpdateQueue chan<- ResourceUpdateMessage) gin.Hand
 }
 
 func HandleResourceUpdate(subUpdateQueue chan<- ResourceUpdateMessage, resource interface{}) {
-	var patientID string
-	var timestamp time.Time
+	for patientID, timestamp := range triggeredPatients(resource) {
+		ru := NewResourceUpdateMessage(patientID, timestamp.Format(time.RFC3339))
+		subUpdateQueue <- ru
+	}
+}
+
+func triggeredPatients(resource interface{}) map[string]time.Time {
+	result := make(map[string]time.Time)
 
 	switch t := resource.(type) {
 	case *fhirmodels.Condition:
-		patientID = t.Patient.ReferencedID
-		timestamp = t.OnsetDateTime.Time
+		result[t.Patient.ReferencedID] = t.OnsetDateTime.Time
 	case *fhirmodels.MedicationStatement:
-		patientID = t.Patient.ReferencedID
-		timestamp = t.EffectivePeriod.Start.Time
+		result[t.Patient.ReferencedID] = t.EffectivePeriod.Start.Time
 	case *fhirmodels.Encounter:
-		patientID = t.Patient.ReferencedID
-		timestamp = t.Period.Start.Time
+		result[t.Patient.ReferencedID] = t.Period.Start.Time
 	case *fhirmodels.Bundle:
 		for _, entry := range t.Entry {
 			if entry.Resource != nil {
-				HandleResourceUpdate(subUpdateQueue, entry.Resource)
+				subResult := triggeredPatients(entry.Resource)
+				for k, v := range subResult {
+					if t, ok := result[k]; !ok || v.After(t) {
+						result[k] = v
+					}
+				}
+
 			}
 		}
-		return
-	default:
-		return
 	}
-
-	ru := NewResourceUpdateMessage(patientID, timestamp.Format(time.RFC3339))
-	subUpdateQueue <- ru
+	return result
 }
