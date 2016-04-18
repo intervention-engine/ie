@@ -42,7 +42,7 @@ func RegisterRoutes(s *server.FHIRServer, selfURL, riskServiceEndpoint string) f
 	s.Engine.GET("/Pie/:id", GeneratePieHandler(riskServiceEndpoint))
 	s.Engine.POST("/CodeLookup", CodeLookup)
 
-	login := s.Engine.Group("/login")
+	login := s.Engine.Group("/auth")
 	login.POST("", LoginHandler)
 	login.DELETE("", LogoutHandler)
 
