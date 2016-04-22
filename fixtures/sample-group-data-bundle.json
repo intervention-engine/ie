@@ -49,7 +49,6 @@
       "fullUrl": "urn:uuid:61ebe359-bfdc-4613-8bf2-c5e300945f2f",
       "resource": {
           "resourceType" : "Condition",
-        	"verificationStatus": "confirmed",
           "patient": {
         		"reference": "urn:uuid:61ebe359-bfdc-4613-8bf2-c5e300945f2a"
         	},
@@ -73,7 +72,6 @@
       "fullUrl": "urn:uuid:61ebe359-bfdc-4613-8bf2-c5e30054dae5",
       "resource": {
           "resourceType" : "Condition",
-        	"verificationStatus": "confirmed",
           "patient": {
         		"reference": "urn:uuid:61ebe359-bfdc-4613-8bf2-c5e300945f2a"
         	},
@@ -91,6 +89,24 @@
       "request": {
         "method": "POST",
         "url": "Condition"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:61ebe359-bfdc-4613-8bf2-c5e300945f2d",
+      "resource": {
+        "resourceType": "Patient",
+        "name": [
+          {
+            "use": "official",
+            "family": ["Donald"],
+            "given": ["Daffy"]
+          }
+        ],
+        "gender": "male"
+      },
+      "request": {
+        "method": "POST",
+        "url": "Patient"
       }
     }
   ]

@@ -40,9 +40,6 @@ func (m *HuddleSearchSuite) SetupSuite() {
 
 	//turnOnDebugLog()
 
-	// Register the custom search parameters
-	RegisterCustomSearchDefinitions()
-
 	// Set up the database
 	var err error
 	m.DBServer = &dbtest.DBServer{}

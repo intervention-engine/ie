@@ -41,7 +41,6 @@ func (suite *HuddleSchedulerSuite) SetupSuite() {
 		panic(err)
 	}
 	suite.DBServer.SetPath(suite.DBServerPath)
-	RegisterCustomSearchDefinitions()
 }
 
 func (suite *HuddleSchedulerSuite) SetupTest() {

@@ -50,18 +50,18 @@
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/models",
-			"Comment": "DSTU1-146-g110cf40",
-			"Rev": "110cf404483136b41a4c549b636f38ff921408f0"
+			"Comment": "DSTU1-147-gb274723",
+			"Rev": "b27472374323fb2582d750b140c88729ecfabd8b"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/search",
-			"Comment": "DSTU1-146-g110cf40",
-			"Rev": "110cf404483136b41a4c549b636f38ff921408f0"
+			"Comment": "DSTU1-147-gb274723",
+			"Rev": "b27472374323fb2582d750b140c88729ecfabd8b"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/server",
-			"Comment": "DSTU1-146-g110cf40",
-			"Rev": "110cf404483136b41a4c549b636f38ff921408f0"
+			"Comment": "DSTU1-147-gb274723",
+			"Rev": "b27472374323fb2582d750b140c88729ecfabd8b"
 		},
 		{
 			"ImportPath": "github.com/manucorporat/sse",
