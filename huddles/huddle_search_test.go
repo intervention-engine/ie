@@ -2,7 +2,6 @@ package huddles
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -11,9 +10,9 @@ import (
 
 	"github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/search"
+	"github.com/intervention-engine/ie/testutil"
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/dbtest"
 )
 
 // In order for 'go test' to run this suite, we need to create
@@ -23,10 +22,7 @@ func TestHuddleSearchSuite(t *testing.T) {
 }
 
 type HuddleSearchSuite struct {
-	suite.Suite
-	DBServer      *dbtest.DBServer
-	DBServerPath  string
-	Session       *mgo.Session
+	testutil.MongoSuite
 	MongoSearcher *search.MongoSearcher
 	EST           *time.Location
 	Local         *time.Location
@@ -41,15 +37,7 @@ func (m *HuddleSearchSuite) SetupSuite() {
 	//turnOnDebugLog()
 
 	// Set up the database
-	var err error
-	m.DBServer = &dbtest.DBServer{}
-	m.DBServerPath, err = ioutil.TempDir("", "mongotestdb")
-	require.NoError(err)
-	m.DBServer.SetPath(m.DBServerPath)
-
-	m.Session = m.DBServer.Session()
-	db := m.Session.DB("fhir-test")
-	m.MongoSearcher = search.NewMongoSearcher(db)
+	m.MongoSearcher = search.NewMongoSearcher(m.DB())
 
 	// Read in the data in FHIR format
 	data, err := ioutil.ReadFile("../fixtures/huddle.json")
@@ -59,18 +47,12 @@ func (m *HuddleSearchSuite) SetupSuite() {
 	var huddle models.Group
 	err = json.Unmarshal(data, &huddle)
 	require.NoError(err)
-	err = db.C("groups").Insert(&huddle)
+	err = m.DB().C("groups").Insert(&huddle)
 	require.NoError(err)
 }
 
 func (m *HuddleSearchSuite) TearDownSuite() {
-	m.Session.Close()
-	m.DBServer.Wipe()
-	m.DBServer.Stop()
-
-	if err := os.RemoveAll(m.DBServerPath); err != nil {
-		fmt.Fprintf(os.Stderr, "WARNING: Error cleaning up temp directory: %s", err.Error())
-	}
+	m.TearDownDBServer()
 }
 
 func turnOnDebugLog() {

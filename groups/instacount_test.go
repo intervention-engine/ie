@@ -2,17 +2,15 @@ package groups
 
 import (
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/server"
+	"github.com/intervention-engine/ie/testutil"
 	"github.com/pebbe/util"
 	"github.com/stretchr/testify/suite"
-	"gopkg.in/mgo.v2/dbtest"
 )
 
 // In order for 'go test' to run this suite, we need to create
@@ -22,20 +20,7 @@ func TestInstacountSuite(t *testing.T) {
 }
 
 type InstacountSuite struct {
-	suite.Suite
-	DBServer     *dbtest.DBServer
-	DBServerPath string
-}
-
-func (suite *InstacountSuite) SetupSuite() {
-	require := suite.Require()
-
-	// Set up the database
-	var err error
-	suite.DBServer = &dbtest.DBServer{}
-	suite.DBServerPath, err = ioutil.TempDir("", "mongotestdb")
-	require.NoError(err)
-	suite.DBServer.SetPath(suite.DBServerPath)
+	testutil.MongoSuite
 }
 
 func (suite *InstacountSuite) SetupTest() {
@@ -43,7 +28,7 @@ func (suite *InstacountSuite) SetupTest() {
 	assert := suite.Assert()
 
 	// Setup the database
-	server.Database = suite.DBServer.Session().DB("ie-test")
+	server.Database = suite.DB()
 
 	// Store the bundle
 	bundleFile, err := os.Open("../fixtures/sample-group-data-bundle.json")
@@ -53,21 +38,16 @@ func (suite *InstacountSuite) SetupTest() {
 	ctx.Request, err = http.NewRequest("POST", "http://ie-server/", bundleFile)
 	require.NoError(err)
 	ctx.Request.Header.Add("Content-Type", "application/json")
-	server.NewBatchController(server.NewMongoDataAccessLayer(server.Database)).Post(ctx)
+	server.NewBatchController(server.NewMongoDataAccessLayer(suite.DB())).Post(ctx)
 	assert.Equal(200, rw.Code)
 }
 
 func (suite *InstacountSuite) TearDownTest() {
-	server.Database.Session.Close()
-	suite.DBServer.Wipe()
+	suite.TearDownDB()
 }
 
 func (suite *InstacountSuite) TearDownSuite() {
-	suite.DBServer.Stop()
-
-	if err := os.RemoveAll(suite.DBServerPath); err != nil {
-		fmt.Fprintf(os.Stderr, "WARNING: Error cleaning up temp directory: %s", err.Error())
-	}
+	suite.TearDownDBServer()
 }
 
 func (suite *InstacountSuite) TestInstaCountAllHandler() {

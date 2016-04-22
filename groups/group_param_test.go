@@ -2,7 +2,6 @@ package groups
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -12,9 +11,9 @@ import (
 	fhir "github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/search"
 	"github.com/intervention-engine/fhir/server"
+	"github.com/intervention-engine/ie/testutil"
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/mgo.v2/bson"
-	"gopkg.in/mgo.v2/dbtest"
 )
 
 // In order for 'go test' to run this suite, we need to create
@@ -24,38 +23,20 @@ func TestGroupParamSuite(t *testing.T) {
 }
 
 type GroupParamSuite struct {
-	suite.Suite
-	DBServer     *dbtest.DBServer
-	DBServerPath string
-}
-
-func (suite *GroupParamSuite) SetupSuite() {
-	require := suite.Require()
-
-	// Set up the database
-	var err error
-	suite.DBServer = &dbtest.DBServer{}
-	suite.DBServerPath, err = ioutil.TempDir("", "mongotestdb")
-	require.NoError(err)
-	suite.DBServer.SetPath(suite.DBServerPath)
+	testutil.MongoSuite
 }
 
 func (suite *GroupParamSuite) SetupTest() {
 	// Setup the database
-	server.Database = suite.DBServer.Session().DB("ie-test")
+	server.Database = suite.DB()
 }
 
 func (suite *GroupParamSuite) TearDownTest() {
-	server.Database.Session.Close()
-	suite.DBServer.Wipe()
+	suite.TearDownDB()
 }
 
 func (suite *GroupParamSuite) TearDownSuite() {
-	suite.DBServer.Stop()
-
-	if err := os.RemoveAll(suite.DBServerPath); err != nil {
-		fmt.Fprintf(os.Stderr, "WARNING: Error cleaning up temp directory: %s", err.Error())
-	}
+	suite.TearDownDBServer()
 }
 
 func (suite *GroupParamSuite) TestGroupParamParser() {
@@ -79,7 +60,7 @@ func (suite *GroupParamSuite) TestGroupBSONBuilder() {
 	err = json.Unmarshal(groupData, group)
 	require.NoError(err)
 	group.Id = bson.NewObjectId().Hex()
-	server.Database.C("groups").Insert(group)
+	suite.DB().C("groups").Insert(group)
 
 	// Store the bundle of data to match the group
 	bundleFile, err := os.Open("../fixtures/sample-group-data-bundle.json")
@@ -88,7 +69,7 @@ func (suite *GroupParamSuite) TestGroupBSONBuilder() {
 	ctx.Request, err = http.NewRequest("POST", "http://ie-server/", bundleFile)
 	require.NoError(err)
 	ctx.Request.Header.Add("Content-Type", "application/json")
-	server.NewBatchController(server.NewMongoDataAccessLayer(server.Database)).Post(ctx)
+	server.NewBatchController(server.NewMongoDataAccessLayer(suite.DB())).Post(ctx)
 	require.Equal(200, rw.Code)
 	bundle := new(fhir.Bundle)
 	err = json.NewDecoder(rw.Body).Decode(bundle)
