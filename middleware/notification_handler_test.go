@@ -4,34 +4,33 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/notifications"
-	"github.com/pebbe/util"
-	. "gopkg.in/check.v1"
+	"github.com/intervention-engine/ie/testutil"
+	"github.com/stretchr/testify/suite"
 	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/dbtest"
 )
 
+// In order for 'go test' to run this suite, we need to create
+// a normal test function and pass our suite to suite.Run
+func TestNotificationHandlerSuite(t *testing.T) {
+	suite.Run(t, new(NotificationHandlerSuite))
+}
+
 type NotificationHandlerSuite struct {
-	DBServer               *dbtest.DBServer
+	testutil.MongoSuite
 	Server                 *httptest.Server
 	Handler                *NotificationHandler
 	NotificationCollection *mgo.Collection
 }
 
-var _ = Suite(&NotificationHandlerSuite{})
-
-func (n *NotificationHandlerSuite) SetUpSuite(c *C) {
-	n.DBServer = &dbtest.DBServer{}
-	n.DBServer.SetPath(c.MkDir())
-}
-
-func (n *NotificationHandlerSuite) SetUpTest(c *C) {
-	server.Database = n.DBServer.Session().DB("ie-test")
-	n.NotificationCollection = n.DBServer.Session().DB("ie-test").C("communicationrequests")
+func (n *NotificationHandlerSuite) SetupTest() {
+	server.Database = n.DB()
+	n.NotificationCollection = n.DB().C("communicationrequests")
 
 	//register notification handler middleware
 	n.Handler = &NotificationHandler{Registry: &notifications.NotificationDefinitionRegistry{}}
@@ -47,62 +46,74 @@ func (n *NotificationHandlerSuite) SetUpTest(c *C) {
 	n.Server = httptest.NewServer(e)
 }
 
-func (n *NotificationHandlerSuite) TearDownTest(c *C) {
+func (n *NotificationHandlerSuite) TearDownTest() {
 	//clear the notification definition registry and the notification database
 	n.Handler.Registry = &notifications.NotificationDefinitionRegistry{}
-	server.Database.Session.Close()
-	n.DBServer.Wipe()
+	n.TearDownDB()
 	n.Server.Close()
 }
 
-func (n *NotificationHandlerSuite) TearDownSuite(c *C) {
-	n.DBServer.Stop()
+func (n *NotificationHandlerSuite) TearDownSuite() {
+	n.TearDownDBServer()
 }
 
-func (n *NotificationHandlerSuite) TestNotificationTriggers(c *C) {
+func (n *NotificationHandlerSuite) TestNotificationTriggers() {
+	require := n.Require()
+	assert := n.Assert()
+
 	n.Handler.Registry.Register(new(PlannedEncounterNotificationDefinition))
 	//load fixture
 	data, err := os.Open("../fixtures/encounter-planned.json")
-	util.CheckErr(err)
+	require.NoError(err)
 	defer data.Close()
 
 	//post fixture
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", n.Server.URL+"/Encounter", data)
-	util.CheckErr(err)
-	_, err = client.Do(req)
+	req.Header.Add("Content-Type", "application/json")
+	require.NoError(err)
+	res, err := client.Do(req)
+	require.NoError(err)
+	require.Equal(201, res.StatusCode)
 
 	//check for notification created
 	query := n.NotificationCollection.Find(nil)
 
 	//make sure there is only one
-	count, _ := query.Count()
-	c.Assert(count, Equals, 1)
+	count, err := query.Count()
+	require.NoError(err)
+	require.Equal(1, count)
 
 	//make sure it is the right one
 	result := models.CommunicationRequest{}
 	query.One(&result)
-	c.Assert(result.Id, Equals, "123")
-	c.Assert(result.Subject.Reference, Equals, "http://intervention-engine.org/Patient/5540f2041cd4623133000001")
+	assert.Equal("123", result.Id)
+	assert.Equal("http://intervention-engine.org/Patient/5540f2041cd4623133000001", result.Subject.Reference)
 }
 
-func (n *NotificationHandlerSuite) TestNotificationDoesNotTrigger(c *C) {
+func (n *NotificationHandlerSuite) TestNotificationDoesNotTrigger() {
+	require := n.Require()
+	assert := n.Assert()
+
 	n.Handler.Registry.Register(new(PlannedEncounterNotificationDefinition))
 
 	//load fixture
 	data, err := os.Open("../fixtures/encounter-office-visit.json")
-	util.CheckErr(err)
+	require.NoError(err)
 	defer data.Close()
 
 	//post fixture
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", n.Server.URL+"/Encounter", data)
-	util.CheckErr(err)
+	require.NoError(err)
+	req.Header.Add("Content-Type", "application/json")
 	_, err = client.Do(req)
+	require.NoError(err)
 
 	//check for no notification
 	count, err := n.NotificationCollection.Count()
-	c.Assert(count, Equals, 0)
+	require.NoError(err)
+	assert.Equal(0, count)
 }
 
 //  Dummy notification definition for testing
@@ -121,6 +132,7 @@ func (def *PlannedEncounterNotificationDefinition) GetNotification(resource inte
 		cr := &models.CommunicationRequest{}
 		cr.Id = "123"
 		cr.Subject = enc.Patient
+		return cr
 	}
 	return nil
 }

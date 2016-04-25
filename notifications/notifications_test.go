@@ -7,120 +7,134 @@ import (
 	"time"
 
 	"github.com/intervention-engine/fhir/models"
-	"github.com/pebbe/util"
-	. "gopkg.in/check.v1"
+	"github.com/stretchr/testify/suite"
 )
 
-type NotificationSuite struct{}
+// In order for 'go test' to run this suite, we need to create
+// a normal test function and pass our suite to suite.Run
+func TestNotificationSuite(t *testing.T) {
+	suite.Run(t, new(NotificationSuite))
+}
 
-func Test(t *testing.T) { TestingT(t) }
+type NotificationSuite struct {
+	suite.Suite
+}
 
-var _ = Suite(&NotificationSuite{})
+func (n *NotificationSuite) TestInpatientAdmissionNotifications() {
+	require := n.Require()
+	assert := n.Assert()
 
-func (n *NotificationSuite) TestInpatientAdmissionNotifications(c *C) {
 	encounter, err := UnmarshallEncounter("../fixtures/encounter-inpatient.json")
-	util.CheckErr(err)
+	require.NoError(err)
 
 	count := 0
 	for _, def := range DefaultNotificationDefinitionRegistry.GetAll() {
 		if def.Triggers(encounter, "create") {
 			count++
-			c.Assert(def.Name(), Equals, "Inpatient Admission")
+			assert.Equal("Inpatient Admission", def.Name())
 			cr := def.GetNotification(encounter, "create", "http://intervention-engine.org")
-			AssertEncounterNotificationContents(cr, &models.Coding{System: "http://snomed.info/sct", Code: "32485007"}, c)
+			n.AssertEncounterNotificationContents(cr, &models.Coding{System: "http://snomed.info/sct", Code: "32485007"})
 		}
-		c.Assert(def.Triggers(encounter, "update"), Equals, false)
-		c.Assert(def.GetNotification(encounter, "update", "http://intervention-engine.org"), IsNil)
-		c.Assert(def.Triggers(encounter, "delete"), Equals, false)
-		c.Assert(def.GetNotification(encounter, "delete", "http://intervention-engine.org"), IsNil)
-
+		assert.False(def.Triggers(encounter, "update"))
+		assert.Nil(def.GetNotification(encounter, "update", "http://intervention-engine.org"))
+		assert.False(def.Triggers(encounter, "delete"))
+		assert.Nil(def.GetNotification(encounter, "delete", "http://intervention-engine.org"))
 	}
-	c.Assert(count, Equals, 1)
+	assert.Equal(1, count)
 }
 
-func (n *NotificationSuite) TestReadmissionNotifications(c *C) {
+func (n *NotificationSuite) TestReadmissionNotifications() {
+	require := n.Require()
+	assert := n.Assert()
+
 	encounter, err := UnmarshallEncounter("../fixtures/encounter-readmission.json")
-	util.CheckErr(err)
+	require.NoError(err)
 
 	count := 0
 	for _, def := range DefaultNotificationDefinitionRegistry.GetAll() {
 		if def.Triggers(encounter, "create") {
 			count++
-			c.Assert(def.Name(), Equals, "Readmission")
+			assert.Equal("Readmission", def.Name())
 			cr := def.GetNotification(encounter, "create", "http://intervention-engine.org")
-			AssertEncounterNotificationContents(cr, &models.Coding{System: "http://snomed.info/sct", Code: "417005"}, c)
+			n.AssertEncounterNotificationContents(cr, &models.Coding{System: "http://snomed.info/sct", Code: "417005"})
 		}
-		c.Assert(def.Triggers(encounter, "update"), Equals, false)
-		c.Assert(def.GetNotification(encounter, "update", "http://intervention-engine.org"), IsNil)
-		c.Assert(def.Triggers(encounter, "delete"), Equals, false)
-		c.Assert(def.GetNotification(encounter, "delete", "http://intervention-engine.org"), IsNil)
-
+		assert.False(def.Triggers(encounter, "update"))
+		assert.Nil(def.GetNotification(encounter, "update", "http://intervention-engine.org"))
+		assert.False(def.Triggers(encounter, "delete"))
+		assert.Nil(def.GetNotification(encounter, "delete", "http://intervention-engine.org"))
 	}
-	c.Assert(count, Equals, 1)
+	assert.Equal(1, count)
 }
 
-func (n *NotificationSuite) TestERVisitNotifications(c *C) {
+func (n *NotificationSuite) TestERVisitNotifications() {
+	require := n.Require()
+	assert := n.Assert()
+
 	encounter, err := UnmarshallEncounter("../fixtures/encounter-er-visit.json")
-	util.CheckErr(err)
+	require.NoError(err)
 
 	count := 0
 	for _, def := range DefaultNotificationDefinitionRegistry.GetAll() {
 		if def.Triggers(encounter, "create") {
 			count++
-			c.Assert(def.Name(), Equals, "ER Visit")
+			assert.Equal("ER Visit", def.Name())
 			cr := def.GetNotification(encounter, "create", "http://intervention-engine.org")
-			AssertEncounterNotificationContents(cr, &models.Coding{System: "http://snomed.info/sct", Code: "4525004"}, c)
+			n.AssertEncounterNotificationContents(cr, &models.Coding{System: "http://snomed.info/sct", Code: "4525004"})
 		}
-		c.Assert(def.Triggers(encounter, "update"), Equals, false)
-		c.Assert(def.GetNotification(encounter, "update", "http://intervention-engine.org"), IsNil)
-		c.Assert(def.Triggers(encounter, "delete"), Equals, false)
-		c.Assert(def.GetNotification(encounter, "delete", "http://intervention-engine.org"), IsNil)
-
+		assert.False(def.Triggers(encounter, "update"))
+		assert.Nil(def.GetNotification(encounter, "update", "http://intervention-engine.org"))
+		assert.False(def.Triggers(encounter, "delete"))
+		assert.Nil(def.GetNotification(encounter, "delete", "http://intervention-engine.org"))
 	}
-	c.Assert(count, Equals, 1)
+	assert.Equal(1, count)
 }
 
-func (n *NotificationSuite) TestOfficeVisitDoesNotTriggerNoNotifications(c *C) {
+func (n *NotificationSuite) TestOfficeVisitDoesNotTriggerNoNotifications() {
+	require := n.Require()
+	assert := n.Assert()
+
 	encounter, err := UnmarshallEncounter("../fixtures/encounter-office-visit.json")
-	util.CheckErr(err)
+	require.NoError(err)
 
 	for _, def := range DefaultNotificationDefinitionRegistry.GetAll() {
-		c.Assert(def.Triggers(encounter, "create"), Equals, false)
-		c.Assert(def.GetNotification(encounter, "create", "http://intervention-engine.org"), IsNil)
-		c.Assert(def.Triggers(encounter, "update"), Equals, false)
-		c.Assert(def.GetNotification(encounter, "update", "http://intervention-engine.org"), IsNil)
-		c.Assert(def.Triggers(encounter, "delete"), Equals, false)
-		c.Assert(def.GetNotification(encounter, "delete", "http://intervention-engine.org"), IsNil)
-
+		assert.False(def.Triggers(encounter, "create"))
+		assert.Nil(def.GetNotification(encounter, "create", "http://intervention-engine.org"))
+		assert.False(def.Triggers(encounter, "update"))
+		assert.Nil(def.GetNotification(encounter, "update", "http://intervention-engine.org"))
+		assert.False(def.Triggers(encounter, "delete"))
+		assert.Nil(def.GetNotification(encounter, "delete", "http://intervention-engine.org"))
 	}
 }
 
-func (n *NotificationSuite) TestNotificationDefinitionRegistration(c *C) {
+func (n *NotificationSuite) TestNotificationDefinitionRegistration() {
+	assert := n.Assert()
+
 	defs := DefaultNotificationDefinitionRegistry.GetAll()
-	c.Assert(defs, HasLen, 3)
-	c.Assert(IsRegistered(AdmissionNotificationDefinition), Equals, true)
-	c.Assert(IsRegistered(ReadmissionNotificationDefinition), Equals, true)
-	c.Assert(IsRegistered(ERVisitNotificationDefinition), Equals, true)
+	assert.Len(defs, 3)
+	assert.True(IsRegistered(AdmissionNotificationDefinition))
+	assert.True(IsRegistered(ReadmissionNotificationDefinition))
+	assert.True(IsRegistered(ERVisitNotificationDefinition))
 }
 
-func AssertEncounterNotificationContents(cr *models.CommunicationRequest, reason *models.Coding, c *C) {
-	c.Assert(cr.Id, NotNil)
-	c.Assert(cr.Category.Coding, HasLen, 1)
-	c.Assert(cr.Category.Coding[0].System, Equals, "http://snomed.info/sct")
-	c.Assert(cr.Category.Coding[0].Code, Equals, "185087000")
-	c.Assert(cr.Payload, HasLen, 1)
-	c.Assert(cr.Payload[0].ContentReference.Reference, Equals, "http://intervention-engine.org/Encounter/1")
-	c.Assert(cr.Payload[0].ContentReference.ReferencedID, Equals, "1")
-	c.Assert(cr.Payload[0].ContentReference.Type, Equals, "Encounter")
-	c.Assert(cr.Status, Equals, "requested")
-	c.Assert(cr.Reason, HasLen, 1)
-	c.Assert(cr.Reason[0].Coding, HasLen, 1)
-	c.Assert(cr.Reason[0].Coding[0].System, Equals, reason.System)
-	c.Assert(cr.Reason[0].Coding[0].Code, Equals, reason.Code)
-	c.Assert(cr.Subject.Reference, Matches, ".*/Patient/5540f2041cd4623133000001")
-	c.Assert(cr.RequestedOn.Precision, Equals, models.Precision(models.Timestamp))
-	c.Assert(cr.RequestedOn.Time.Before(time.Now()), Equals, true)
-	c.Assert(time.Now().Sub(cr.RequestedOn.Time) < time.Duration(5)*time.Minute, Equals, true)
+func (n *NotificationSuite) AssertEncounterNotificationContents(cr *models.CommunicationRequest, reason *models.Coding) {
+	assert := n.Assert()
+	assert.NotNil(cr.Id)
+	assert.Len(cr.Category.Coding, 1)
+	assert.Equal("http://snomed.info/sct", cr.Category.Coding[0].System)
+	assert.Equal("185087000", cr.Category.Coding[0].Code)
+	assert.Len(cr.Payload, 1)
+	assert.Equal("http://intervention-engine.org/Encounter/1", cr.Payload[0].ContentReference.Reference)
+	assert.Equal("1", cr.Payload[0].ContentReference.ReferencedID)
+	assert.Equal("Encounter", cr.Payload[0].ContentReference.Type)
+	assert.Equal("requested", cr.Status)
+	assert.Len(cr.Reason, 1)
+	assert.Len(cr.Reason[0].Coding, 1)
+	assert.Equal(reason.System, cr.Reason[0].Coding[0].System)
+	assert.Equal(reason.Code, cr.Reason[0].Coding[0].Code)
+	assert.Regexp(".*/Patient/5540f2041cd4623133000001", cr.Subject.Reference)
+	assert.Equal(models.Precision(models.Timestamp), cr.RequestedOn.Precision)
+	assert.True(cr.RequestedOn.Time.Before(time.Now()))
+	assert.True(time.Now().Sub(cr.RequestedOn.Time) < time.Duration(5)*time.Minute)
 }
 
 func IsRegistered(n NotificationDefinition) bool {

@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/testutil"
-	"github.com/pebbe/util"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -88,7 +87,7 @@ func (suite *InstacountSuite) TestInstaCountAllHandlerWithRefutedCondition() {
 	counts := make(map[string]int)
 	err := json.NewDecoder(w.Body).Decode(&counts)
 
-	util.CheckErr(err)
+	require.NoError(err)
 
 	//TODO: These tests should be made more robust once we have better fixtures and test helpers
 	assert.Equal(0, counts["patients"])
