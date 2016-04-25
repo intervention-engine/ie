@@ -1,8 +1,6 @@
 package huddles
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"log"
 	"os"
 	"testing"
@@ -29,8 +27,6 @@ type HuddleSearchSuite struct {
 }
 
 func (m *HuddleSearchSuite) SetupSuite() {
-	require := m.Require()
-
 	m.EST = time.FixedZone("EST", -5*60*60)
 	m.Local, _ = time.LoadLocation("Local")
 
@@ -40,15 +36,7 @@ func (m *HuddleSearchSuite) SetupSuite() {
 	m.MongoSearcher = search.NewMongoSearcher(m.DB())
 
 	// Read in the data in FHIR format
-	data, err := ioutil.ReadFile("../fixtures/huddle.json")
-	require.NoError(err)
-
-	// Put the huddle into the database
-	var huddle models.Group
-	err = json.Unmarshal(data, &huddle)
-	require.NoError(err)
-	err = m.DB().C("groups").Insert(&huddle)
-	require.NoError(err)
+	m.InsertFixture("groups", "../fixtures/huddle.json", new(models.Group))
 }
 
 func (m *HuddleSearchSuite) TearDownSuite() {

@@ -1,16 +1,23 @@
 package testutil
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"reflect"
+	"strings"
 	"sync"
 
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 	"gopkg.in/mgo.v2/dbtest"
 )
 
+// MongoSuite is a testify Suite that adds functions to setup and teardown test Mongo DBs, as well as other provides
+// functions for other common Mongo-related tasks such as inserting a fixture into the database.
 type MongoSuite struct {
 	suite.Suite
 	dbServer      *dbtest.DBServer
@@ -89,4 +96,56 @@ func (suite *MongoSuite) TearDownDB() {
 		}
 		suite.dbServerMutex.Unlock()
 	}
+}
+
+// InsertFixture inserts a test fixture into the Mongo database.  If the fixture does not have an _id set, InsertFixture
+// will attempt to find the _id field using reflection and will set it to a new BSON ID before inserting.
+func (suite *MongoSuite) InsertFixture(collection string, pathToFixture string, doc interface{}) {
+	require := suite.Require()
+
+	// Read the fixture file and unmarshal it to the doc
+	data, err := ioutil.ReadFile(pathToFixture)
+	require.NoError(err)
+	err = json.Unmarshal(data, doc)
+	require.NoError(err)
+
+	// If it's a slice, store each element, otherwise just store the thing
+	value := reflect.ValueOf(doc).Elem()
+	if value.Kind() == reflect.Slice {
+		for i := 0; i < value.Len(); i++ {
+			suite.insertValue(collection, value.Index(i))
+		}
+	} else {
+		suite.insertValue(collection, value)
+	}
+}
+
+func (suite *MongoSuite) insertValue(collection string, value reflect.Value) {
+	// Find the ID field and set it, if necessary
+	if field, err := findBSONIDField(value); err == nil && field.CanSet() && field.String() == "" {
+		field.SetString(bson.NewObjectId().Hex())
+	}
+
+	// Store it
+	err := suite.DB().C(collection).Insert(value.Interface())
+	suite.Require().NoError(err)
+}
+
+func findBSONIDField(value reflect.Value) (reflect.Value, error) {
+	for i := 0; i < value.NumField(); i++ {
+		valueField := value.Field(i)
+		typeField := value.Type().Field(i)
+		bsonTag := typeField.Tag.Get("bson")
+		if strings.HasPrefix(bsonTag, ",inline") {
+			// It's an inline struct, so check it for an _id
+			if idField, err := findBSONIDField(valueField); err == nil {
+				return idField, nil
+			}
+		} else if strings.HasPrefix(bsonTag, "_id") {
+			return valueField, nil
+		} else if typeField.Name == "_id" && (bsonTag == "" || strings.HasPrefix(bsonTag, ",")) {
+			return valueField, nil
+		}
+	}
+	return reflect.Value{}, errors.New("No _id field found")
 }

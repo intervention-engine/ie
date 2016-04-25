@@ -2,7 +2,6 @@ package groups
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
@@ -54,13 +53,8 @@ func (suite *GroupParamSuite) TestGroupBSONBuilder() {
 	assert := suite.Assert()
 
 	// Store the group
-	groupData, err := ioutil.ReadFile("../fixtures/sample-group.json")
-	require.NoError(err)
 	group := new(fhir.Group)
-	err = json.Unmarshal(groupData, group)
-	require.NoError(err)
-	group.Id = bson.NewObjectId().Hex()
-	suite.DB().C("groups").Insert(group)
+	suite.InsertFixture("groups", "../fixtures/sample-group.json", group)
 
 	// Store the bundle of data to match the group
 	bundleFile, err := os.Open("../fixtures/sample-group-data-bundle.json")
