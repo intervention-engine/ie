@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/intervention-engine/fhir/server"
+	"github.com/intervention-engine/ie/groups"
 	"github.com/intervention-engine/ie/middleware"
 	"github.com/intervention-engine/ie/notifications"
 	"github.com/intervention-engine/ie/subscription"
@@ -22,8 +23,6 @@ func RegisterRoutes(s *server.FHIRServer, selfURL, riskServiceEndpoint string) f
 	//s.AddMiddleware("Group", middleware.AuthHandler())
 	//s.AddMiddleware("Patient", middleware.AuthHandler())
 
-	s.AddMiddleware("Patient", PatientListMiddleware)
-
 	s.AddMiddleware("Condition", watch)
 
 	s.AddMiddleware("MedicationStatement", watch)
@@ -36,8 +35,7 @@ func RegisterRoutes(s *server.FHIRServer, selfURL, riskServiceEndpoint string) f
 	notificationHandler := &middleware.NotificationHandler{Registry: notifications.DefaultNotificationDefinitionRegistry}
 	s.AddMiddleware("Encounter", notificationHandler.Handle())
 
-	s.Engine.GET("/GroupList/:id", PatientListHandler)
-	s.Engine.POST("/InstaCountAll", InstaCountAllHandler)
+	s.Engine.POST("/InstaCountAll", groups.InstaCountAllHandler)
 	s.Engine.GET("/NotificationCount", NotificationCountHandler)
 	s.Engine.GET("/Pie/:id", GeneratePieHandler(riskServiceEndpoint))
 	s.Engine.POST("/CodeLookup", CodeLookup)

@@ -2,20 +2,17 @@ package huddles
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/server"
+	"github.com/intervention-engine/ie/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"gopkg.in/mgo.v2/dbtest"
 )
 
 // In order for 'go test' to run this suite, we need to create
@@ -25,41 +22,19 @@ func TestHuddleSchedulerSuite(t *testing.T) {
 }
 
 type HuddleSchedulerSuite struct {
-	suite.Suite
-	DBServer     *dbtest.DBServer
-	DBServerPath string
-	Session      *mgo.Session
-	Database     *mgo.Database
-}
-
-func (suite *HuddleSchedulerSuite) SetupSuite() {
-	// Set up the database
-	suite.DBServer = &dbtest.DBServer{}
-	var err error
-	suite.DBServerPath, err = ioutil.TempDir("", "mongotestdb")
-	if err != nil {
-		panic(err)
-	}
-	suite.DBServer.SetPath(suite.DBServerPath)
-	RegisterCustomSearchDefinitions()
+	testutil.MongoSuite
 }
 
 func (suite *HuddleSchedulerSuite) SetupTest() {
-	suite.Session = suite.DBServer.Session()
-	suite.Database = suite.Session.DB("riskservice-test")
-	server.Database = suite.Database
+	server.Database = suite.DB()
 }
 
 func (suite *HuddleSchedulerSuite) TearDownTest() {
-	suite.Session.Close()
-	suite.DBServer.Wipe()
+	suite.TearDownDB()
 }
 
 func (suite *HuddleSchedulerSuite) TearDownSuite() {
-	suite.DBServer.Stop()
-	if err := os.RemoveAll(suite.DBServerPath); err != nil {
-		fmt.Fprintf(os.Stderr, "WARNING: Error cleaning up temp directory: %s", err.Error())
-	}
+	suite.TearDownDBServer()
 }
 
 // For now, this test just uses risk scores, but it should be expanded as we add support for autopopulating
@@ -331,7 +306,7 @@ func (suite *HuddleSchedulerSuite) storePatientAndScores(id string, scores ...in
 
 	p := new(models.Patient)
 	p.Id = id
-	require.NoError(suite.Database.C("patients").Insert(p))
+	require.NoError(suite.DB().C("patients").Insert(p))
 
 	if len(scores) > 0 {
 		day := 24 * time.Hour
@@ -369,7 +344,7 @@ func (suite *HuddleSchedulerSuite) storePatientAndScores(id string, scores ...in
 					},
 				}
 			}
-			require.NoError(suite.Database.C("riskassessments").Insert(ra))
+			require.NoError(suite.DB().C("riskassessments").Insert(ra))
 			date = date.Add(7 * 24 * time.Hour)
 		}
 	}
@@ -429,7 +404,7 @@ func (suite *HuddleSchedulerSuite) storeHuddleWithReasons(date time.Time, leader
 		}
 	}
 
-	require.NoError(suite.Database.C("groups").Insert(g))
+	require.NoError(suite.DB().C("groups").Insert(g))
 }
 
 func (suite *HuddleSchedulerSuite) storeHuddle(date time.Time, leaderID string, reason *models.CodeableConcept, patients ...string) {

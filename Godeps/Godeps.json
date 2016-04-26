@@ -5,11 +5,13 @@
 	"Packages": [
 		"github.com/intervention-engine/ie",
 		"github.com/intervention-engine/ie/controllers",
+		"github.com/intervention-engine/ie/groups",
 		"github.com/intervention-engine/ie/huddles",
 		"github.com/intervention-engine/ie/middleware",
 		"github.com/intervention-engine/ie/models",
 		"github.com/intervention-engine/ie/notifications",
 		"github.com/intervention-engine/ie/subscription",
+		"github.com/intervention-engine/ie/testutil",
 		"github.com/intervention-engine/ie/utilities"
 	],
 	"Deps": [
@@ -50,26 +52,22 @@
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/models",
-			"Comment": "DSTU1-146-g110cf40",
-			"Rev": "110cf404483136b41a4c549b636f38ff921408f0"
+			"Comment": "DSTU1-147-gb274723",
+			"Rev": "b27472374323fb2582d750b140c88729ecfabd8b"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/search",
-			"Comment": "DSTU1-146-g110cf40",
-			"Rev": "110cf404483136b41a4c549b636f38ff921408f0"
+			"Comment": "DSTU1-147-gb274723",
+			"Rev": "b27472374323fb2582d750b140c88729ecfabd8b"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/server",
-			"Comment": "DSTU1-146-g110cf40",
-			"Rev": "110cf404483136b41a4c549b636f38ff921408f0"
+			"Comment": "DSTU1-147-gb274723",
+			"Rev": "b27472374323fb2582d750b140c88729ecfabd8b"
 		},
 		{
 			"ImportPath": "github.com/manucorporat/sse",
 			"Rev": "ee05b128a739a0fb76c7ebd3ae4810c1de808d6d"
-		},
-		{
-			"ImportPath": "github.com/pebbe/util",
-			"Rev": "732c49a562eac4233f1e635fdfa58f9c8bc0f969"
 		},
 		{
 			"ImportPath": "github.com/pmezard/go-difflib/difflib",
@@ -106,10 +104,6 @@
 		{
 			"ImportPath": "golang.org/x/net/context",
 			"Rev": "5df5483e0518a11a6ef1e894c70236eb3f639557"
-		},
-		{
-			"ImportPath": "gopkg.in/check.v1",
-			"Rev": "64131543e7896d5bcc6bd5a76287eb75ea96c673"
 		},
 		{
 			"ImportPath": "gopkg.in/go-playground/validator.v8",

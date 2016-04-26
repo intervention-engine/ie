@@ -8,29 +8,24 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/server"
-	"github.com/pebbe/util"
-	. "gopkg.in/check.v1"
-	"gopkg.in/mgo.v2/dbtest"
+	"github.com/intervention-engine/ie/testutil"
+	"github.com/stretchr/testify/suite"
 )
 
+// In order for 'go test' to run this suite, we need to create
+// a normal test function and pass our suite to suite.Run
+func TestResourceWatchSuite(t *testing.T) {
+	suite.Run(t, new(ResourceWatchSuite))
+}
+
 type ResourceWatchSuite struct {
-	DBServer      *dbtest.DBServer
+	testutil.MongoSuite
 	Server        *httptest.Server
 	WorkerChannel chan ResourceUpdateMessage
 }
 
-var _ = Suite(&ResourceWatchSuite{})
-
-func Test(t *testing.T) { TestingT(t) }
-
-func (r *ResourceWatchSuite) SetUpSuite(c *C) {
-	//set up dbtest server
-	r.DBServer = &dbtest.DBServer{}
-	r.DBServer.SetPath(c.MkDir())
-}
-
-func (r *ResourceWatchSuite) SetUpTest(c *C) {
-	server.Database = r.DBServer.Session().DB("ie-test")
+func (r *ResourceWatchSuite) SetupTest() {
+	server.Database = r.DB()
 
 	//set up empty router
 	e := gin.New()
@@ -45,33 +40,35 @@ func (r *ResourceWatchSuite) SetUpTest(c *C) {
 	r.Server.Start()
 }
 
-func (r *ResourceWatchSuite) TearDownTest(c *C) {
+func (r *ResourceWatchSuite) TearDownTest() {
 	close(r.WorkerChannel)
-	server.Database.Session.Close()
-	r.DBServer.Wipe()
+	r.TearDownDB()
 	r.Server.Close()
 }
 
-func (r *ResourceWatchSuite) TearDownSuite(c *C) {
-	r.DBServer.Stop()
+func (r *ResourceWatchSuite) TearDownSuite() {
+	r.TearDownDBServer()
 }
 
-func (r *ResourceWatchSuite) TestGenerateResourceWatch(c *C) {
+func (r *ResourceWatchSuite) TestGenerateResourceWatch() {
+	require := r.Require()
+	assert := r.Assert()
+
 	//load fixture
 	data, err := os.Open("../fixtures/medication-statement.json")
-	util.CheckErr(err)
+	require.NoError(err)
 	defer data.Close()
 
 	//post fixture
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", r.Server.URL+"/MedicationStatement", data)
-	util.CheckErr(err)
+	require.NoError(err)
 	req.Header.Add("Content-Type", "application/json")
 	_, err = client.Do(req)
 
-	util.CheckErr(err)
-	c.Assert(len(r.WorkerChannel), Equals, 1)
+	require.NoError(err)
+	assert.Len(r.WorkerChannel, 1)
 	rum := <-r.WorkerChannel
-	c.Assert(rum.PatientID, Equals, "55c3847267803d2945000003")
-	c.Assert(rum.Timestamp, Equals, "2015-04-01T00:00:00-04:00")
+	assert.Equal("55c3847267803d2945000003", rum.PatientID)
+	assert.Equal("2015-04-01T00:00:00-04:00", rum.Timestamp)
 }

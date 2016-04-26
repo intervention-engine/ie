@@ -58,8 +58,6 @@ func main() {
 		riskServiceEndpoint = "http://" + riskServiceEndpoint + ":9000"
 	}
 
-	huddles.RegisterCustomSearchDefinitions()
-
 	var ip net.IP
 	var selfURL string
 	host, err := os.Hostname()

@@ -4,15 +4,22 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"sync"
+	"testing"
 
 	"github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/server"
-	. "gopkg.in/check.v1"
-	"gopkg.in/mgo.v2/dbtest"
+	"github.com/intervention-engine/ie/testutil"
+	"github.com/stretchr/testify/suite"
 )
 
+// In order for 'go test' to run this suite, we need to create
+// a normal test function and pass our suite to suite.Run
+func TestNotifierSuite(t *testing.T) {
+	suite.Run(t, new(NotifierSuite))
+}
+
 type NotifierSuite struct {
-	DBServer          *dbtest.DBServer
+	testutil.MongoSuite
 	Server            *httptest.Server
 	PatientRecieved   string
 	TimestampRecieved string
@@ -20,13 +27,7 @@ type NotifierSuite struct {
 	WorkerChannel     chan ResourceUpdateMessage
 }
 
-var _ = Suite(&NotifierSuite{})
-
-func (r *NotifierSuite) SetUpSuite(c *C) {
-	//set up dbtest server
-	r.DBServer = &dbtest.DBServer{}
-	r.DBServer.SetPath(c.MkDir())
-
+func (r *NotifierSuite) SetupSuite() {
 	//create test risk server
 	r.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		r.PatientRecieved = req.FormValue("patientId")
@@ -37,25 +38,26 @@ func (r *NotifierSuite) SetUpSuite(c *C) {
 	r.WorkerChannel = make(chan ResourceUpdateMessage, 1)
 }
 
-func (r *NotifierSuite) SetUpTest(c *C) {
-	server.Database = r.DBServer.Session().DB("ie-test")
+func (r *NotifierSuite) SetupTest() {
+	server.Database = r.DB()
 }
 
-func (r *NotifierSuite) TearDownTest(c *C) {
-	server.Database.Session.Close()
-	r.DBServer.Wipe()
+func (r *NotifierSuite) TearDownTest() {
+	r.TearDownDB()
 }
 
-func (r *NotifierSuite) TearDownSuite(c *C) {
-	r.DBServer.Stop()
+func (r *NotifierSuite) TearDownSuite() {
+	r.TearDownDBServer()
 	r.Server.Close()
 }
 
-func (r *NotifierSuite) TestRiskServiceHandler(c *C) {
+func (r *NotifierSuite) TestRiskServiceHandler() {
+	assert := r.Assert()
+
 	sub := &models.Subscription{}
 	channel := &models.SubscriptionChannelComponent{Endpoint: r.Server.URL, Type: "rest-hook"}
 	sub.Channel = channel
-	server.Database.C("subscriptions").Insert(sub)
+	r.DB().C("subscriptions").Insert(sub)
 	rum := NewResourceUpdateMessage("55c3847267803d2945000003", "2015-04-01T00:00:00-04:00")
 	r.WorkerChannel <- rum
 	var wg sync.WaitGroup
@@ -63,7 +65,7 @@ func (r *NotifierSuite) TestRiskServiceHandler(c *C) {
 	go NotifySubscribers(r.WorkerChannel, "http://example.org", &wg)
 	close(r.WorkerChannel)
 	wg.Wait()
-	c.Assert(r.PatientRecieved, Equals, "55c3847267803d2945000003")
-	c.Assert(r.TimestampRecieved, Equals, "2015-04-01T00:00:00-04:00")
-	c.Assert(r.EndpointRecieved, Equals, "http://example.org")
+	assert.Equal("55c3847267803d2945000003", r.PatientRecieved)
+	assert.Equal("2015-04-01T00:00:00-04:00", r.TimestampRecieved)
+	assert.Equal("http://example.org", r.EndpointRecieved)
 }
