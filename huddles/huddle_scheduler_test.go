@@ -175,6 +175,106 @@ func (suite *HuddleSchedulerSuite) TestScheduleHuddles() {
 	assert.Equal(huddles, storedHuddles, "Stored huddles should match returned huddles")
 }
 
+// Test for bug logged in pivotal: https://www.pivotaltracker.com/story/show/117859291
+func (suite *HuddleSchedulerSuite) TestManuallyAddPatientToExistingHuddle() {
+	assert := assert.New(suite.T())
+	require := require.New(suite.T())
+
+	// Create a patient that needs to be discussed every week, to ensure weekly scheduled huddles
+	suite.storePatientAndScores(bsonID(1), 8)
+	// Create a patient that needs to be discussed every 2 weeks, whom we'll manually schedule on an off-week
+	suite.storePatientAndScores(bsonID(2), 7)
+
+	config := createHuddleConfig()
+	// The bug indicates there must be a huddle TODAY, so set the day of the week to today's
+	config.Days[0] = time.Now().Weekday()
+
+	// Schedule the huddles
+	huddles, err := ScheduleHuddles(config)
+	require.NoError(err)
+	assert.Len(huddles, 4)
+	for i := range huddles {
+		ha := NewHuddleAssertions(huddles[i], assert)
+		ha.AssertValidHuddleProfile()
+		ha.AssertLeaderIdEqual("123")
+		ha.AssertNameEqual("Test Huddle Config")
+	}
+
+	// Find today @ 10am to start checking dates
+	t := time.Now()
+	t = time.Date(t.Year(), t.Month(), t.Day(), 10, 0, 0, 0, t.Location())
+
+	// Check each one individually to ensure it's as expected
+	ha := NewHuddleAssertions(huddles[0], assert)
+	ha.AssertActiveDateTimeEqual(t)
+	ha.AssertMemberIDs(bsonID(1), bsonID(2))
+
+	ha = NewHuddleAssertions(huddles[1], assert)
+	ha.AssertActiveDateTimeEqual(t.AddDate(0, 0, 7))
+	ha.AssertMemberIDs(bsonID(1))
+
+	ha = NewHuddleAssertions(huddles[2], assert)
+	ha.AssertActiveDateTimeEqual(t.AddDate(0, 0, 14))
+	ha.AssertMemberIDs(bsonID(1), bsonID(2))
+
+	ha = NewHuddleAssertions(huddles[3], assert)
+	ha.AssertActiveDateTimeEqual(t.AddDate(0, 0, 21))
+	ha.AssertMemberIDs(bsonID(1))
+
+	// Now manually schedule patient 2 to the second huddle (which should be an off-week for the patient)
+	huddles[1].Member = append(huddles[1].Member, models.GroupMemberComponent{
+		BackboneElement: models.BackboneElement{
+			Element: models.Element{
+				Extension: []models.Extension{
+					{
+						Url:                  "http://interventionengine.org/fhir/extension/group/member/reason",
+						ValueCodeableConcept: &ManualAdditionReason,
+					},
+				},
+			},
+		},
+		Entity: &models.Reference{
+			Reference:    "Patient/" + bsonID(2),
+			ReferencedID: bsonID(2),
+			Type:         "Patient",
+			External:     new(bool),
+		},
+	})
+	err = suite.DB().C("groups").UpdateId(huddles[1].Id, huddles[1])
+	require.NoError(err)
+
+	// Reschedule the huddles
+	huddles, err = ScheduleHuddles(config)
+	require.NoError(err)
+	assert.Len(huddles, 4)
+
+	// Check each one again to ensure it's as expected
+	ha = NewHuddleAssertions(huddles[0], assert)
+	ha.AssertActiveDateTimeEqual(t)
+	// Still should have patient 2 because it's before the new manual addition
+	ha.AssertMemberIDs(bsonID(1), bsonID(2))
+
+	ha = NewHuddleAssertions(huddles[1], assert)
+	ha.AssertActiveDateTimeEqual(t.AddDate(0, 0, 7))
+	// Should have patient 2 now because patient 2 was manually added for this week
+	ha.AssertMemberIDs(bsonID(2), bsonID(1))
+
+	ha = NewHuddleAssertions(huddles[2], assert)
+	ha.AssertActiveDateTimeEqual(t.AddDate(0, 0, 14))
+	// Should no longer have patient 2 because the manual addition reset the every-2-week cadence
+	ha.AssertMemberIDs(bsonID(1))
+
+	ha = NewHuddleAssertions(huddles[3], assert)
+	ha.AssertActiveDateTimeEqual(t.AddDate(0, 0, 21))
+	// Should have patient 2 now due to the new cadence
+	ha.AssertMemberIDs(bsonID(1), bsonID(2))
+
+	// Now just make sure they were really stored to the db
+	var storedHuddles []*models.Group
+	server.Database.C("groups").Find(bson.M{}).Sort("extension.activeDateTime").All(&storedHuddles)
+	assert.Equal(huddles, storedHuddles, "Stored huddles should match returned huddles")
+}
+
 func (suite *HuddleSchedulerSuite) TestFindEligiblePatientIDsByRiskScoreWithNoPreviousHuddles() {
 	assert := assert.New(suite.T())
 	require := require.New(suite.T())
