@@ -98,15 +98,11 @@ func CreatePopulatedHuddle(date time.Time, config *HuddleConfig) (*models.Group,
 	// First find the manually added patients (in case this was existing) and remember them
 	var manuallyAddedPatientIDs []string
 	for i := range group.Member {
-		for j := range group.Member[i].Extension {
-			ext := group.Member[i].Extension[j]
-			if ext.Url == "http://interventionengine.org/fhir/extension/group/member/reason" &&
-				ext.ValueCodeableConcept != nil &&
-				len(ext.ValueCodeableConcept.Coding) > 0 &&
-				ext.ValueCodeableConcept.Coding[0].Code == ManualAdditionReason.Coding[0].Code {
-				manuallyAddedPatientIDs = append(manuallyAddedPatientIDs, group.Member[i].Entity.ReferencedID)
-				break
-			}
+		mem := HuddleMember(group.Member[i])
+		reason := mem.Reason()
+		if reason != nil && reason.MatchesCode(ManualAdditionReason.Coding[0].System, ManualAdditionReason.Coding[0].Code) {
+			manuallyAddedPatientIDs = append(manuallyAddedPatientIDs, mem.Entity.ReferencedID)
+			break
 		}
 	}
 

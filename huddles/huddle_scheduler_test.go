@@ -97,7 +97,7 @@ func (suite *HuddleSchedulerSuite) TestCreatePopulatedHuddleForNewHuddle() {
 	ha := NewHuddleAssertions(group, assert)
 	ha.AssertValidHuddleProfile()
 	ha.AssertActiveDateTimeEqual(time.Date(2016, time.March, 21, 9, 0, 0, 0, time.UTC))
-	ha.AssertLeaderIdEqual("123")
+	ha.AssertLeaderIDEqual("123")
 	ha.AssertNameEqual("Test Huddle Config")
 	assert.Len(group.Member, 13)
 
@@ -142,7 +142,7 @@ func (suite *HuddleSchedulerSuite) TestCreatePopulatedHuddleForExistingHuddle() 
 	ha := NewHuddleAssertions(group, assert)
 	ha.AssertValidHuddleProfile()
 	ha.AssertActiveDateTimeEqual(time.Date(2016, time.March, 21, 0, 0, 0, 0, time.Local))
-	ha.AssertLeaderIdEqual("123")
+	ha.AssertLeaderIDEqual("123")
 	assert.True(strings.HasPrefix(ha.Name, "Test Huddle"))
 
 	require.Len(ha.Member, 3)
@@ -168,7 +168,7 @@ func (suite *HuddleSchedulerSuite) TestScheduleHuddlesByRiskScore() {
 	for i := range huddles {
 		ha := NewHuddleAssertions(huddles[i], assert)
 		ha.AssertValidHuddleProfile()
-		ha.AssertLeaderIdEqual("123")
+		ha.AssertLeaderIDEqual("123")
 		ha.AssertNameEqual("Test Huddle Config")
 	}
 
@@ -231,7 +231,7 @@ func (suite *HuddleSchedulerSuite) TestScheduleHuddlesByEncounterEvents() {
 	for i := range huddles {
 		ha := NewHuddleAssertions(huddles[i], assert)
 		ha.AssertValidHuddleProfile()
-		ha.AssertLeaderIdEqual("123")
+		ha.AssertLeaderIDEqual("123")
 		ha.AssertNameEqual("Test Huddle Config")
 	}
 
@@ -298,7 +298,7 @@ func (suite *HuddleSchedulerSuite) TestManuallyAddPatientToExistingHuddle() {
 	for i := range huddles {
 		ha := NewHuddleAssertions(huddles[i], assert)
 		ha.AssertValidHuddleProfile()
-		ha.AssertLeaderIdEqual("123")
+		ha.AssertLeaderIDEqual("123")
 		ha.AssertNameEqual("Test Huddle Config")
 	}
 
@@ -674,13 +674,14 @@ func bsonID(id int) string {
 }
 
 type HuddleAssertions struct {
-	*models.Group
+	*Huddle
 	assert *assert.Assertions
 }
 
 func NewHuddleAssertions(group *models.Group, assertions *assert.Assertions) *HuddleAssertions {
+	h := Huddle(*group)
 	return &HuddleAssertions{
-		Group:  group,
+		Huddle: &h,
 		assert: assertions,
 	}
 }
@@ -689,21 +690,11 @@ func (h *HuddleAssertions) AssertValidHuddleProfile() bool {
 	status := true
 
 	status = status && h.assert.Contains(h.Meta.Profile, "http://interventionengine.org/fhir/profile/huddle")
-	var foundActiveDateTime, foundLeader bool
-	for _, ext := range h.Extension {
-		switch ext.Url {
-		case "http://interventionengine.org/fhir/extension/group/activeDateTime":
-			status = status && h.assert.NotNil(ext.ValueDateTime)
-			foundActiveDateTime = true
-		case "http://interventionengine.org/fhir/extension/group/leader":
-			status = status && h.assert.NotNil(ext.ValueReference)
-			status = status && h.assert.Equal("Practitioner", ext.ValueReference.Type)
-			status = status && h.assert.False(*ext.ValueReference.External)
-			foundLeader = true
-		}
-	}
-	status = status && h.assert.True(foundActiveDateTime, "activeDateTime extension should be populated")
-	status = status && h.assert.True(foundLeader, "leader extension should be populated")
+	status = status && h.assert.NotNil(h.ActiveDateTime())
+	l := h.Leader()
+	status = status && h.assert.NotNil(l)
+	status = status && h.assert.Equal("Practitioner", l.Type)
+	status = status && h.assert.False(*l.External)
 	status = status && h.assert.Equal("person", h.Type)
 	status = status && h.assert.True(*h.Actual)
 	status = status && h.assert.Equal(&models.CodeableConcept{
@@ -713,18 +704,12 @@ func (h *HuddleAssertions) AssertValidHuddleProfile() bool {
 		Text: "Huddle",
 	}, h.Code)
 	status = status && h.assert.NotEmpty(h.Name)
-	for _, mem := range h.Member {
-		var foundReason bool
-		for _, ext := range mem.Extension {
-			if ext.Url == "http://interventionengine.org/fhir/extension/group/member/reason" {
-				status = status && h.assert.NotNil(ext.ValueCodeableConcept)
-				status = status && h.assert.Len(ext.ValueCodeableConcept.Coding, 1)
-				status = status && h.assert.Equal("http://interventionengine.org/fhir/cs/huddle-member-reason", ext.ValueCodeableConcept.Coding[0].System)
-				status = status && h.assert.NotEmpty(ext.ValueCodeableConcept.Text)
-				foundReason = true
-			}
-		}
-		status = status && h.assert.True(foundReason, "Member reason extension should be populated")
+	for _, mem := range h.HuddleMembers() {
+		r := mem.Reason()
+		status = status && h.assert.NotNil(r)
+		status = status && h.assert.Len(r.Coding, 1)
+		status = status && h.assert.Equal("http://interventionengine.org/fhir/cs/huddle-member-reason", r.Coding[0].System)
+		status = status && h.assert.NotEmpty(r.Text)
 		status = status && h.assert.NotNil(mem.Entity)
 		status = status && h.assert.Equal("Patient", mem.Entity.Type)
 		status = status && h.assert.False(*mem.Entity.External)
@@ -734,26 +719,22 @@ func (h *HuddleAssertions) AssertValidHuddleProfile() bool {
 }
 
 func (h *HuddleAssertions) AssertActiveDateTimeEqual(date time.Time) bool {
-	for i := range h.Extension {
-		if h.Extension[i].Url == "http://interventionengine.org/fhir/extension/group/activeDateTime" {
-			return h.assert.True(h.Extension[i].ValueDateTime.Time.Equal(date), "Expected <", date, ">, Got <", h.Extension[i].ValueDateTime.Time, ">")
-		}
-	}
-	return h.assert.Fail("Expected ActiveDateTime but did not find one")
+	adt := h.ActiveDateTime()
+	status := true
+	status = status && h.assert.NotNil(adt)
+	return status && h.assert.True(adt.Time.Equal(date), "Expected <", date, ">, Got <", adt.Time, ">")
 }
 
-func (h *HuddleAssertions) AssertLeaderIdEqual(leaderID string) bool {
-	for i := range h.Extension {
-		if h.Extension[i].Url == "http://interventionengine.org/fhir/extension/group/leader" {
-			return h.assert.Equal(&models.Reference{
-				Reference:    "Practitioner/" + leaderID,
-				ReferencedID: leaderID,
-				Type:         "Practitioner",
-				External:     new(bool),
-			}, h.Extension[i].ValueReference)
-		}
-	}
-	return h.assert.Fail("Expected Leader but did not find one")
+func (h *HuddleAssertions) AssertLeaderIDEqual(leaderID string) bool {
+	leader := h.Leader()
+	status := true
+	status = status && h.assert.NotNil(leader)
+	return status && h.assert.Equal(&models.Reference{
+		Reference:    "Practitioner/" + leaderID,
+		ReferencedID: leaderID,
+		Type:         "Practitioner",
+		External:     new(bool),
+	}, leader)
 }
 
 func (h *HuddleAssertions) AssertNameEqual(name string) bool {
@@ -773,10 +754,7 @@ func (h *HuddleAssertions) AssertMember(i int, id string, reason *models.Codeabl
 	}, h.Member[i].Entity)
 	if reason != nil {
 		status = status && h.assert.Len(h.Member[i].Extension, 1)
-		status = status && h.assert.Equal(h.Member[i].Extension[0], models.Extension{
-			Url:                  "http://interventionengine.org/fhir/extension/group/member/reason",
-			ValueCodeableConcept: reason,
-		})
+		status = status && h.assert.Equal(reason, h.HuddleMembers()[i].Reason())
 	}
 	return status
 }
