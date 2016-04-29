@@ -133,8 +133,10 @@ func (suite *HuddleSchedulerSuite) TestCreatePopulatedHuddleForExistingHuddle() 
 
 	config := createHuddleConfig(true, true, time.Monday)
 	suite.storeHuddle(time.Date(2016, time.March, 14, 0, 0, 0, 0, time.Local), config.LeaderID, &RiskScoreReason, bsonID(3), bsonID(4))
+	hunchReason := ManualAdditionReason
+	hunchReason.Text = "I've got a hunch"
 	suite.storeHuddleWithReasons(time.Date(2016, time.March, 21, 0, 0, 0, 0, time.Local), config.LeaderID, &RiskScoreReason,
-		map[string]*models.CodeableConcept{bsonID(1): &ManualAdditionReason}, bsonID(1), bsonID(2), bsonID(3), bsonID(4))
+		map[string]*models.CodeableConcept{bsonID(1): &hunchReason}, bsonID(1), bsonID(2), bsonID(3), bsonID(4))
 
 	group, err := CreatePopulatedHuddle(time.Date(2016, time.March, 21, 0, 0, 0, 0, time.Local), config)
 	require.NoError(err)
@@ -146,7 +148,7 @@ func (suite *HuddleSchedulerSuite) TestCreatePopulatedHuddleForExistingHuddle() 
 	assert.True(strings.HasPrefix(ha.Name, "Test Huddle"))
 
 	require.Len(ha.Member, 3)
-	ha.AssertMember(0, bsonID(1), &ManualAdditionReason)
+	ha.AssertMember(0, bsonID(1), &hunchReason)
 	ha.AssertMember(1, bsonID(4), &RiskScoreReason)
 	ha.AssertMember(2, bsonID(2), &RiskScoreReason)
 }

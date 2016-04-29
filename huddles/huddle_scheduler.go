@@ -97,11 +97,13 @@ func CreatePopulatedHuddle(date time.Time, config *HuddleConfig) (*models.Group,
 
 	// First find the manually added patients (in case this was existing) and remember them
 	var manuallyAddedPatientIDs []string
+	manuallyAddedReasonMap := make(map[string]*models.CodeableConcept)
 	for i := range group.Member {
 		mem := HuddleMember(group.Member[i])
 		reason := mem.Reason()
 		if reason != nil && reason.MatchesCode(ManualAdditionReason.Coding[0].System, ManualAdditionReason.Coding[0].Code) {
 			manuallyAddedPatientIDs = append(manuallyAddedPatientIDs, mem.Entity.ReferencedID)
+			manuallyAddedReasonMap[mem.Entity.ReferencedID] = reason
 			break
 		}
 	}
@@ -111,7 +113,7 @@ func CreatePopulatedHuddle(date time.Time, config *HuddleConfig) (*models.Group,
 
 	// Start repopulating by adding back manually added patients (if applicable)
 	for _, pid := range manuallyAddedPatientIDs {
-		addPatientToHuddle(group, pid, &ManualAdditionReason)
+		addPatientToHuddle(group, pid, manuallyAddedReasonMap[pid])
 	}
 
 	encounterPatients, err := findEligiblePatientIDsByRecentEncounter(date, config)
