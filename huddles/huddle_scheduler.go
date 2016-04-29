@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 	"time"
 
 	"gopkg.in/mgo.v2/bson"
@@ -96,16 +97,14 @@ func CreatePopulatedHuddle(date time.Time, config *HuddleConfig) (*models.Group,
 
 	// First find the manually added patients (in case this was existing) and remember them
 	var manuallyAddedPatientIDs []string
+	manuallyAddedReasonMap := make(map[string]*models.CodeableConcept)
 	for i := range group.Member {
-		for j := range group.Member[i].Extension {
-			ext := group.Member[i].Extension[j]
-			if ext.Url == "http://interventionengine.org/fhir/extension/group/member/reason" &&
-				ext.ValueCodeableConcept != nil &&
-				len(ext.ValueCodeableConcept.Coding) > 0 &&
-				ext.ValueCodeableConcept.Coding[0].Code == ManualAdditionReason.Coding[0].Code {
-				manuallyAddedPatientIDs = append(manuallyAddedPatientIDs, group.Member[i].Entity.ReferencedID)
-				break
-			}
+		mem := HuddleMember(group.Member[i])
+		reason := mem.Reason()
+		if reason != nil && reason.MatchesCode(ManualAdditionReason.Coding[0].System, ManualAdditionReason.Coding[0].Code) {
+			manuallyAddedPatientIDs = append(manuallyAddedPatientIDs, mem.Entity.ReferencedID)
+			manuallyAddedReasonMap[mem.Entity.ReferencedID] = reason
+			break
 		}
 	}
 
@@ -114,7 +113,17 @@ func CreatePopulatedHuddle(date time.Time, config *HuddleConfig) (*models.Group,
 
 	// Start repopulating by adding back manually added patients (if applicable)
 	for _, pid := range manuallyAddedPatientIDs {
-		addPatientToHuddle(group, pid, &ManualAdditionReason)
+		addPatientToHuddle(group, pid, manuallyAddedReasonMap[pid])
+	}
+
+	encounterPatients, err := findEligiblePatientIDsByRecentEncounter(date, config)
+	if err != nil {
+		return nil, err
+	}
+	for i := range encounterPatients {
+		reason := RecentEncounterReason
+		reason.Text = encounterPatients[i].EventCode.Name
+		addPatientToHuddle(group, encounterPatients[i].PatientID, &reason)
 	}
 
 	riskPatientIDs, err := findEligiblePatientIDsByRiskScore(date, config)
@@ -124,10 +133,7 @@ func CreatePopulatedHuddle(date time.Time, config *HuddleConfig) (*models.Group,
 	for _, pid := range riskPatientIDs {
 		addPatientToHuddle(group, pid, &RiskScoreReason)
 	}
-	encounterPatientIDs := findEligiblePatientIDsByRecentEncounter(date, config)
-	for _, pid := range encounterPatientIDs {
-		addPatientToHuddle(group, pid, &RecentEncounterReason)
-	}
+
 	carriedOverPatientIDs := findEligibleCarriedOverPatients(date, config)
 	for _, pid := range carriedOverPatientIDs {
 		addPatientToHuddle(group, pid, &CarriedOverReason)
@@ -150,7 +156,7 @@ var RecentEncounterReason = models.CodeableConcept{
 	Coding: []models.Coding{
 		{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "RECENT_ENCOUNTER"},
 	},
-	Text: "Recent Encounter Warrants Discussion",
+	Text: "Recent Encounter",
 }
 
 // CarriedOverReason indicates that the patient was added to the huddle because he/she was scheduled for the last huddle
@@ -182,7 +188,139 @@ func findExistingHuddle(date time.Time, config *HuddleConfig) (*models.Group, er
 	return nil, nil
 }
 
+type patientEvent struct {
+	PatientID string
+	EventCode EventCode
+}
+
+func findEligiblePatientIDsByRecentEncounter(date time.Time, config *HuddleConfig) ([]patientEvent, error) {
+	var patientEvents []patientEvent
+	patientMap := make(map[string]bool)
+	if config.EventConfig == nil {
+		return patientEvents, nil
+	}
+	// Loop through the event configs, looking for patients with matching encounters
+	for _, eventConfig := range config.EventConfig.EncounterConfigs {
+		// Find the low date representing the earliest time to look back to
+		y, m, d := date.AddDate(0, 0, -1*eventConfig.LookBackDays).Date()
+		lowInclDate := time.Date(y, m, d, 0, 0, 0, 0, date.Location())
+
+		// Don't bother looking for events in the future!
+		if lowInclDate.After(time.Now()) {
+			continue
+		}
+
+		// Find the high date representing the latest time (exclusive) to look at
+		y, m, d = date.AddDate(0, 0, 1).Date()
+		highExclDate := time.Date(y, m, d, 0, 0, 0, 0, date.Location())
+
+		// Build up the query to get all possible encounters that might trigger a huddle
+		fmt := "2006-01-02T15:04:05.000-07:00"
+		queryStr := "date=ge" + lowInclDate.Format(fmt) + "&date=lt" + highExclDate.Format(fmt) + "&status=arrived,in-progress,onleave,finished"
+		if len(eventConfig.TypeCodes) > 0 {
+			codeVals := make([]string, len(eventConfig.TypeCodes))
+			for i, code := range eventConfig.TypeCodes {
+				codeVals[i] = code.System + "|" + code.Code
+			}
+			queryStr += "&type=" + strings.Join(codeVals, ",")
+		}
+
+		searcher := search.NewMongoSearcher(server.Database)
+		encQuery := searcher.CreateQueryObject(search.Query{Resource: "Encounter", Query: queryStr})
+
+		// This pipeline starts with the encounter date/code query, sorts them by date, left-joins the huddles and then
+		// returns only the info we care about.
+		pipeline := []bson.M{
+			{"$match": encQuery},
+			{"$sort": bson.M{"period.start": -1}},
+			{"$lookup": bson.M{
+				"from":         "groups",
+				"localField":   "patient.referenceid",
+				"foreignField": "member.entity.referenceid",
+				"as":           "_groups",
+			}},
+			{"$project": bson.M{
+				"_id":       0,
+				"patientID": "$patient.referenceid",
+				"type":      1,
+				"period":    1,
+				"huddles":   "$_groups",
+			}},
+		}
+
+		var results []struct {
+			PatientID string                   `bson:"patientID"`
+			Type      []models.CodeableConcept `bson:"type"`
+			Period    *models.Period           `bson:"period"`
+			Huddles   []models.Group           `bson:"huddles"`
+		}
+		if err := server.Database.C("encounters").Pipe(pipeline).All(&results); err != nil {
+			return nil, err
+		}
+
+		// Go through the encounters finding the matches and storing in the patient map.  Note that FHIR search only
+		// allows you to search on dates representing a time that happened at some point in the encounter -- so we must
+		// post-process to see if the date is a real match.
+		for _, result := range results {
+			if patientMap[result.PatientID] {
+				// Patient is already scheduled due to an event, so skip
+				continue
+			}
+			for _, code := range eventConfig.TypeCodes {
+				if codeMatches(result.Type, &code) {
+					if d, matches := dateMatches(result.Period, &code, lowInclDate, highExclDate); matches {
+						// If the patient has been discussed since the date, then don't schedule again
+						alreadyDiscussed := false
+						for i := range result.Huddles {
+							h := Huddle(result.Huddles[i])
+							if h.ActiveDateTime() != nil && h.ActiveDateTime().Time.After(d) {
+								m := h.FindHuddleMember(result.PatientID)
+								// Only consider it already discussed if the patient was discussed for this same reason
+								alreadyDiscussed = m != nil && m.Reason().MatchesCode(RecentEncounterReason.Coding[0].System, RecentEncounterReason.Coding[0].Code)
+								break
+							}
+						}
+						if !alreadyDiscussed {
+							patientEvents = append(patientEvents, patientEvent{
+								PatientID: result.PatientID,
+								EventCode: code,
+							})
+							patientMap[result.PatientID] = true
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+	return patientEvents, nil
+}
+
+func codeMatches(encType []models.CodeableConcept, code *EventCode) bool {
+	return models.CodeableConcepts(encType).AnyMatchesCode(code.System, code.Code)
+}
+
+func dateMatches(encPeriod *models.Period, code *EventCode, lowIncl, highExcl time.Time) (time.Time, bool) {
+	if encPeriod == nil {
+		return time.Time{}, false
+	}
+	d := encPeriod.Start
+	if code.UseEndDate {
+		d = encPeriod.End
+	}
+	if d != nil && !d.Time.Before(lowIncl) && d.Time.Before(highExcl) {
+		return d.Time, true
+	}
+	return time.Time{}, false
+}
+
+//func findLatestHuddleInfoForPatient(huddles []models.Group, patientID string, highDate time.Time) (date time.Time, reason models.CodeableConcept)
+
 func findEligiblePatientIDsByRiskScore(date time.Time, config *HuddleConfig) ([]string, error) {
+	if config.RiskConfig == nil {
+		return []string{}, nil
+	}
+
 	var patientInfos []patientHuddleInfo
 	var firstHuddle *time.Time
 
@@ -244,12 +382,6 @@ func findEligiblePatientIDsByRiskScore(date time.Time, config *HuddleConfig) ([]
 		patientIDs[i] = patientInfos[i].PatientID
 	}
 	return patientIDs, nil
-}
-
-func findEligiblePatientIDsByRecentEncounter(date time.Time, config *HuddleConfig) []string {
-	var patientIDs []string
-	// Find all patients with Encounters of specified config.EncounterCodes with admits or discharges since last huddle
-	return patientIDs
 }
 
 func findEligibleCarriedOverPatients(date time.Time, config *HuddleConfig) []string {

@@ -24,5 +24,41 @@
       }
     ]
   },
+  "eventConfig": {
+    "encounterConfigs": [
+      {
+        "lookBackDays": 7,
+        "typeCodes": [
+          {
+            "name": "Hospital Discharge",
+            "system": "http://snomed.info/sct",
+            "code": "32485007",
+            "useEndDate": true
+          },
+          {
+            "name": "Hospital Admission",
+            "system": "http://snomed.info/sct",
+            "code": "32485007"
+          },
+          {
+            "name": "Hospital Re-Admission Discharge",
+            "system": "http://snomed.info/sct",
+            "code": "417005",
+            "useEndDate": true
+          },
+          {
+            "name": "Hospital Re-Admission",
+            "system": "http://snomed.info/sct",
+            "code": "417005"
+          },
+          {
+            "name": "Emergency Room Admission",
+            "system": "http://snomed.info/sct",
+            "code": "50849002"
+          }
+        ]
+      }
+    ]
+  },
   "schedulerCronSpec": "@midnight"
 }

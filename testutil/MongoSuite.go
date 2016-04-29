@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"reflect"
 	"strings"
@@ -118,6 +119,47 @@ func (suite *MongoSuite) InsertFixture(collection string, pathToFixture string, 
 	} else {
 		suite.insertValue(collection, value)
 	}
+}
+
+// PrintDBServerInfo logs out the connection info for the current test database.
+func (suite *MongoSuite) PrintDBServerInfo() {
+	suite.dbServerMutex.Lock()
+	defer suite.dbServerMutex.Unlock()
+
+	dbs := suite.dbServer
+	if dbs == nil {
+		log.Println("Test database server is not running.")
+		return
+	}
+
+	suite.dbMutex.Lock()
+	defer suite.dbMutex.Unlock()
+
+	var session *mgo.Session
+	if suite.db != nil {
+		session = suite.db.Session
+	} else {
+		session = dbs.Session()
+		defer session.Close()
+	}
+
+	log.Println("Test Mongo Database Info {")
+	for _, addr := range session.LiveServers() {
+		log.Println("  Address:       ", addr)
+	}
+	if dbNames, err := session.DatabaseNames(); err == nil {
+		log.Println("  Databases:     [ ", strings.Join(dbNames, ", "), " ]")
+	}
+	if info, err := session.BuildInfo(); err == nil {
+		log.Println("  Version:       ", info.Version)
+		log.Println("  GitVersion:    ", info.GitVersion)
+		log.Println("  OpenSSLVersion:", info.OpenSSLVersion)
+		log.Println("  Bits:          ", info.Bits)
+		log.Println("  MaxObjectSize: ", info.MaxObjectSize)
+		log.Println("  Debug:         ", info.Debug)
+	}
+	log.Println("}")
+
 }
 
 func (suite *MongoSuite) insertValue(collection string, value reflect.Value) {
