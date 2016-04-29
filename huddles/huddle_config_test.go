@@ -63,6 +63,44 @@ func (suite *HuddleConfigSuite) TestLoadHuddleFromJSON() {
 			MaxDaysBetweenHuddles: 28,
 		},
 	}, config.RiskConfig.FrequencyConfigs)
+	require.NotNil(config.EventConfig)
+	assert.Equal([]EncounterEventConfig{
+		{
+			LookBackDays: 7,
+			TypeCodes: []EventCode{
+				{
+					Name:       "Hospital Discharge",
+					System:     "http://snomed.info/sct",
+					Code:       "32485007",
+					UseEndDate: true,
+				},
+				{
+					Name:       "Hospital Admission",
+					System:     "http://snomed.info/sct",
+					Code:       "32485007",
+					UseEndDate: false,
+				},
+				{
+					Name:       "Hospital Re-Admission Discharge",
+					System:     "http://snomed.info/sct",
+					Code:       "417005",
+					UseEndDate: true,
+				},
+				{
+					Name:       "Hospital Re-Admission",
+					System:     "http://snomed.info/sct",
+					Code:       "417005",
+					UseEndDate: false,
+				},
+				{
+					Name:       "Emergency Room Admission",
+					System:     "http://snomed.info/sct",
+					Code:       "50849002",
+					UseEndDate: false,
+				},
+			},
+		},
+	}, config.EventConfig.EncounterConfigs)
 	assert.Equal(config.SchedulerCronSpec, "@midnight")
 }
 

@@ -19,6 +19,7 @@ type HuddleConfig struct {
 	Days              []time.Weekday
 	LookAhead         int
 	RiskConfig        *ScheduleByRiskConfig
+	EventConfig       *ScheduleByEventConfig
 	SchedulerCronSpec string
 }
 
@@ -44,4 +45,26 @@ type RiskScoreFrequencyConfig struct {
 	MaxScore              float64
 	MinDaysBetweenHuddles int
 	MaxDaysBetweenHuddles int
+}
+
+// ScheduleByEventConfig represents how recent events should influence huddle population
+type ScheduleByEventConfig struct {
+	EncounterConfigs []EncounterEventConfig
+}
+
+// EncounterEventConfig represents what types of encounters should cause patients to be scheduled, and how far back
+// the algorithm should look for them
+type EncounterEventConfig struct {
+	LookBackDays int
+	TypeCodes    []EventCode
+}
+
+// EventCode represents a coded event that should cause a patient to be scheduled.  The Name will be displayed as
+// part of the reason the patient was scheduled.  If UseEndDate is set to true, then the end date, rather than the
+// start date, will be used in the scheduling algorithm.
+type EventCode struct {
+	Name       string
+	System     string
+	Code       string
+	UseEndDate bool
 }
