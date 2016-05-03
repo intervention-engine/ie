@@ -1,9 +1,3 @@
-frontend:
-  build: ../frontend
-  ports:
-    - "4200:4200"
-  links:
-    - ie
 ie:
   build: .
   ports:
@@ -29,3 +23,11 @@ riskservice:
     - "9000:9000"
   links:
     - mongodb:mongo
+nginx:
+  build: ../nginx
+  ports:
+    - "8080:8080"
+    - "443:443"
+  links:
+    - ie
+  command: /bin/bash -c "envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf '$$IE_PORT_3001_TCP_ADDR:$$IE_PORT_3001_TCP_PORT' && nginx -g 'daemon off;'"

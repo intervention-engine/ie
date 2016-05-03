@@ -48,7 +48,7 @@ The repositories that are required to deploy Intervention Engine in Docker are a
 
 -	ie: https://github.com/intervention-engine/ie
 -	riskservice: https://github.com/intervention-engine/riskservice
--	frontend: https://github.com/intervention-engine/frontend
+-	nginx: https://github.com/intervention-engine/nginx
 - ie-ccda-endpoint: https://github.com/intervention-engine/ie-ccda-endpoint
 
 Cloning the ie-ccda-endpoint repository is not covered in our local setup instructions.
@@ -84,6 +84,18 @@ endpoint:
 
 You must configure *all* of the `build` fields to point to each repositories local directory.
 
+Create or Configure SSL Certificates and Keys
+=============================================
+In order for nginx to use secure http (`https`), it requires an ssl certificate and key. These can be generated (self-signed certificate) or obtained from a Certificate Authority. To generate a certificate and key, run the following command:
+
+```
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout nginx.key -out nginx.crt
+```
+
+You will then have `nginx.key` and `nginx.cert` files in your current directory. These must be moved into the Intervention Engine `nginx` repository in a folder named `ssl`. The `Dockerfile` in the `nginx` repository will then copy the key and certificate into the required location in the `nginx` container.
+
+If you obtained your certificate and key from a Certificate Authority, simply rename them to `nginx.key` and `nginx.cert` and move or copy them into the `nginx/ssl` directory.
+
 Run docker-compose to Build and Launch the Containers
 =====================================================
 Once your Docker Virtual Machine and docker-compose.yml file are set up and configured, you can use docker-compose to build and launch all of the Intervention Engine containers.
@@ -98,9 +110,9 @@ Docker will then begin downloading and building containers. Once the containers 
 
 Once the containers are all up and running, you can then connect to the Intervention Engine Frontend, FHIR server, MongoDB database, and CCDA endpoint on the following ports:
 
-- Frontend - port 4200
+- Intervention Engine Frontend - port 443 (https)
 - FHIR server - port 3001
 - MongoDB - port 27017
 - CCDA endpoint - port 3000
 
-These ports are exposed on your host machine. To navigate to the frontend in a browser, enter `http://{your host IP}:4200`
+These ports are exposed on your host machine. To navigate to the frontend in a browser, enter `http://{your host IP}:443`
