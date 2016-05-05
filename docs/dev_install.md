@@ -18,7 +18,7 @@ Install Prerequisite Tools and Servers
 
 Building and running the Intervention Engine backend requires the following 3rd party tools and servers:
 
--	Go 1.5+
+-	Go 1.6+
 -	MongoDB 3.2+
 -	Git
 
@@ -31,7 +31,7 @@ Building and running the Intervention Engine frontend (web UI server) additional
 Install Go
 ----------
 
-Intervention Engine's backend services and FHIR tools are written in Go. The Go tools are needed to install Intervention Engine's dependencies and compile Intervention Engine's code into binaries. Intervention Engine requires Go 1.5 or above. At the time this documentation was written, Go 1.5.3 was the latest available release.
+Intervention Engine's backend services and FHIR tools are written in Go. The Go tools are needed to install Intervention Engine's dependencies and compile Intervention Engine's code into binaries. Intervention Engine requires Go 1.6 or above. At the time this documentation was written, Go 1.6.2 was the latest available release.
 
 To install Go, follow the instructions found in the [Go Programming Language Getting Started guide](http://golang.org/doc/install).
 
@@ -47,7 +47,7 @@ Be sure to follow the advice in the [Go Programming Language Getting Started gui
 Install MongoDB
 ---------------
 
-Intervention Engine and its FHIR server store all data as BSON documents in MongoDB. Intervention Engine requires MongoDB 3.2 or above. At the time this documentation was written, MongoDB 3.2.1 was the latest available release.
+Intervention Engine and its FHIR server store all data as BSON documents in MongoDB. Intervention Engine requires MongoDB 3.2 or above. At the time this documentation was written, MongoDB 3.2.6 was the latest available release.
 
 To install the MongoDB community edition, follow the instructions found in the [MongoDB installation guide](https://docs.mongodb.org/manual/tutorial/install-mongodb-on-os-x/).
 
@@ -61,7 +61,7 @@ $ brew install mongodb
 Install Git
 -----------
 
-Intervention Engine source code is hosted on GitHub. The Git toolchain is needed to clone Intervention Engine source code repositories locally. At the time this documentation was written, Git 2.7.0 was the latest available release.
+Intervention Engine source code is hosted on GitHub. The Git toolchain is needed to clone Intervention Engine source code repositories locally. At the time this documentation was written, Git 2.8.2 was the latest available release.
 
 To install Git, follow the instructions found in the [Git Book - Installing Git chapter](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
 
@@ -75,7 +75,7 @@ $ brew install git
 Install Node.js
 ---------------
 
-The Intervention Engine frontend server uses Node.js tools for building, testing, and running in development. Due to the unification of the Node.js and io.js projects, Node.js version numbering is a little funky. Intervention Engine requires Node 0.12, 5.0, or above. At the time this documentation was written, Node.js 0.12.9 was the latest available pre-unification release and Node.js 5.5.0 was the latest available post-unification release.
+The Intervention Engine frontend server uses Node.js tools for building, testing, and running in development. Due to the unification of the Node.js and io.js projects, Node.js version numbering is a little funky. Intervention Engine requires Node 0.12.z or 5.x. At the time this documentation was written, Node.js 0.12.13 was the latest available pre-unification release and Node.js 5.11.0 was the latest available post-unification 5.x release.  Intervention Engine has not been tested with Node.js 6.0 or higher, but is expected to work.
 
 To install Node.js, download and execute the installer [here](https://nodejs.org/en/download/stable/) or install via a package manager, as described [here](https://nodejs.org/en/download/package-manager/#osx).
 
@@ -89,7 +89,7 @@ $ brew install node
 Install Bower
 -------------
 
-The Intervention Engine frontend server uses Bower to manage its dependencies. At the time this documentation was written, Bower 1.7.2 was the latest available release.
+The Intervention Engine frontend server uses Bower to manage its dependencies. At the time this documentation was written, Bower 1.7.9 was the latest available release.
 
 To install Bower, use `npm` (which is installed with Node.js):
 
@@ -117,7 +117,7 @@ Clone Intervention Engine GitHub Repositories Locally
 Intervention Engine source code is hosted on Github. The following repositories need to be cloned to test and run a full instance of Intervention Engine:
 
 -	ie: https://github.com/intervention-engine/ie
--	riskservice: https://github.com/intervention-engine/riskservice
+-	multifactorriskservice: https://github.com/intervention-engine/multifactorriskservice
 -	tools: https://github.com/intervention-engine/tools
 -	frontend: https://github.com/intervention-engine/frontend
 
@@ -142,16 +142,18 @@ $ cd $GOPATH/src/github.com/intervention-engine
 $ git clone https://github.com/intervention-engine/ie.git
 ```
 
-Clone riskservice Repository
-----------------------------
+Clone multifactorriskservice Repository
+---------------------------------------
 
-The *riskservice* repository contains the source code for the prototype risk service server. The *riskservice* server calculates risk scores for individual patients and provides risk component data to allow the frontend to properly draw the "risk pies". This is a proof-of-concept service only and currently supports a stroke score (based on CHA2DS2-VASc) and a negative outcome score (a simple sum of conditions and medications).
+The *multifactorriskservice* repository contains the source code for the prototype multi-factor risk service server.  The *multifactorriskservice* server interfaces with a [REDCap](http://projectredcap.org/) database to import recorded risk scores for patients, based on a multi-factor risk model.  The *multifactorriskservice* server also provides risk component data in a format that allows the Intervention Engine [frontend](https://github.com/intervention-engine/frontend) to properly draw the "risk pies".
+
+The integration with REDCap supports our current use case, but users outside our organization don't likely have access to a REDCap server or the specific database referenced by the multi-factor risk service.  For this reason, the *multifactorriskservice* provides a *mock* implementation for generating synthetic risk scores to allow testing and development without a REDCap server.  *The mock implementation must ONLY be used for development with synthetic patients.  It should never be used with production (real) data!*
 
 Following standard Go practices, you should clone the *riskservice* repository under your `$GOPATH` src folder, using a package-based sub-path:
 
 ```
 $ cd $GOPATH/src/github.com/intervention-engine
-$ git clone https://github.com/intervention-engine/riskservice.git
+$ git clone https://github.com/intervention-engine/multifactorriskservice.git
 ```
 
 Clone tools Repository
@@ -254,7 +256,7 @@ A fully running Intervention Engine stack consists of the following processes:
 
 -	MongoDB database server (mongod)
 -	Intervention Engine server (ie)
--	Risk Service server (riskservice)
+-	Multi-Factor Risk Service server (multifactorriskservice)
 -	Frontend Ember server (ember)
 
 Run MongoDB
@@ -291,58 +293,58 @@ $ go build
 
 The above commands do not need to be run again unless you make (or download) changes to the *ie* or *fhir* source code.
 
-The first time you run the `ie` executable, you should pass the `-loadCodes` option to load the ICD-9 codes that are needed for the ICD-9 auto-complete feature:
+To support automatic huddle scheduling, you must pass the `ie` executable a `-huddle` argument to indicate the path to the huddle configuration file.  In addition, the first time you run the `ie` executable, you should also pass the `-loadCodes` option to load the ICD-9 codes that are needed for the ICD-9 auto-complete feature:
 
 ```
-$ ./ie -loadCodes
+$ ./ie -huddle ./configs/multifactor_huddle_config.json -loadCodes
 ```
+
+Automatic huddle scheduling will happen at the times indicated by the cron expression in the huddle configuration file.  You can also force huddles to be rescheduled by performing an HTTP GET on [http://localhost:3001/ScheduleHuddles](http://localhost:3001/ScheduleHuddles).
 
 Subsequent runs of *ie* do not need to load the codes again:
 
 ```
-$ ./ie
+$ ./ie -huddle ./configs/multifactor_huddle_config.json
 ```
 
 If you are concurrently modifying the *ie* or *fhir* source code, sometimes it is easier to combine the build and run steps into a single command (forcing a recompile on every run):
 
 ```
-$ go run server.go
+$ go run server.go -huddle ./configs/multifactor_huddle_config.json
 ```
 
 The *ie* server accepts connections on port 3001 by default.
 
-Build and Run Risk Service Server
-=================================
+Build and Run Multi-Factor Risk Service Server
+==============================================
 
-Before you can run the Risk Service server, you must install its dependencies via `go get` and build the `riskservice` executable:
+*NOTE: If you wish to run the MOCK Multi-Factor Risk Service server instead, please see the [multifactorriskservice README](https://github.com/intervention-engine/multifactorriskservice/blob/master/README.md).*
+
+Before you can run the Multi-Factor Risk Service server, you must install its dependencies via `go get` and build the `multifactorriskservice` executable:
 
 ```
-$ cd $GOPATH/src/github.com/intervention-engine/riskservice
+$ cd $GOPATH/src/github.com/intervention-engine/multifactorriskservice
 $ go get
 $ go build
 ```
 
-The above commands do not need to be run again unless you make (or download) changes to the *riskservice* source code.
+The above commands do not need to be run again unless you make (or download) changes to the *multifactorriskservice* source code.
 
-The first time you run the `riskservice` executable, you should pass the `-registerURL` option to register the risk service for update notifications from the *ie* server:
-
-```
-$ ./riskservice -registerURL http://localhost:3001
-```
-
-Subsequent runs of *riskservice* do not need to register again:
+The `multifactorriskservice` executable requires several arguments to indicate the URL to the REDCap API server (`-redcap`), the REDCap API token to use (`-token`), the URL to the FHIR API server (`-fhir`), and (optionally) a cron expression for when the data import should occur (`-cron`):
 
 ```
-$ ./riskservice
+$ ./multifactorriskservice -redcap http://redcapsrv.org -token abcdefg -fhir http://localhost:3001 -cron 0 0 22 * * *
 ```
 
-If you are concurrently modifying the *riskservice* source code, sometimes it is easier to combine the build and run steps into a single command (forcing a recompile on every run):
+If no cron expression is passed in, it defaults to `0 0 22 * * *` (daily at 10:00pm).  For more information on supported cron expressions, see the [cron package documentation](https://godoc.org/github.com/robfig/cron#hdr-CRON_Expression_Format).
+
+If you are concurrently modifying the *multifactorriskservice* source code, sometimes it is easier to combine the build and run steps into a single command (forcing a recompile on every run):
 
 ```
-$ go run riskservice.go
+$ go run main.go -redcap http://redcapsrv.org -token abcdefg -fhir http://localhost:3001 -cron 0 0 22 * * *
 ```
 
-The *riskservice* server accepts connections on port 9000 by default.
+The *multifactorriskservice* server accepts connections on port 9000 by default.
 
 Build and Run Frontend Ember Server
 -----------------------------------
