@@ -40,15 +40,14 @@ func main() {
 		mongoHost = "localhost"
 	}
 
-	codeLookupFlag := flag.Bool("loadCodes", false, "flag to enable download of icd-9 code lookup")
+	codeLookupFlag := flag.Bool("loadCodes", false, "flag to enable download of icd-9 and icd-10 code lookup")
 	icd9URL := flag.String("icd9URL", "https://www.cms.gov/Medicare/Coding/ICD9ProviderDiagnosticCodes/Downloads/ICD-9-CM-v32-master-descriptions.zip", "url for icd-9 code definition zip")
+	icd10URL := flag.String("icd10URL", "https://www.cms.gov/Medicare/Coding/ICD10/Downloads/2016-Code-Descriptions-in-Tabular-Order.zip", "url for icd-10 code definition zip")
 	flag.Parse()
 
-	parsedLookupFlag := *codeLookupFlag
-	parsedICD9LookupURL := *icd9URL
-
-	if parsedLookupFlag {
-		utilities.LoadICD9FromCMS(mongoHost, parsedICD9LookupURL)
+	if *codeLookupFlag {
+		utilities.LoadICDFromCMS(mongoHost, *icd9URL, "ICD-9")
+		utilities.LoadICDFromCMS(mongoHost, *icd10URL, "ICD-10")
 	}
 
 	riskServiceEndpoint := os.Getenv("RISKSERVICE_PORT_9000_TCP_ADDR")
