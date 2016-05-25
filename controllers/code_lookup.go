@@ -27,14 +27,38 @@ func CodeLookup(c *gin.Context) {
 
 	result := []utilities.CodeEntry{}
 
-	query := codecollection.Find(bson.M{
+	codeQuery := bson.M{
 		"codeSystem": f.CodeSystem,
 		"$or": []interface{}{
 			bson.M{"code": bson.RegEx{Pattern: ".*" + f.Query + ".*", Options: "i"}},
 			bson.M{"name": bson.RegEx{Pattern: ".*" + f.Query + ".*", Options: "i"}},
-		}}).Limit(f.ResultLimit)
+		}}
 
-	if err := query.All(&result); err != nil {
+	pipeline := []bson.M{
+		{"$match": codeQuery},
+		{"$lookup": bson.M{
+			"from":         "conditions",
+			"localField":   "code",
+			"foreignField": "code.coding.code",
+			"as":           "_conditions",
+		}},
+		{"$project": bson.M{
+			"_id":        1,
+			"code":       1,
+			"codeSystem": 1,
+			"name":       1,
+			"count": bson.M{
+				"$size": "$_conditions",
+			},
+		}},
+		{"$sort": bson.D{
+			{"count", -1},
+			{"code", 1},
+		}},
+		{"$limit": f.ResultLimit},
+	}
+
+	if err := codecollection.Pipe(pipeline).All(&result); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}

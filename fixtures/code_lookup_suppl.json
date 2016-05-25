@@ -1,0 +1,44 @@
+[
+    {
+          "resourceType" : "Condition",
+          "patient": {
+        		"reference": "Patient/1"
+        	},
+          "code" : {
+              "coding" : [
+                  {"system" : "http://hl7.org/fhir/sid/icd-9", "code" : "003.21"}
+              ],
+              "text" : "Salmonella meningitis"
+          },
+          "onsetDateTime": "2015-04-01T00:00:00-04:00",
+          "verificationStatus": "confirmed"
+      },
+      {
+          "resourceType" : "Condition",
+          "patient": {
+        		"reference": "Patient/1"
+        	},
+          "code" : {
+              "coding" : [
+                  {"system" : "http://hl7.org/fhir/sid/icd-9", "code" : "003.22"}
+              ],
+              "text" : "Salmonella pneumonia"
+          },
+          "onsetDateTime": "2015-04-01T00:00:00-04:00",
+          "verificationStatus": "confirmed"
+      },
+      {
+          "resourceType" : "Condition",
+          "patient": {
+        		"reference": "Patient/2"
+        	},
+          "code" : {
+              "coding" : [
+                  {"system" : "http://hl7.org/fhir/sid/icd-9", "code" : "003.21"}
+              ],
+              "text" : "Salmonella meningitis"
+          },
+          "onsetDateTime": "2013-11-15T00:00:00-04:00",
+          "verificationStatus": "confirmed"
+      }
+]
