@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/testutil"
 	"github.com/intervention-engine/ie/utilities"
@@ -27,7 +28,9 @@ func (l *CodeLookupSuite) SetupSuite() {
 	server.Database = l.DB()
 
 	var codes []utilities.CodeEntry
+	var conditions []models.Condition
 	l.InsertFixture("codelookup", "../fixtures/code-lookup.json", &codes)
+	l.InsertFixture("conditions", "../fixtures/code_lookup_suppl.json", &conditions)
 }
 
 func (l *CodeLookupSuite) TearDownSuite() {
@@ -51,6 +54,21 @@ func (l *CodeLookupSuite) TestCodeLookupByName() {
 	require.NoError(err)
 
 	assert.Len(nameResponseCodes, 10)
+	assert.Equal(utilities.CodeEntry{
+		CodeSystem: "ICD-9",
+		Code:       "003.21",
+		Name:       "Salmonella meningitis",
+		Count:      2,
+	}, nameResponseCodes[0])
+	assert.Equal(utilities.CodeEntry{
+		CodeSystem: "ICD-9",
+		Code:       "003.22",
+		Name:       "Salmonella pneumonia",
+		Count:      1,
+	}, nameResponseCodes[1])
+	for i := 2; i < 10; i++ {
+		assert.Equal(0, nameResponseCodes[i].Count)
+	}
 }
 
 func (l *CodeLookupSuite) TestCodeLookupByCode() {

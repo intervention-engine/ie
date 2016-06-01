@@ -19,6 +19,7 @@ type CodeEntry struct {
 	CodeSystem string `bson:"codeSystem",json:"codeSystem"`
 	Code       string `bson:"code",json:"code"`
 	Name       string `bson:"name",json:"name"`
+	Count      int    `bson:"count,omitempty",json:"count,omitempty"`
 }
 
 // LoadICDFromCMS downloads CMS-provided ICD-9 or ICD-10 codes and loads them into the Mongo database
