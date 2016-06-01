@@ -278,6 +278,56 @@ func (suite *HuddleSchedulerSuite) TestScheduleHuddlesByEncounterEvents() {
 	assert.Equal(huddles, storedHuddles, "Stored huddles should match returned huddles")
 }
 
+// TestScheduleHuddlesByEncounterEventsWithReschedules tests for a bug we encountered where a patient would be
+// scheduled correctly the first time, but if the scheduling algorithm was run again, the patient would be bumped
+// one schedule further (and again and again every time the algorithm is run)
+func (suite *HuddleSchedulerSuite) TestScheduleHuddlesByEncounterEventsWithReschedules() {
+	assert := assert.New(suite.T())
+	require := require.New(suite.T())
+
+	suite.storePatientAndScores(bsonID(1), 7)
+
+	// Add an encounter
+	t := time.Now()
+	yesterday := t.AddDate(0, 0, -1)
+	suite.storeEncounter(bsonID(1), "ER", &yesterday, &yesterday) // ED visit yesterday -- trigger ED
+
+	// Set t to 10am (huddle time) to start checking dates
+	t = time.Date(t.Year(), t.Month(), t.Day(), 10, 0, 0, 0, t.Location())
+	config := createHuddleConfig(false, true, t.Weekday())
+	config.EventConfig.EncounterConfigs[0].LookBackDays = 30
+
+	// Do this five times just to ensure the same results every time
+	for i := 0; i < 5; i++ {
+		huddles, err := ScheduleHuddles(config)
+		require.NoError(err)
+		assert.Len(huddles, 4)
+
+		// Now check each huddle
+		ha := NewHuddleAssertions(huddles[0], assert)
+		ha.AssertActiveDateTimeEqual(t)
+		ha.AssertMemberIDs(bsonID(1))
+
+		ha = NewHuddleAssertions(huddles[1], assert)
+		ha.AssertActiveDateTimeEqual(t.AddDate(0, 0, 7))
+		assert.Empty(huddles[1].Member)
+
+		ha = NewHuddleAssertions(huddles[2], assert)
+		ha.AssertActiveDateTimeEqual(t.AddDate(0, 0, 14))
+		assert.Empty(huddles[2].Member)
+
+		ha = NewHuddleAssertions(huddles[3], assert)
+		ha.AssertActiveDateTimeEqual(t.AddDate(0, 0, 21))
+		assert.Empty(huddles[3].Member)
+
+		// And check the details of the first huddle
+		huddle := Huddle(*huddles[0])
+		m := huddle.FindHuddleMember(bsonID(1))
+		require.NotNil(m)
+		assert.Equal("Emergency Room Visit", m.Reason().Text)
+	}
+}
+
 // Test for bug logged in pivotal: https://www.pivotaltracker.com/story/show/117859291
 func (suite *HuddleSchedulerSuite) TestManuallyAddPatientToExistingHuddle() {
 	assert := assert.New(suite.T())

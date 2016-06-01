@@ -273,7 +273,7 @@ func findEligiblePatientIDsByRecentEncounter(date time.Time, config *HuddleConfi
 						alreadyDiscussed := false
 						for i := range result.Huddles {
 							h := Huddle(result.Huddles[i])
-							if h.ActiveDateTime() != nil && h.ActiveDateTime().Time.After(d) {
+							if h.ActiveDateTime() != nil && !h.ActiveDateTime().Time.Equal(date) && h.ActiveDateTime().Time.After(d) {
 								m := h.FindHuddleMember(result.PatientID)
 								// Only consider it already discussed if the patient was discussed for this same reason
 								alreadyDiscussed = m != nil && m.Reason().MatchesCode(RecentEncounterReason.Coding[0].System, RecentEncounterReason.Coding[0].Code)
