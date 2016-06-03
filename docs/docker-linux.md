@@ -106,7 +106,7 @@ Navigate to the directory where the *ie* repository was cloned and run the follo
 docker-compose up
 ```
 
-Docker will then begin downloading and building containers. Once the containers are built, docker-compose will report all stdout output from the running containers, prepended by the container name.
+Docker will then begin downloading and building containers. Once the containers are built, docker-compose will report all stdout output from the running containers, prepended by the container name. Please note that docker-compose will then be running in the foreground of your terminal session, so you will need to open another terminal and initialize the docker environment variables with `$ eval $(docker-machine env default)` to complete the following step of adding users to Intervention Engine.
 
 Adding Users to Intervention Engine
 ===================================
