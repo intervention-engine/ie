@@ -5,11 +5,15 @@ FROM golang
 # Copy the local package files to the container's workspace.
 ADD . /go/src/github.com/intervention-engine/ie
 
+#Build the Intervention Engine server
 WORKDIR /go/src/github.com/intervention-engine/ie
 RUN go get
 RUN go build server.go
 
-# Run the outyet command by default when the container starts.
+#Build the user tool
+WORKDIR /go/src/github.com/intervention-engine/ie/deploy
+RUN go build ieuser.go
+
 ENTRYPOINT /go/src/github.com/intervention-engine/ie/server
 
 # Document that the service listens on port 3001.
