@@ -1,0 +1,31 @@
+{
+  "resourceType": "Group",
+  "type": "person",
+  "actual": false,
+  "name": "Males with major depression",
+  "characteristic": [
+    {
+      "code": {
+        "coding": [{"system": "http://loinc.org", "code": "21840-4"}],
+        "text": "Gender"
+      },
+      "valueCodeableConcept": {
+        "coding": [{"system": "http://hl7.org/fhir/administrative-gender", "code": "male"}]
+      },
+      "exclude": false
+    },
+    {
+      "code": {
+        "coding": [{"system": "http://loinc.org", "code": "11450-4"}],
+        "text": "Condition"
+      },
+      "valueCodeableConcept": {
+        "coding": [
+          {"system": "http://foo", "code": "bar"},
+          {"system": "http://hl7.org/fhir/sid/icd-9", "code": "296.21"}
+        ]
+      },
+      "exclude": false
+    }
+  ]
+}

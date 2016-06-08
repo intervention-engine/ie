@@ -94,3 +94,26 @@ func (suite *InstacountSuite) TestInstaCountAllHandlerWithRefutedCondition() {
 	assert.Equal(0, counts["conditions"])
 	assert.Equal(0, counts["encounters"])
 }
+
+func (suite *InstacountSuite) TestInstaCountAllHandlerWithOredCodes() {
+	require := suite.Require()
+	assert := suite.Assert()
+
+	handler := InstaCountAllHandler
+	groupFile, _ := os.Open("../fixtures/sample-group-or-codes.json")
+
+	ctx, w, _ := gin.CreateTestContext()
+	ctx.Request, _ = http.NewRequest("POST", "/InstaCountAll", groupFile)
+	ctx.Request.Header.Add("Content-Type", "application/json")
+	handler(ctx)
+	require.Equal(http.StatusOK, w.Code)
+
+	counts := make(map[string]int)
+	err := json.NewDecoder(w.Body).Decode(&counts)
+	require.NoError(err)
+
+	//TODO: These tests should be made more robust once we have better fixtures and test helpers
+	assert.Equal(1, counts["patients"])
+	assert.Equal(1, counts["conditions"])
+	assert.Equal(1, counts["encounters"])
+}
