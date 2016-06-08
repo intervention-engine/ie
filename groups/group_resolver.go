@@ -3,6 +3,7 @@ package groups
 import (
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	fhir "github.com/intervention-engine/fhir/models"
@@ -169,12 +170,12 @@ func LoadCharacteristicInfo(characteristics []fhir.GroupCharacteristicComponent)
 
 		// Condition
 		case characteristic.Code.MatchesCode("http://loinc.org", "11450-4"):
-			c.ConditionQueryValues.Add("code", characteristic.ValueCodeableConcept.Coding[0].System+"|"+characteristic.ValueCodeableConcept.Coding[0].Code)
+			c.ConditionQueryValues.Add("code", codeableConceptQueryValues(characteristic.ValueCodeableConcept))
 			c.HasConditionCharacteristics = true
 
 		// Encounter
 		case characteristic.Code.MatchesCode("http://loinc.org", "46240-8"):
-			c.EncounterQueryValues.Add("type", characteristic.ValueCodeableConcept.Coding[0].System+"|"+characteristic.ValueCodeableConcept.Coding[0].Code)
+			c.EncounterQueryValues.Add("type", codeableConceptQueryValues(characteristic.ValueCodeableConcept))
 			c.HasEncounterCharacteristics = true
 
 		// Unknown
@@ -183,4 +184,12 @@ func LoadCharacteristicInfo(characteristics []fhir.GroupCharacteristicComponent)
 		}
 	}
 	return c, nil
+}
+
+func codeableConceptQueryValues(cc *fhir.CodeableConcept) string {
+	values := make([]string, len(cc.Coding))
+	for i := range cc.Coding {
+		values[i] = cc.Coding[i].System + "|" + cc.Coding[i].Code
+	}
+	return strings.Join(values, ",")
 }
