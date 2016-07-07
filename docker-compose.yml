@@ -5,6 +5,7 @@ ie:
   links:
     - mongodb:mongo
     - riskservice:riskservice
+  command: /go/src/github.com/intervention-engine/ie/server -huddle /go/src/github.com/intervention-engine/ie/configs/multifactor_huddle_config.json
 endpoint:
   build: ../ie-ccda-endpoint
   ports:
