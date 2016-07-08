@@ -14,7 +14,5 @@ RUN go build server.go
 WORKDIR /go/src/github.com/intervention-engine/ie/deploy
 RUN go build ieuser.go
 
-ENTRYPOINT /go/src/github.com/intervention-engine/ie/server
-
 # Document that the service listens on port 3001.
 EXPOSE 3001
