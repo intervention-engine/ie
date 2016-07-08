@@ -293,7 +293,9 @@ $ go build
 
 The above commands do not need to be run again unless you make (or download) changes to the *ie* or *fhir* source code.
 
-To support automatic huddle scheduling, you must pass the `ie` executable a `-huddle` argument to indicate the path to the huddle configuration file.  In addition, the first time you run the `ie` executable, you should also pass the `-loadCodes` option to load the ICD-9 codes that are needed for the ICD-9 auto-complete feature:
+To support automatic huddle scheduling, you must pass the `ie` executable a `-huddle` argument to indicate the path to the huddle configuration file.  For more information of the huddle configuration file, see the [annotated huddle configuration file](https://github.com/intervention-engine/ie/blob/master/docs/huddle_config.md).  
+
+In addition, the first time you run the `ie` executable, you should also pass the `-loadCodes` option to load the ICD-9 and ICD-10 codes that are needed for the ICD-9/ICD-10 auto-complete feature:
 
 ```
 $ ./ie -huddle ./configs/multifactor_huddle_config.json -loadCodes
