@@ -129,6 +129,12 @@ endpoint:
 
 You must configure *all* of the `build` fields to point to each repositories local directory.
 
+In addition, you must configure the multifactorriskservice to correctly point to your REDCap installation and contain your REDCap API token.  To do this, edit the values after `-redcap` and `-token` in the `command` entry of the `multifactorriskservice`:
+
+```
+  command: /go/src/github.com/intervention-engine/multifactorriskservice/multifactorriskservice -redcap https://your_redcap_server/redcap/api -token your_redcap_api_token -fhir http://ie:3001
+```
+
 Create or Configure SSL Certificates and Keys
 =============================================
 In order for nginx to use secure http (`https`), it requires an ssl certificate and key. These can be generated (self-signed certificate) or obtained from a Certificate Authority. To generate a certificate and key, run the following command:
