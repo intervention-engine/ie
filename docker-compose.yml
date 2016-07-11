@@ -1,7 +1,7 @@
 ie:
   build: .
   ports:
-    - "3001:3001"
+    - "3001"
   links:
     - mongodb:mongo
     - riskservice:riskservice
@@ -17,17 +17,16 @@ mongodb:
   volumes:
     - /data/db:/data/db
   ports:
-    - "27017:27017"
+    - "27017"
 riskservice:
   build: ../riskservice
   ports:
-    - "9000:9000"
+    - "9000"
   links:
     - mongodb:mongo
 nginx:
   build: ../nginx
   ports:
-    - "8080:8080"
     - "443:443"
   links:
     - ie
