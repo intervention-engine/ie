@@ -96,6 +96,32 @@ You will then have `nginx.key` and `nginx.cert` files in your current directory.
 
 If you obtained your certificate and key from a Certificate Authority, simply rename them to `nginx.key` and `nginx.cert` and move or copy them into the `nginx/ssl` directory.
 
+Add Users to System
+===================
+To add users to Intervention Engine, you must use the `htpasswd` utility to append users to the relevant file in the `nginx` repository. To install `apache2-utils` which contains the `htpasswd` tool, run the following command:
+
+```
+sudo apt-get install apache2-utils
+```
+
+Navigate to the `nginx` repository and run the following command, replacing `exampleuser` with the username you would like to add:
+
+```
+sudo htpasswd -c htpasswd exampleuser
+```
+
+The tool will prompt you for a password:
+
+```
+New password:
+Re-type new password:
+Adding password for user exampleuser
+```
+
+This will add an entry to the `htpasswd` file with the username and encrypted password.
+
+Repeat this step for each user you would like to add to the system.
+
 Run docker-compose to Build and Launch the Containers
 =====================================================
 Once your Docker Virtual Machine and docker-compose.yml file are set up and configured, you can use docker-compose to build and launch all of the Intervention Engine containers.
@@ -106,23 +132,6 @@ Navigate to the directory where the *ie* repository was cloned and run the follo
 docker-compose up
 ```
 
-Docker will then begin downloading and building containers. Once the containers are built, docker-compose will report all stdout output from the running containers, prepended by the container name. Please note that docker-compose will then be running in the foreground of your terminal session, so you will need to open another terminal and initialize the docker environment variables with `$ eval $(docker-machine env default)` to complete the following step of adding users to Intervention Engine.
+Docker will then begin downloading and building containers. Once the containers are built, docker-compose will report all stdout output from the running containers, prepended by the container name. Please note that docker-compose will then be running in the foreground of your terminal session, so you will need to open another terminal and initialize the docker environment variables with `$ eval $(docker-machine env default)` to interact with the docker containers.
 
-Adding Users to Intervention Engine
-===================================
-Once the containers are all up and running, you can add Users to Intervention Engine login/authentication. To do so, run the following command for each User you would like to add:
-
-```
-docker exec ie_ie_1 bash -c '/go/src/github.com/intervention-engine/ie/deploy/ieuser add <username> <password> "$IE_MONGODB_1_PORT_27017_TCP_ADDR"'
-```
-
-Replacing `<username>` and `<password>` with the desired username and password. Keep in mind the username should be an email address, and the password should be at least 8 characters long.
-
-Once you've registered your desired User accounts, you can then connect to the Intervention Engine Frontend, FHIR server, MongoDB database, and CCDA endpoint on the following ports:
-
-- Intervention Engine Frontend - port 443 (https)
-- FHIR server - port 3001
-- MongoDB - port 27017
-- CCDA endpoint - port 3000
-
-These ports are exposed on your host machine. To navigate to the frontend in a browser, enter `http://{your host IP}:443`
+Once all of the containers are built and running, you can connect to intervention engine over https (port 443). Your browser should prompt you for a username and password when you connect.
