@@ -335,7 +335,7 @@ The above commands do not need to be run again unless you make (or download) cha
 The `multifactorriskservice` executable requires several arguments to indicate the URL to the REDCap API server (`-redcap`), the REDCap API token to use (`-token`), the URL to the FHIR API server (`-fhir`), and (optionally) a cron expression for when the data import should occur (`-cron`):
 
 ```
-$ ./multifactorriskservice -redcap http://redcapsrv.org -token abcdefg -fhir http://localhost:3001 -cron 0 0 22 * * *
+$ ./multifactorriskservice -redcap http://example.org/redcap/api -token abcdefg -fhir http://localhost:3001 -cron 0 0 22 * * *
 ```
 
 If no cron expression is passed in, it defaults to `0 0 22 * * *` (daily at 10:00pm).  For more information on supported cron expressions, see the [cron package documentation](https://godoc.org/github.com/robfig/cron#hdr-CRON_Expression_Format).
@@ -343,7 +343,7 @@ If no cron expression is passed in, it defaults to `0 0 22 * * *` (daily at 10:0
 If you are concurrently modifying the *multifactorriskservice* source code, sometimes it is easier to combine the build and run steps into a single command (forcing a recompile on every run):
 
 ```
-$ go run main.go -redcap http://redcapsrv.org -token abcdefg -fhir http://localhost:3001 -cron 0 0 22 * * *
+$ go run main.go -redcap http://example.org/redcap/api -token abcdefg -fhir http://localhost:3001 -cron 0 0 22 * * *
 ```
 
 The *multifactorriskservice* server accepts connections on port 9000 by default.
