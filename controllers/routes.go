@@ -17,12 +17,6 @@ func RegisterRoutes(s *server.FHIRServer, selfURL, riskServiceEndpoint string) f
 	wg.Add(1)
 	go subscription.NotifySubscribers(workerChannel, selfURL, &wg)
 
-	// Turn off auth because risk services need to connect to Patient endpoint now.
-	// This is TEMPORARARY, as there is a story to apply auth to everything and
-	// update risk services and other tools to pass credentials through
-	//s.AddMiddleware("Group", middleware.AuthHandler())
-	//s.AddMiddleware("Patient", middleware.AuthHandler())
-
 	s.AddMiddleware("Condition", watch)
 
 	s.AddMiddleware("MedicationStatement", watch)
@@ -39,10 +33,6 @@ func RegisterRoutes(s *server.FHIRServer, selfURL, riskServiceEndpoint string) f
 	s.Engine.GET("/NotificationCount", NotificationCountHandler)
 	s.Engine.GET("/Pie/:id", GeneratePieHandler(riskServiceEndpoint))
 	s.Engine.POST("/CodeLookup", CodeLookup)
-
-	login := s.Engine.Group("/auth")
-	login.POST("", LoginHandler)
-	login.DELETE("", LogoutHandler)
 
 	return func() {
 		stopNotifier(workerChannel, &wg)
