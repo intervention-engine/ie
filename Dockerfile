@@ -10,9 +10,5 @@ WORKDIR /go/src/github.com/intervention-engine/ie
 RUN go get
 RUN go build server.go
 
-#Build the user tool
-WORKDIR /go/src/github.com/intervention-engine/ie/deploy
-RUN go build ieuser.go
-
 # Document that the service listens on port 3001.
 EXPOSE 3001
