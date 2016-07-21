@@ -5,6 +5,11 @@ The Intervention Engine project provides a web-application for *data-driven team
 
 Intervention Engine is a work in progress. Current Intervention Engine features:
 
+-	huddle management
+	-	assign patients to huddles based on risk scores
+	-	assign patients to huddles based on recent encounters (e.g., ED Visit)
+	-	manually assign patients to huddles
+	-	mark patients as "discussed"
 -	custom population filters based on age, gender, conditions, and encounter types
 -	clinical risk assessment integration via an open API
 	-	prototype stroke risk calculation service (based on CHA2DS2-VASc)
@@ -15,10 +20,8 @@ Intervention Engine is a work in progress. Current Intervention Engine features:
 
 Still to come:
 
--	Near term: huddle management (scheduling, viewing, progressing)
--	Near term: automated patient selection for huddles
--	Longer term: intervention planning & tracking
--	Longer term: population views and visualizations
+-	Population views and visualizations
+-	SMART-on-FHIR integration
 
 The ie Repository
 -----------------

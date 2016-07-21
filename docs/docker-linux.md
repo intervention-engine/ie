@@ -47,7 +47,7 @@ To clone the Intervention Engine Repositories Locally, follow the instructions f
 The repositories that are required to deploy Intervention Engine in Docker are as follows:
 
 -	ie: https://github.com/intervention-engine/ie
--	riskservice: https://github.com/intervention-engine/riskservice
+-	multifactorriskservice: https://github.com/intervention-engine/multifactorriskservice
 -	nginx: https://github.com/intervention-engine/nginx
 - ie-ccda-endpoint: https://github.com/intervention-engine/ie-ccda-endpoint
 
