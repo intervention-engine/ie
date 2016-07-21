@@ -24,7 +24,7 @@ multifactorriskservice:
   links:
     - mongodb:mongo
     - ie
-  command: ./multifactorriskservice -redcap https://your_redcap_server/redcap/api -token your_redcap_api_token -fhir http://ie:3001
+  command: ./multifactorriskservice -redcap https://your_redcap_server/redcap/api -token your_redcap_api_token -fhir http://ie:3001 -useStudyID
 nginx:
   build: ../nginx
   ports:
