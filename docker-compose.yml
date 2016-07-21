@@ -4,7 +4,7 @@ ie:
     - "3001"
   links:
     - mongodb:mongo
-  command: /go/src/github.com/intervention-engine/ie/server -huddle /go/src/github.com/intervention-engine/ie/configs/multifactor_huddle_config.json
+  command: ./server -huddle ./configs/multifactor_huddle_config.json
 endpoint:
   build: ../ie-ccda-endpoint
   ports:
@@ -24,7 +24,7 @@ multifactorriskservice:
   links:
     - mongodb:mongo
     - ie
-  command: /go/src/github.com/intervention-engine/multifactorriskservice/multifactorriskservice -redcap https://your_redcap_server/redcap/api -token your_redcap_api_token -fhir http://ie:3001
+  command: ./multifactorriskservice -redcap https://your_redcap_server/redcap/api -token your_redcap_api_token -fhir http://ie:3001
 nginx:
   build: ../nginx
   ports:
