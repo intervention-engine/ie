@@ -35,6 +35,8 @@ func HandleResourceUpdate(subUpdateQueue chan<- ResourceUpdateMessage, resource 
 func triggeredPatients(resource interface{}) map[string]time.Time {
 	result := make(map[string]time.Time)
 
+	// TODO: This code causes panics when the expected time fields are not present!
+	// Need to determine correct course of action when that occurs.
 	switch t := resource.(type) {
 	case *fhirmodels.Condition:
 		result[t.Patient.ReferencedID] = t.OnsetDateTime.Time

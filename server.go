@@ -57,6 +57,8 @@ func main() {
 		riskServiceEndpoint = "http://" + riskServiceEndpoint + ":9000"
 	}
 
+	subscriptionFlag := flag.Bool("subscriptions", false, "enables limited support for resource subscriptions (default: false)")
+
 	var ip net.IP
 	var selfURL string
 	host, err := os.Hostname()
@@ -123,7 +125,7 @@ func main() {
 		defer c.Stop()
 	}
 
-	closer := controllers.RegisterRoutes(s, selfURL, riskServiceEndpoint)
+	closer := controllers.RegisterRoutes(s, selfURL, riskServiceEndpoint, *subscriptionFlag)
 	defer closer()
 
 	s.Run(server.Config{

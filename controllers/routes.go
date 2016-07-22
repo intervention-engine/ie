@@ -10,20 +10,25 @@ import (
 	"github.com/intervention-engine/ie/subscription"
 )
 
-func RegisterRoutes(s *server.FHIRServer, selfURL, riskServiceEndpoint string) func() {
-	workerChannel := make(chan subscription.ResourceUpdateMessage)
-	watch := subscription.GenerateResourceWatch(workerChannel)
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go subscription.NotifySubscribers(workerChannel, selfURL, &wg)
+func RegisterRoutes(s *server.FHIRServer, selfURL, riskServiceEndpoint string, enableSubscriptions bool) func() {
+	returnFunc := func() {}
+	if enableSubscriptions {
+		workerChannel := make(chan subscription.ResourceUpdateMessage)
+		watch := subscription.GenerateResourceWatch(workerChannel)
+		var wg sync.WaitGroup
+		wg.Add(1)
+		go subscription.NotifySubscribers(workerChannel, selfURL, &wg)
 
-	s.AddMiddleware("Condition", watch)
+		s.AddMiddleware("Condition", watch)
 
-	s.AddMiddleware("MedicationStatement", watch)
+		s.AddMiddleware("MedicationStatement", watch)
 
-	s.AddMiddleware("Encounter", watch)
+		s.AddMiddleware("Encounter", watch)
 
-	s.AddMiddleware("Batch", watch)
+		s.AddMiddleware("Batch", watch)
+
+		returnFunc = func() { stopNotifier(workerChannel, &wg) }
+	}
 
 	// Setup the notification handler to use the default notification definitions (and then register it)
 	notificationHandler := &middleware.NotificationHandler{Registry: notifications.DefaultNotificationDefinitionRegistry}
@@ -34,9 +39,7 @@ func RegisterRoutes(s *server.FHIRServer, selfURL, riskServiceEndpoint string) f
 	s.Engine.GET("/Pie/:id", GeneratePieHandler(riskServiceEndpoint))
 	s.Engine.POST("/CodeLookup", CodeLookup)
 
-	return func() {
-		stopNotifier(workerChannel, &wg)
-	}
+	return returnFunc
 }
 
 func stopNotifier(wc chan subscription.ResourceUpdateMessage, wg *sync.WaitGroup) {
