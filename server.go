@@ -79,6 +79,11 @@ func main() {
 
 	s := server.NewServer(mongoHost)
 
+	reqLog := flag.Bool("reqlog", false, "Enables request logging -- do NOT use in production")
+	if *reqLog {
+		s.Engine.Use(server.RequestLoggerHandler)
+	}
+
 	// Since the huddle controller needs info from the command line, set it up here.  When IE is refactored
 	// to take out globals (and other stuff), this should be rethought.
 	c := cron.New()
