@@ -19,6 +19,7 @@ func TestHuddleConfigSuite(t *testing.T) {
 type HuddleConfigSuite struct {
 	suite.Suite
 	SimpleConfig *HuddleConfig
+	BareConfig   *HuddleConfig
 }
 
 func (suite *HuddleConfigSuite) SetupSuite() {
@@ -28,6 +29,12 @@ func (suite *HuddleConfigSuite) SetupSuite() {
 	require.NoError(err)
 	suite.SimpleConfig = new(HuddleConfig)
 	err = json.Unmarshal(data, suite.SimpleConfig)
+	require.NoError(err)
+
+	data, err = ioutil.ReadFile("../fixtures/huddle_config_bare.json")
+	require.NoError(err)
+	suite.BareConfig = new(HuddleConfig)
+	err = json.Unmarshal(data, suite.BareConfig)
 	require.NoError(err)
 }
 
@@ -101,6 +108,22 @@ func (suite *HuddleConfigSuite) TestLoadHuddleFromJSON() {
 			},
 		},
 	}, config.EventConfig.EncounterConfigs)
+	assert.NotNil(config.RollOverDelayInDays)
+	assert.Equal(3, config.RollOverDelayInDays)
+	assert.Equal(config.SchedulerCronSpec, "@midnight")
+}
+
+func (suite *HuddleConfigSuite) TestLoadBareHuddleFromJSON() {
+	assert := suite.Assert()
+
+	config := suite.BareConfig
+	assert.Equal("Bare Huddle", config.Name)
+	assert.Equal("1", config.LeaderID)
+	assert.Equal([]time.Weekday{time.Monday}, config.Days)
+	assert.Equal(4, config.LookAhead)
+	assert.Nil(config.RiskConfig)
+	assert.Nil(config.EventConfig)
+	assert.Equal(0, config.RollOverDelayInDays)
 	assert.Equal(config.SchedulerCronSpec, "@midnight")
 }
 
