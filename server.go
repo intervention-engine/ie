@@ -43,6 +43,9 @@ func main() {
 	codeLookupFlag := flag.Bool("loadCodes", false, "flag to enable download of icd-9 and icd-10 code lookup")
 	icd9URL := flag.String("icd9URL", "https://www.cms.gov/Medicare/Coding/ICD9ProviderDiagnosticCodes/Downloads/ICD-9-CM-v32-master-descriptions.zip", "url for icd-9 code definition zip")
 	icd10URL := flag.String("icd10URL", "https://www.cms.gov/Medicare/Coding/ICD10/Downloads/2016-Code-Descriptions-in-Tabular-Order.zip", "url for icd-10 code definition zip")
+	subscriptionFlag := flag.Bool("subscriptions", false, "enables limited support for resource subscriptions (default: false)")
+	reqLog := flag.Bool("reqlog", false, "Enables request logging -- do NOT use in production")
+
 	flag.Parse()
 
 	if *codeLookupFlag {
@@ -76,6 +79,10 @@ func main() {
 	}
 
 	s := server.NewServer(mongoHost)
+
+	if *reqLog {
+		s.Engine.Use(server.RequestLoggerHandler)
+	}
 
 	// Since the huddle controller needs info from the command line, set it up here.  When IE is refactored
 	// to take out globals (and other stuff), this should be rethought.
@@ -123,7 +130,7 @@ func main() {
 		defer c.Stop()
 	}
 
-	closer := controllers.RegisterRoutes(s, selfURL, riskServiceEndpoint)
+	closer := controllers.RegisterRoutes(s, selfURL, riskServiceEndpoint, *subscriptionFlag)
 	defer closer()
 
 	s.Run(server.Config{
