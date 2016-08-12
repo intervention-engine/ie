@@ -18,7 +18,7 @@ import (
 // of future huddles as specified in the config.LookAhead.
 func ScheduleHuddles(config *HuddleConfig) ([]*models.Group, error) {
 	now := time.Now()
-	start := time.Date(now.Year(), now.Month(), now.Day(), 10, 0, 0, 0, time.Local)
+	start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
 
 	// Step through one day at a time, starting today, until we have scheduled the requested number of huddles
 	huddles := make([]*models.Group, 0, config.LookAhead)
