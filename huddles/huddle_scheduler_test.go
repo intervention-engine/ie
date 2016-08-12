@@ -428,6 +428,142 @@ func (suite *HuddleSchedulerSuite) TestManuallyAddPatientToExistingHuddle() {
 	assert.Equal(huddles, storedHuddles, "Stored huddles should match returned huddles")
 }
 
+// Test for bug logged in Jira: https://interventionengine.atlassian.net/browse/IE-48
+func (suite *HuddleSchedulerSuite) TestManuallyAddMultiplePatientsToTodaysHuddle() {
+	assert := assert.New(suite.T())
+	require := require.New(suite.T())
+
+	// Create a patient that needs to be discussed every week, to ensure weekly scheduled huddles
+	suite.storePatientAndScores(bsonID(1), 8)
+	// Create a patient that needs to be discussed every 2 weeks
+	suite.storePatientAndScores(bsonID(2), 7)
+	// Create some patients that are low-risk and don't generally need discussion, whom we'll manually schedule
+	suite.storePatientAndScores(bsonID(3), 1)
+	suite.storePatientAndScores(bsonID(4), 1)
+	suite.storePatientAndScores(bsonID(5), 1)
+
+	t := time.Now()
+	config := createHuddleConfig(true, true, t.Weekday())
+	config.Days[0] = time.Now().Weekday()
+
+	// Schedule the huddles
+	huddles, err := ScheduleHuddles(config)
+	require.NoError(err)
+	assert.Len(huddles, 4)
+	for i := range huddles {
+		ha := NewHuddleAssertions(huddles[i], assert)
+		ha.AssertValidHuddleProfile()
+		ha.AssertLeaderIDEqual("123")
+		ha.AssertNameEqual("Test Huddle Config")
+	}
+
+	// Find today @ midnight to start checking dates
+	t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+
+	// Check each one individually to ensure it's as expected
+	ha := NewHuddleAssertions(huddles[0], assert)
+	ha.AssertActiveDateTimeEqual(t)
+	ha.AssertMemberIDs(bsonID(1), bsonID(2))
+
+	ha = NewHuddleAssertions(huddles[1], assert)
+	ha.AssertActiveDateTimeEqual(t.AddDate(0, 0, 7))
+	ha.AssertMemberIDs(bsonID(1))
+
+	ha = NewHuddleAssertions(huddles[2], assert)
+	ha.AssertActiveDateTimeEqual(t.AddDate(0, 0, 14))
+	ha.AssertMemberIDs(bsonID(1), bsonID(2))
+
+	ha = NewHuddleAssertions(huddles[3], assert)
+	ha.AssertActiveDateTimeEqual(t.AddDate(0, 0, 21))
+	ha.AssertMemberIDs(bsonID(1))
+
+	// Now manually schedule patients to today's huddle
+	huddles[0].Member = append(huddles[0].Member, models.GroupMemberComponent{
+		BackboneElement: models.BackboneElement{
+			Element: models.Element{
+				Extension: []models.Extension{
+					{
+						Url:                  "http://interventionengine.org/fhir/extension/group/member/reason",
+						ValueCodeableConcept: &ManualAdditionReason,
+					},
+				},
+			},
+		},
+		Entity: &models.Reference{
+			Reference:    "Patient/" + bsonID(3),
+			ReferencedID: bsonID(3),
+			Type:         "Patient",
+			External:     new(bool),
+		},
+	})
+	huddles[0].Member = append(huddles[0].Member, models.GroupMemberComponent{
+		BackboneElement: models.BackboneElement{
+			Element: models.Element{
+				Extension: []models.Extension{
+					{
+						Url:                  "http://interventionengine.org/fhir/extension/group/member/reason",
+						ValueCodeableConcept: &ManualAdditionReason,
+					},
+				},
+			},
+		},
+		Entity: &models.Reference{
+			Reference:    "Patient/" + bsonID(4),
+			ReferencedID: bsonID(4),
+			Type:         "Patient",
+			External:     new(bool),
+		},
+	})
+	huddles[0].Member = append(huddles[0].Member, models.GroupMemberComponent{
+		BackboneElement: models.BackboneElement{
+			Element: models.Element{
+				Extension: []models.Extension{
+					{
+						Url:                  "http://interventionengine.org/fhir/extension/group/member/reason",
+						ValueCodeableConcept: &ManualAdditionReason,
+					},
+				},
+			},
+		},
+		Entity: &models.Reference{
+			Reference:    "Patient/" + bsonID(5),
+			ReferencedID: bsonID(5),
+			Type:         "Patient",
+			External:     new(bool),
+		},
+	})
+	err = suite.DB().C("groups").UpdateId(huddles[0].Id, huddles[0])
+	require.NoError(err)
+
+	// Reschedule the huddles -- this is where the extra manually added patients seem to get dropped
+	huddles, err = ScheduleHuddles(config)
+	require.NoError(err)
+	assert.Len(huddles, 4)
+
+	// Check each one again to ensure it's as expected
+	ha = NewHuddleAssertions(huddles[0], assert)
+	ha.AssertActiveDateTimeEqual(t)
+	// Should have patients 3, 4, and 5 (in addition to patients 1 and 2)
+	ha.AssertMemberIDs(bsonID(3), bsonID(4), bsonID(5), bsonID(1), bsonID(2))
+
+	ha = NewHuddleAssertions(huddles[1], assert)
+	ha.AssertActiveDateTimeEqual(t.AddDate(0, 0, 7))
+	ha.AssertMemberIDs(bsonID(1))
+
+	ha = NewHuddleAssertions(huddles[2], assert)
+	ha.AssertActiveDateTimeEqual(t.AddDate(0, 0, 14))
+	ha.AssertMemberIDs(bsonID(1), bsonID(2))
+
+	ha = NewHuddleAssertions(huddles[3], assert)
+	ha.AssertActiveDateTimeEqual(t.AddDate(0, 0, 21))
+	ha.AssertMemberIDs(bsonID(1))
+
+	// Now just make sure they were really stored to the db
+	var storedHuddles []*models.Group
+	server.Database.C("groups").Find(bson.M{}).Sort("extension.activeDateTime").All(&storedHuddles)
+	assert.Equal(huddles, storedHuddles, "Stored huddles should match returned huddles")
+}
+
 // Test for bug logged in jira: https://interventionengine.atlassian.net/browse/IE-11
 func (suite *HuddleSchedulerSuite) TestManuallyAddPatientToTodaysHuddle() {
 	assert := assert.New(suite.T())

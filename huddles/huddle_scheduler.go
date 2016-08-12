@@ -104,7 +104,6 @@ func CreatePopulatedHuddle(date time.Time, config *HuddleConfig) (*models.Group,
 		if reason != nil && reason.MatchesCode(ManualAdditionReason.Coding[0].System, ManualAdditionReason.Coding[0].Code) {
 			manuallyAddedPatientIDs = append(manuallyAddedPatientIDs, mem.Entity.ReferencedID)
 			manuallyAddedReasonMap[mem.Entity.ReferencedID] = reason
-			break
 		}
 	}
 
