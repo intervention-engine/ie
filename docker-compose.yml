@@ -7,10 +7,12 @@ services:
     depends_on:
       - mongodb
     environment:
-      - MONGO_PORT_27017_TCP_ADDR=mongodb
-      - MULTIFACTORRISKSERVICE_PORT_9000_TCP_ADDR=multifactorriskservice
+      # The values below should not be modified under normal circumstances
+      - HUDDLE_CONFIGS=./configs/multifactor_huddle_config.json
+      - MONGO_URL=mongodb://mongodb:27017
+      - RISK_SERVICE_URL=http://multifactorriskservice:9000
       - GIN_MODE=release
-    command: ./server -huddle ./configs/multifactor_huddle_config.json
+    command: ./server -loadCodes
   endpoint:
     build: ../ie-ccda-endpoint
     ports:
@@ -18,8 +20,8 @@ services:
     depends_on:
       - ie
     environment:
-      - IE_PORT_3001_TCP_ADDR=ie
-      - IE_PORT_3001_TCP_PORT=3001
+      # The value below should not be modified under normal circumstances
+      - FHIR_URL=http://ie:3001
   mongodb:
     image: mongo
     volumes:
@@ -34,9 +36,16 @@ services:
       - ie
       - mongodb
     environment:
-      - MONGO_PORT_27017_TCP_ADDR=mongodb
-    command: ./multifactorriskservice -redcap https://your_redcap_server/redcap/api -token your_redcap_api_token -fhir http://ie:3001 -useStudyID
-    #command: ./mock -fhir http://ie:3001 -gen # for testing only!
+      # REDCAP_URL and REDCAP_TOKEN must be set to valid values before running!
+      - REDCAP_URL=http://myredcapserver/redcap/api
+      - REDCAP_TOKEN=MYREDCAPTOKEN
+      # The values below should not be modified under normal circumstances
+      - FHIR_URL=http://ie:3001
+      - MONGO_URL=mongodb://mongodb:27017
+      - HTTP_HOST_AND_PORT=multifactorriskservice:9000
+      - GIN_MODE=release
+    command: ./multifactorriskservice
+    # command: ./mock -gen # for testing only!
   nginx:
     build: ../nginx
     ports:
@@ -45,6 +54,6 @@ services:
       - ie
       - multifactorriskservice
     environment:
-      - IE_PORT_3001_TCP_ADDR=ie
-      - IE_PORT_3001_TCP_PORT=3001
-    command: /bin/bash -c "envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf '$$IE_PORT_3001_TCP_ADDR:$$IE_PORT_3001_TCP_PORT' && nginx -g 'daemon off;'"
+      # The value below should not be modified under normal circumstances
+      - IE_URL=http://ie:3001
+    command: /bin/bash -c "envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf '$$IE_URL' && nginx -g 'daemon off;'"

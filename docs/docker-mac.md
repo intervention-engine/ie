@@ -113,26 +113,31 @@ Configure docker-compose.yml
 ============================
 Docker-compose is part of the Docker Toolbox which allows the orchestration of multiple containers, allowing the linking of containers and definition of which ports each container exposes and which ports those are mapped to on the Docker host. Docker-compose is configured in the appropriately named docker-compose.yml file. This file currently exists in the *ie* repository.
 
-The top level of the YAML in the docker-compose.yml defines each container to be built. The second level tags of the YAML define specific configuration options for specific containers. The only field that needs to be configured before deployment is the `build` field. This field specifies the local directory in which to find the `Dockerfile` with which to build its parent container.
+The `services` section of the YAML in the docker-compose.yml defines each container to be built. The tags under each container of the YAML define specific configuration options for specific containers. The `build` field within each container may need to be configured before deployment. This field specifies the local directory in which to find the `Dockerfile` with which to build its parent container.
 
 Since our instructions for cloning the Intervention Engine repositories specify to clone some repositories into the $GOPATH and some repositories to your preferred development location, you must set the `build` fields to point to each repository's local directory. For example, if you cloned the *ie-ccda-endpoint* repository to `~/development/intervention-engine/ie-ccda-endpoint`, the `endpoint` section of your docker-compose.yml should look as follows:
 
 ```
-endpoint:
-  build: ~/development/intervention-engine/ie-ccda-endpoint
-  ports:
-    - "3000:3000"
-  links:
-    - ie
-
+  endpoint:
+    build: ~/development/intervention-engine/ie-ccda-endpoint
+    ports:
+      - "3000:3000"
+    depends_on:
+      - ie
+    environment:
+      # The value below should not be modified under normal circumstances
+      - FHIR_URL=http://ie:3001
 ```
 
-You must configure *all* of the `build` fields to point to each repositories local directory.
+You must configure *all* of the `build` fields to point to each repository's local directory.
 
-In addition, you must configure the multifactorriskservice to correctly point to your REDCap installation and contain your REDCap API token.  To do this, edit the values after `-redcap` and `-token` in the `command` entry of the `multifactorriskservice`:
+In addition, you must configure the multifactorriskservice to correctly point to your REDCap installation and contain your REDCap API token.  To do this, edit the `REDCAP_URL` and `REDCAP_TOKEN` values in the `environment` section of the `multifactorriskservice`:
 
 ```
-  command: /go/src/github.com/intervention-engine/multifactorriskservice/multifactorriskservice -redcap https://your_redcap_server/redcap/api -token your_redcap_api_token -fhir http://ie:3001
+    environment:
+      # REDCAP_URL and REDCAP_TOKEN must be set to valid values before running!
+      - REDCAP_URL=http://myredcapserver/redcap/api
+      - REDCAP_TOKEN=MYREDCAPTOKEN
 ```
 
 Create or Configure SSL Certificates and Keys
