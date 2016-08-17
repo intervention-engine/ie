@@ -1,34 +1,59 @@
-ie:
-  build: .
-  ports:
-    - "3001"
-  links:
-    - mongodb:mongo
-  command: ./server -huddle ./configs/multifactor_huddle_config.json
-endpoint:
-  build: ../ie-ccda-endpoint
-  ports:
-    - "3000:3000"
-  links:
-    - ie
-mongodb:
-  image: mongo
-  volumes:
-    - /data/db:/data/db
-  ports:
-    - "27017"
-multifactorriskservice:
-  build: ../multifactorriskservice
-  ports:
-    - "9000"
-  links:
-    - mongodb:mongo
-    - ie
-  command: ./multifactorriskservice -redcap https://your_redcap_server/redcap/api -token your_redcap_api_token -fhir http://ie:3001 -useStudyID
-nginx:
-  build: ../nginx
-  ports:
-    - "443:443"
-  links:
-    - ie
-  command: /bin/bash -c "envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf '$$IE_PORT_3001_TCP_ADDR:$$IE_PORT_3001_TCP_PORT' && nginx -g 'daemon off;'"
+version: '2'
+services:
+  ie:
+    build: .
+    ports:
+      - "3001"
+    depends_on:
+      - mongodb
+    environment:
+      # The values below should not be modified under normal circumstances
+      - HUDDLE_CONFIGS=./configs/multifactor_huddle_config.json
+      - MONGO_URL=mongodb://mongodb:27017
+      - RISK_SERVICE_URL=http://multifactorriskservice:9000
+      - GIN_MODE=release
+    command: ./server -loadCodes
+  endpoint:
+    build: ../ie-ccda-endpoint
+    ports:
+      - "3000:3000"
+    depends_on:
+      - ie
+    environment:
+      # The value below should not be modified under normal circumstances
+      - FHIR_URL=http://ie:3001
+  mongodb:
+    image: mongo
+    volumes:
+      - /data/db:/data/db
+    ports:
+      - "27017"
+  multifactorriskservice:
+    build: ../multifactorriskservice
+    ports:
+      - "9000"
+    depends_on:
+      - ie
+      - mongodb
+    environment:
+      # REDCAP_URL and REDCAP_TOKEN must be set to valid values before running!
+      - REDCAP_URL=http://myredcapserver/redcap/api
+      - REDCAP_TOKEN=MYREDCAPTOKEN
+      # The values below should not be modified under normal circumstances
+      - FHIR_URL=http://ie:3001
+      - MONGO_URL=mongodb://mongodb:27017
+      - HTTP_HOST_AND_PORT=multifactorriskservice:9000
+      - GIN_MODE=release
+    command: ./multifactorriskservice
+    # command: ./mock -gen # for testing only!
+  nginx:
+    build: ../nginx
+    ports:
+      - "443:443"
+    depends_on:
+      - ie
+      - multifactorriskservice
+    environment:
+      # The value below should not be modified under normal circumstances
+      - IE_URL=http://ie:3001
+    command: /bin/bash -c "envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf '$$IE_URL' && nginx -g 'daemon off;'"

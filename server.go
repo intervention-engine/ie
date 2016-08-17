@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/intervention-engine/fhir/server"
@@ -34,30 +35,31 @@ func init() {
 }
 
 func main() {
-	// Check for a linked MongoDB container if we are running in Docker
-	mongoHost := os.Getenv("MONGO_PORT_27017_TCP_ADDR")
-	if mongoHost == "" {
-		mongoHost = "localhost"
-	}
-
 	codeLookupFlag := flag.Bool("loadCodes", false, "flag to enable download of icd-9 and icd-10 code lookup")
 	icd9URL := flag.String("icd9URL", "https://www.cms.gov/Medicare/Coding/ICD9ProviderDiagnosticCodes/Downloads/ICD-9-CM-v32-master-descriptions.zip", "url for icd-9 code definition zip")
 	icd10URL := flag.String("icd10URL", "https://www.cms.gov/Medicare/Coding/ICD10/Downloads/2016-Code-Descriptions-in-Tabular-Order.zip", "url for icd-10 code definition zip")
 	subscriptionFlag := flag.Bool("subscriptions", false, "enables limited support for resource subscriptions (default: false)")
 	reqLog := flag.Bool("reqlog", false, "Enables request logging -- do NOT use in production")
-
 	flag.Parse()
 
-	if *codeLookupFlag {
-		utilities.LoadICDFromCMS(mongoHost, *icd9URL, "ICD-9")
-		utilities.LoadICDFromCMS(mongoHost, *icd10URL, "ICD-10")
+	mongoURL := os.Getenv("MONGO_URL")
+	if mongoURL == "" {
+		mongoURL = "mongodb://localhost:2017"
 	}
 
-	riskServiceEndpoint := os.Getenv("RISKSERVICE_PORT_9000_TCP_ADDR")
-	if riskServiceEndpoint == "" {
-		riskServiceEndpoint = "http://localhost:9000"
-	} else {
-		riskServiceEndpoint = "http://" + riskServiceEndpoint + ":9000"
+	riskServiceURL := os.Getenv("RISK_SERVICE_URL")
+	if riskServiceURL == "" {
+		riskServiceURL = "http://localhost:9000"
+	}
+
+	huddleConfigs := huddleFlag
+	if len(huddleConfigs) == 0 && os.Getenv("HUDDLE_CONFIGS") != "" {
+		huddleConfigs = huddleSlice(strings.Split(os.Getenv("HUDDLE_CONFIGS"), ","))
+	}
+
+	if *codeLookupFlag {
+		utilities.LoadICDFromCMS(mongoURL, *icd9URL, "ICD-9")
+		utilities.LoadICDFromCMS(mongoURL, *icd10URL, "ICD-10")
 	}
 
 	var ip net.IP
@@ -78,7 +80,7 @@ func main() {
 		}
 	}
 
-	s := server.NewServer(mongoHost)
+	s := server.NewServer(mongoURL)
 
 	if *reqLog {
 		s.Engine.Use(server.RequestLoggerHandler)
@@ -88,7 +90,7 @@ func main() {
 	// to take out globals (and other stuff), this should be rethought.
 	c := cron.New()
 	huddleController := new(huddles.HuddleSchedulerController)
-	for _, huddlePath := range huddleFlag {
+	for _, huddlePath := range huddleConfigs {
 		data, err := ioutil.ReadFile(huddlePath)
 		if err != nil {
 			panic(err)
@@ -125,12 +127,12 @@ func main() {
 	}
 	s.Engine.GET("/ScheduleHuddles", huddleController.ScheduleHandler)
 
-	if len(huddleFlag) > 0 {
+	if len(huddleConfigs) > 0 {
 		c.Start()
 		defer c.Stop()
 	}
 
-	closer := controllers.RegisterRoutes(s, selfURL, riskServiceEndpoint, *subscriptionFlag)
+	closer := controllers.RegisterRoutes(s, selfURL, riskServiceURL, *subscriptionFlag)
 	defer closer()
 
 	s.Run(server.Config{
