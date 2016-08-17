@@ -53,7 +53,7 @@ func main() {
 		utilities.LoadICDFromCMS(mongoHost, *icd10URL, "ICD-10")
 	}
 
-	riskServiceEndpoint := os.Getenv("RISKSERVICE_PORT_9000_TCP_ADDR")
+	riskServiceEndpoint := os.Getenv("MULTIFACTORRISKSERVICE_PORT_9000_TCP_ADDR")
 	if riskServiceEndpoint == "" {
 		riskServiceEndpoint = "http://localhost:9000"
 	} else {

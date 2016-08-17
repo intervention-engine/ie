@@ -1,34 +1,50 @@
-ie:
-  build: .
-  ports:
-    - "3001"
-  links:
-    - mongodb:mongo
-  command: ./server -huddle ./configs/multifactor_huddle_config.json
-endpoint:
-  build: ../ie-ccda-endpoint
-  ports:
-    - "3000:3000"
-  links:
-    - ie
-mongodb:
-  image: mongo
-  volumes:
-    - /data/db:/data/db
-  ports:
-    - "27017"
-multifactorriskservice:
-  build: ../multifactorriskservice
-  ports:
-    - "9000"
-  links:
-    - mongodb:mongo
-    - ie
-  command: ./multifactorriskservice -redcap https://your_redcap_server/redcap/api -token your_redcap_api_token -fhir http://ie:3001 -useStudyID
-nginx:
-  build: ../nginx
-  ports:
-    - "443:443"
-  links:
-    - ie
-  command: /bin/bash -c "envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf '$$IE_PORT_3001_TCP_ADDR:$$IE_PORT_3001_TCP_PORT' && nginx -g 'daemon off;'"
+version: '2'
+services:
+  ie:
+    build: .
+    ports:
+      - "3001"
+    depends_on:
+      - mongodb
+    environment:
+      - MONGO_PORT_27017_TCP_ADDR=mongodb
+      - MULTIFACTORRISKSERVICE_PORT_9000_TCP_ADDR=multifactorriskservice
+      - GIN_MODE=release
+    command: ./server -huddle ./configs/multifactor_huddle_config.json
+  endpoint:
+    build: ../ie-ccda-endpoint
+    ports:
+      - "3000:3000"
+    depends_on:
+      - ie
+    environment:
+      - IE_PORT_3001_TCP_ADDR=ie
+      - IE_PORT_3001_TCP_PORT=3001
+  mongodb:
+    image: mongo
+    volumes:
+      - /data/db:/data/db
+    ports:
+      - "27017"
+  multifactorriskservice:
+    build: ../multifactorriskservice
+    ports:
+      - "9000"
+    depends_on:
+      - ie
+      - mongodb
+    environment:
+      - MONGO_PORT_27017_TCP_ADDR=mongodb
+    command: ./multifactorriskservice -redcap https://your_redcap_server/redcap/api -token your_redcap_api_token -fhir http://ie:3001 -useStudyID
+    #command: ./mock -fhir http://ie:3001 -gen # for testing only!
+  nginx:
+    build: ../nginx
+    ports:
+      - "443:443"
+    depends_on:
+      - ie
+      - multifactorriskservice
+    environment:
+      - IE_PORT_3001_TCP_ADDR=ie
+      - IE_PORT_3001_TCP_PORT=3001
+    command: /bin/bash -c "envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf '$$IE_PORT_3001_TCP_ADDR:$$IE_PORT_3001_TCP_PORT' && nginx -g 'daemon off;'"
