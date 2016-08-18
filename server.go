@@ -44,7 +44,7 @@ func main() {
 
 	mongoURL := os.Getenv("MONGO_URL")
 	if mongoURL == "" {
-		mongoURL = "mongodb://localhost:2017"
+		mongoURL = "mongodb://localhost:27017"
 	}
 
 	riskServiceURL := os.Getenv("RISK_SERVICE_URL")

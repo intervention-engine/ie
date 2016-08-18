@@ -29,7 +29,7 @@ func (f *FHIRServer) Run(config Config) {
 	// Setup the database
 	session, err := mgo.Dial(f.DatabaseHost)
 	if err != nil {
-		panic(err)
+		log.Fatalln("Failed to connect to", f.DatabaseHost, ":", err.Error())
 	}
 	log.Println("Connected to mongodb")
 	defer session.Close()
