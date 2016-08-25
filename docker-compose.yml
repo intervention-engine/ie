@@ -16,7 +16,7 @@ services:
   endpoint:
     build: ../ie-ccda-endpoint
     ports:
-      - "3000:3000"
+      - "3000"
     depends_on:
       - ie
     environment:
@@ -46,6 +46,31 @@ services:
       - GIN_MODE=release
     command: ./multifactorriskservice
     # command: ./mock -gen # for testing only!
+  integrator:
+    build: ../integrator
+    depends_on:
+      - ie
+      - mongodb
+      - endpoint
+    volumes:
+      - /data/integrator:/data/integrator
+    environment:
+      # The following variables all have site-specific values -- they must be set before running!
+      - HIE_URL=http://myhieserver/api
+      - HIE_USER=myhieusername
+      - HIE_PASSWORD=myhiepassword
+      # The following file should be created and edited before running
+      # Each line of the file should contain an EE to ingest data for
+      - EE_FILE=/data/integrator/ee_file.txt
+      # The values below may need to be modified in some environments
+      - USE_CURL=true
+      - INTEGRATOR_CRON=0 0 20 * * *
+      - INTEGRATOR_NOW=true
+      # The values below should not be modified under normal circumstances
+      - INGEST_URL=http://endpoint:3000/ccda
+      - MONGO_URL=mongodb://mongodb:27017
+      #- COPY_DIR=/data/integrator/ccda # for debugging only
+    command: dockerize -wait http://endpoint:3000 -timeout 300s ./integrator
   nginx:
     build: ../nginx
     ports:
