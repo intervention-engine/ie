@@ -7,7 +7,6 @@ ADD . /go/src/github.com/intervention-engine/ie
 
 #Build the Intervention Engine server
 WORKDIR /go/src/github.com/intervention-engine/ie
-RUN go get
 RUN go build server.go
 
 # Document that the service listens on port 3001.
