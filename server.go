@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/intervention-engine/fhir/auth"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/controllers"
 	"github.com/intervention-engine/ie/huddles"
@@ -135,8 +136,5 @@ func main() {
 	closer := controllers.RegisterRoutes(s, selfURL, riskServiceURL, *subscriptionFlag)
 	defer closer()
 
-	s.Run(server.Config{
-		UseSmartAuth:         false,
-		UseLoggingMiddleware: true,
-	})
+	s.Run(server.Config{Auth: auth.None()})
 }
