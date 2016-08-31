@@ -1,14 +1,13 @@
 {
 	"ImportPath": "github.com/intervention-engine/ie",
-	"GoVersion": "go1.6",
-	"GodepVersion": "v63",
+	"GoVersion": "go1.7",
+	"GodepVersion": "v74",
 	"Packages": [
 		"github.com/intervention-engine/ie",
 		"github.com/intervention-engine/ie/controllers",
 		"github.com/intervention-engine/ie/groups",
 		"github.com/intervention-engine/ie/huddles",
 		"github.com/intervention-engine/ie/middleware",
-		"github.com/intervention-engine/ie/models",
 		"github.com/intervention-engine/ie/notifications",
 		"github.com/intervention-engine/ie/subscription",
 		"github.com/intervention-engine/ie/testutil",
@@ -16,8 +15,27 @@
 	],
 	"Deps": [
 		{
+			"ImportPath": "github.com/boj/redistore",
+			"Comment": "v1.2",
+			"Rev": "fc113767cd6b051980f260d6dbe84b2740c46ab0"
+		},
+		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
 			"Rev": "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d"
+		},
+		{
+			"ImportPath": "github.com/garyburd/redigo/internal",
+			"Comment": "v1.0.0-5-gffa8d46",
+			"Rev": "ffa8d46ada782d81cfda81a0fbd9f45ceae448e8"
+		},
+		{
+			"ImportPath": "github.com/garyburd/redigo/redis",
+			"Comment": "v1.0.0-5-gffa8d46",
+			"Rev": "ffa8d46ada782d81cfda81a0fbd9f45ceae448e8"
+		},
+		{
+			"ImportPath": "github.com/gin-gonic/contrib/sessions",
+			"Rev": "547e518040cfb96576b507d2f26779ab9c6fc829"
 		},
 		{
 			"ImportPath": "github.com/gin-gonic/gin",
@@ -51,23 +69,45 @@
 			"Rev": "3752dbe3d898496114ebb398c8960ff127cbbe93"
 		},
 		{
+			"ImportPath": "github.com/icrowley/fake",
+			"Rev": "84bff6d01560fb0b5a396ba29534e93fd00d09c6"
+		},
+		{
+			"ImportPath": "github.com/intervention-engine/fhir/auth",
+			"Comment": "DSTU1-178-gdb6ddaa",
+			"Rev": "db6ddaae17b43a909264051a73ded2418259dfe6"
+		},
+		{
 			"ImportPath": "github.com/intervention-engine/fhir/models",
-			"Comment": "DSTU1-154-gae967bd",
-			"Rev": "ae967bd38fd1bfc823ee145c8889ffe22d3cafca"
+			"Comment": "DSTU1-178-gdb6ddaa",
+			"Rev": "db6ddaae17b43a909264051a73ded2418259dfe6"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/search",
-			"Comment": "DSTU1-154-gae967bd",
-			"Rev": "ae967bd38fd1bfc823ee145c8889ffe22d3cafca"
+			"Comment": "DSTU1-178-gdb6ddaa",
+			"Rev": "db6ddaae17b43a909264051a73ded2418259dfe6"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/server",
-			"Comment": "DSTU1-154-gae967bd",
-			"Rev": "ae967bd38fd1bfc823ee145c8889ffe22d3cafca"
+			"Comment": "DSTU1-178-gdb6ddaa",
+			"Rev": "db6ddaae17b43a909264051a73ded2418259dfe6"
+		},
+		{
+			"ImportPath": "github.com/itsjamie/gin-cors",
+			"Comment": "1.0.0",
+			"Rev": "97b4a9da79331dfa2b6d35f4cdd1e50f5148859c"
+		},
+		{
+			"ImportPath": "github.com/juju/errors",
+			"Rev": "6f54ff6318409d31ff16261533ce2c8381a4fd5d"
 		},
 		{
 			"ImportPath": "github.com/manucorporat/sse",
 			"Rev": "ee05b128a739a0fb76c7ebd3ae4810c1de808d6d"
+		},
+		{
+			"ImportPath": "github.com/mitre/heart",
+			"Rev": "0c46b433a490476c34ce33205e87a72c8e0bc7ef"
 		},
 		{
 			"ImportPath": "github.com/pmezard/go-difflib/difflib",
@@ -94,16 +134,16 @@
 			"Rev": "6fe211e493929a8aac0469b93f28b1d0688a9a3a"
 		},
 		{
-			"ImportPath": "golang.org/x/crypto/bcrypt",
-			"Rev": "d67eb63455fa4d6fca5802332d86f1f204017e00"
-		},
-		{
-			"ImportPath": "golang.org/x/crypto/blowfish",
-			"Rev": "d67eb63455fa4d6fca5802332d86f1f204017e00"
-		},
-		{
 			"ImportPath": "golang.org/x/net/context",
 			"Rev": "5df5483e0518a11a6ef1e894c70236eb3f639557"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2",
+			"Rev": "4d549c893be7d4011bab739cc585d091a7188d27"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2/internal",
+			"Rev": "4d549c893be7d4011bab739cc585d091a7188d27"
 		},
 		{
 			"ImportPath": "gopkg.in/go-playground/validator.v8",
@@ -136,8 +176,27 @@
 			"Rev": "03c9f3ee4c14c8e51ee521a6a7d0425658dd6f64"
 		},
 		{
+			"ImportPath": "gopkg.in/square/go-jose.v1",
+			"Comment": "v1.0.3",
+			"Rev": "a3927f83df1b1516f9e9dec71839c93e6bcf1db0"
+		},
+		{
+			"ImportPath": "gopkg.in/square/go-jose.v1/cipher",
+			"Comment": "v1.0.3",
+			"Rev": "a3927f83df1b1516f9e9dec71839c93e6bcf1db0"
+		},
+		{
+			"ImportPath": "gopkg.in/square/go-jose.v1/json",
+			"Comment": "v1.0.3",
+			"Rev": "a3927f83df1b1516f9e9dec71839c93e6bcf1db0"
+		},
+		{
 			"ImportPath": "gopkg.in/tomb.v2",
 			"Rev": "14b3d72120e8d10ea6e6b7f87f7175734b1faab8"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "e4d366fc3c7938e2958e662b4258c7a89e1f0e3e"
 		}
 	]
 }
