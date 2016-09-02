@@ -75,11 +75,11 @@ func (suite *HuddleSuite) TestHuddleMembers() {
 
 	m := suite.Huddle.HuddleMembers()
 	require.Len(m, 5)
-	assert.Equal("1111111111111111111", m[0].Entity.ReferencedID)
-	assert.Equal("2222222222222222222", m[1].Entity.ReferencedID)
-	assert.Equal("3333333333333333333", m[2].Entity.ReferencedID)
-	assert.Equal("4444444444444444444", m[3].Entity.ReferencedID)
-	assert.Equal("5555555555555555555", m[4].Entity.ReferencedID)
+	assert.Equal("1111111111111111111", m[0].ID())
+	assert.Equal("2222222222222222222", m[1].ID())
+	assert.Equal("3333333333333333333", m[2].ID())
+	assert.Equal("4444444444444444444", m[3].ID())
+	assert.Equal("5555555555555555555", m[4].ID())
 
 	// Clear the members and check
 	suite.Huddle.Member = []models.GroupMemberComponent{}
@@ -92,7 +92,7 @@ func (suite *HuddleSuite) TestFindHuddleMember() {
 
 	m := suite.Huddle.FindHuddleMember("4444444444444444444")
 	require.NotNil(m)
-	assert.Equal("4444444444444444444", m.Entity.ReferencedID)
+	assert.Equal("4444444444444444444", m.ID())
 
 	// Try to find one that does not exist
 	m = suite.Huddle.FindHuddleMember("6666666666666666666")

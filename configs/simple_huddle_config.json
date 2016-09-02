@@ -24,5 +24,6 @@
       }
     ]
   },
+  "rollOverDelayInDays": 3,
   "schedulerCronSpec": "0 0 0 * * *"
 }

@@ -17,40 +17,49 @@ import (
 // ScheduleHuddles schedules future huddles based on the passed in config.  It will schedule out the number
 // of future huddles as specified in the config.LookAhead.
 func ScheduleHuddles(config *HuddleConfig) ([]*models.Group, error) {
-	now := time.Now()
-	start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+	huddles := make([]*models.Group, 0, config.LookAhead)
 
 	// Step through one day at a time, starting today, until we have scheduled the requested number of huddles
-	huddles := make([]*models.Group, 0, config.LookAhead)
-	for t := start; len(huddles) < config.LookAhead; t = t.AddDate(0, 0, 1) {
+	for t := today(); len(huddles) < config.LookAhead; t = t.AddDate(0, 0, 1) {
 		if !config.IsHuddleDay(t) {
 			continue
 		}
 
+		// We only want to add rollover patients if this is the first scheduled huddle
+		doRollOverPatients := len(huddles) == 0
+
 		// Create the huddle
-		huddle, err := CreatePopulatedHuddle(t, config)
+		huddle, err := createPopulatedHuddle(t, config, doRollOverPatients)
 		if err != nil {
+			// If it's a HuddleInProgressError, skip saving it, but do continue with scheduling
+			if _, ok := err.(huddleInProgressError); ok {
+				continue
+			}
+			// Otherwise abort the whole thing
+			printInfo(huddles, config.Name, err)
 			return nil, err
 		}
 
 		// Store the huddle
 		if _, err := server.Database.C("groups").UpsertId(huddle.Id, huddle); err != nil {
+			printInfo(huddles, config.Name, err)
 			return huddles, err
 		}
 		huddles = append(huddles, huddle)
 	}
 
-	printInfo(huddles, config.Name)
+	printInfo(huddles, config.Name, nil)
 
 	return huddles, nil
 }
 
-// CreatePopulatedHuddle returns a Group resource representing the patients that should be automatically considered
-// for a huddle for the specific date.  Currently it is based on three criteria:
+// createPopulatedHuddle returns a Group resource representing the patients that should be automatically considered
+// for a huddle for the specific date.  Currently it is based on four criteria:
 // - Risk scores (which determine frequency)
 // - Recent clinical events (such as ED visit)
-// - "Leftovers" from previous huddle
-func CreatePopulatedHuddle(date time.Time, config *HuddleConfig) (*models.Group, error) {
+// - Manually added patients (generally through the web UI)
+// - "Rollovers" from previous huddle
+func createPopulatedHuddle(date time.Time, config *HuddleConfig, doRollOverPatients bool) (*models.Group, error) {
 	group, err := findExistingHuddle(date, config)
 	if err != nil {
 		return nil, err
@@ -95,84 +104,137 @@ func CreatePopulatedHuddle(date time.Time, config *HuddleConfig) (*models.Group,
 		}
 	}
 
-	// First find the manually added patients (in case this was existing) and remember them
-	var manuallyAddedPatientIDs []string
-	manuallyAddedReasonMap := make(map[string]*models.CodeableConcept)
-	for i := range group.Member {
-		mem := HuddleMember(group.Member[i])
-		reason := mem.Reason()
-		if reason != nil && reason.MatchesCode(ManualAdditionReason.Coding[0].System, ManualAdditionReason.Coding[0].Code) {
-			manuallyAddedPatientIDs = append(manuallyAddedPatientIDs, mem.Entity.ReferencedID)
-			manuallyAddedReasonMap[mem.Entity.ReferencedID] = reason
+	huddle := Huddle(*group)
+	originalMembers := huddle.HuddleMembers()
+
+	// If this is today's huddle and any patients are marked reviewed already, then do NOT reschedule this huddle!
+	if huddle.ActiveDateTime() != nil && huddle.ActiveDateTime().Time == today() {
+		for _, member := range originalMembers {
+			if member.Reviewed() != nil {
+				return group, huddleInProgressError{"Today's huddle has at least one patient marked as reviewed"}
+			}
 		}
 	}
 
 	// Clear the huddle members list since we'll be repopulating it
 	group.Member = nil
 
-	// Start repopulating by adding back manually added patients (if applicable)
-	for _, pid := range manuallyAddedPatientIDs {
-		addPatientToHuddle(group, pid, manuallyAddedReasonMap[pid])
+	// Start repopulating by adding back manually added patients
+	for _, member := range originalMembers {
+		if member.ReasonIsManuallyAdded() {
+			addPatientToHuddle(group, member.ID(), member.Reason())
+		}
 	}
 
+	// Add the patients scheduled due to recent encounters
 	encounterPatients, err := findEligiblePatientIDsByRecentEncounter(date, config)
 	if err != nil {
 		return nil, err
 	}
 	for i := range encounterPatients {
-		reason := RecentEncounterReason
-		reason.Text = encounterPatients[i].EventCode.Name
-		addPatientToHuddle(group, encounterPatients[i].PatientID, &reason)
+		addPatientToHuddle(group, encounterPatients[i].PatientID, recentEncounterReason(encounterPatients[i].EventCode.Name))
 	}
 
+	// Add the patients scheduled due to risk scores
 	riskPatientIDs, err := findEligiblePatientIDsByRiskScore(date, config)
 	if err != nil {
 		return nil, err
 	}
 	for _, pid := range riskPatientIDs {
-		addPatientToHuddle(group, pid, &RiskScoreReason)
+		addPatientToHuddle(group, pid, riskScoreReason())
 	}
 
-	carriedOverPatientIDs := findEligibleCarriedOverPatients(date, config)
-	for _, pid := range carriedOverPatientIDs {
-		addPatientToHuddle(group, pid, &CarriedOverReason)
+	// Add back the existing rollover patients
+	for _, member := range originalMembers {
+		if member.ReasonIsRollOver() {
+			addPatientToHuddle(group, member.ID(), member.Reason())
+		}
+	}
+
+	// Now add the newly rolled over patients
+	if doRollOverPatients && config.RollOverDelayInDays > 0 {
+		// Find the patients that need to roll over (i.e., the ones not reviewed in the huddle x days ago)
+		expiredHuddleDay := today().AddDate(0, 0, -1*config.RollOverDelayInDays)
+		expiredHuddle, err := findExistingHuddle(expiredHuddleDay, config)
+		if err != nil {
+			fmt.Printf("Error searching on previous huddle (%s) to detect rollover patients\n", expiredHuddleDay.Format("Jan 2"))
+		} else if expiredHuddle != nil {
+			// Check for unreviewed patients
+			h := Huddle(*expiredHuddle)
+			for _, member := range h.HuddleMembers() {
+				if member.Reviewed() == nil {
+					addPatientToHuddle(group, member.ID(), rollOverReason(expiredHuddleDay, member.Reason()))
+				}
+			}
+		}
 	}
 
 	return group, nil
 }
 
-// RiskScoreReason indicates that the patient was added to the huddle because his/her risk score warrants discussion
-var RiskScoreReason = models.CodeableConcept{
-	Coding: []models.Coding{
-		{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "RISK_SCORE"},
-	},
-	Text: "Risk Score Warrants Discussion",
+func today() time.Time {
+	now := time.Now()
+	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
 }
 
-// RecentEncounterReason indicates that the patient was added to the huddle because a recent encounter (such as an ED
+// huddleInProgressError indicates that the huddle should not be modified because it is already in progress
+// (i.e., it is scheduled for today and at least one patient has already been marked as reviewed)
+type huddleInProgressError struct {
+	msg string
+}
+
+func (e huddleInProgressError) Error() string {
+	return e.msg
+}
+
+// riskScoreReason indicates that the patient was added to the huddle because his/her risk score warrants discussion
+func riskScoreReason() *models.CodeableConcept {
+	return &models.CodeableConcept{
+		Coding: []models.Coding{
+			{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "RISK_SCORE"},
+		},
+		Text: "Risk Score Warrants Discussion",
+	}
+}
+
+// recentEncounterReason indicates that the patient was added to the huddle because a recent encounter (such as an ED
 // visit) warrants discussion
-var RecentEncounterReason = models.CodeableConcept{
-	Coding: []models.Coding{
-		{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "RECENT_ENCOUNTER"},
-	},
-	Text: "Recent Encounter",
-}
-
-// CarriedOverReason indicates that the patient was added to the huddle because he/she was scheduled for the last huddle
-// but was not actually discussed
-var CarriedOverReason = models.CodeableConcept{
-	Coding: []models.Coding{
-		{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "CARRIED_OVER"},
-	},
-	Text: "Carried Over From Last Huddle",
+func recentEncounterReason(description string) *models.CodeableConcept {
+	return &models.CodeableConcept{
+		Coding: []models.Coding{
+			{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "RECENT_ENCOUNTER"},
+		},
+		Text: description,
+	}
 }
 
 // ManualAdditionReason indicates that the patient was manually added to the huddle by a clinician.
-var ManualAdditionReason = models.CodeableConcept{
-	Coding: []models.Coding{
-		{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "MANUAL_ADDITION"},
-	},
-	Text: "Manually Added",
+func manualAdditionReason(description string) *models.CodeableConcept {
+	return &models.CodeableConcept{
+		Coding: []models.Coding{
+			{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "MANUAL_ADDITION"},
+		},
+		Text: description,
+	}
+}
+
+// RollOverReason indicates that the patient was added to the huddle because he/she was scheduled for the last huddle
+// but was not actually discussed
+func rollOverReason(from time.Time, previousReason *models.CodeableConcept) *models.CodeableConcept {
+	var reason string
+	if previousReason.MatchesCode("http://interventionengine.org/fhir/cs/huddle-member-reason", "ROLLOVER") {
+		reason = previousReason.Text
+	} else if previousReason.MatchesCode("http://interventionengine.org/fhir/cs/huddle-member-reason", "MANUAL_ADDITION") {
+		reason = fmt.Sprintf("Rolled Over from %s (Manually Added - %s)", from.Format("Jan 2"), previousReason.Text)
+	} else {
+		reason = fmt.Sprintf("Rolled Over from %s (%s)", from.Format("Jan 2"), previousReason.Text)
+	}
+	return &models.CodeableConcept{
+		Coding: []models.Coding{
+			{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "ROLLOVER"},
+		},
+		Text: reason,
+	}
 }
 
 func findExistingHuddle(date time.Time, config *HuddleConfig) (*models.Group, error) {
@@ -275,7 +337,7 @@ func findEligiblePatientIDsByRecentEncounter(date time.Time, config *HuddleConfi
 							if h.ActiveDateTime() != nil && !h.ActiveDateTime().Time.Equal(date) && h.ActiveDateTime().Time.After(d) {
 								m := h.FindHuddleMember(result.PatientID)
 								// Only consider it already discussed if the patient was discussed for this same reason
-								alreadyDiscussed = m != nil && m.Reason().MatchesCode(RecentEncounterReason.Coding[0].System, RecentEncounterReason.Coding[0].Code)
+								alreadyDiscussed = m != nil && m.ReasonIsRecentEncounter()
 								break
 							}
 						}
@@ -312,8 +374,6 @@ func dateMatches(encPeriod *models.Period, code *EventCode, lowIncl, highExcl ti
 	}
 	return time.Time{}, false
 }
-
-//func findLatestHuddleInfoForPatient(huddles []models.Group, patientID string, highDate time.Time) (date time.Time, reason models.CodeableConcept)
 
 func findEligiblePatientIDsByRiskScore(date time.Time, config *HuddleConfig) ([]string, error) {
 	if config.RiskConfig == nil {
@@ -381,12 +441,6 @@ func findEligiblePatientIDsByRiskScore(date time.Time, config *HuddleConfig) ([]
 		patientIDs[i] = patientInfos[i].PatientID
 	}
 	return patientIDs, nil
-}
-
-func findEligibleCarriedOverPatients(date time.Time, config *HuddleConfig) []string {
-	var patientIDs []string
-	// Find all patients in most recent PAST huddle that were not actually discussed
-	return patientIDs
 }
 
 // findPatientsInScoreRange finds the patients whose most recent risk assessment for the
@@ -560,10 +614,13 @@ func addPatientToHuddle(group *models.Group, id string, reason *models.CodeableC
 	})
 }
 
-func printInfo(huddles []*models.Group, name string) {
+func printInfo(huddles []*models.Group, name string, err error) {
 	fmt.Printf("Scheduled %d huddles with name %s\n", len(huddles), name)
 	for i := range huddles {
 		fmt.Printf("\t%s: %d patients\n", getStringDate(huddles[i]), len(huddles[i].Member))
+	}
+	if err != nil {
+		fmt.Println("Error prevent further huddle scheduling:", err.Error())
 	}
 }
 
