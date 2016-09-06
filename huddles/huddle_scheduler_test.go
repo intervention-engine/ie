@@ -37,8 +37,6 @@ func (suite *HuddleSchedulerSuite) TearDownSuite() {
 	suite.TearDownDBServer()
 }
 
-// For now, this test just uses risk scores, but it should be expanded as we add support for autopopulating
-// based on other criteria.
 func (suite *HuddleSchedulerSuite) TestCreatePopulatedHuddleForNewHuddle() {
 	assert := assert.New(suite.T())
 	require := require.New(suite.T())
@@ -79,20 +77,20 @@ func (suite *HuddleSchedulerSuite) TestCreatePopulatedHuddleForNewHuddle() {
 	dis = time.Date(2016, time.March, 16, 9, 0, 0, 0, time.UTC)
 	suite.storeEncounter(bsonID(19), "ER", &adm, &dis) // 3 days ago, patient Ox13 should get scheduled
 
-	config := createHuddleConfig(true, true, time.Monday)
+	config := createHuddleConfig(true, true, 0, time.Monday)
 
-	suite.storeHuddle(time.Date(2016, time.February, 1, 0, 0, 0, 0, time.UTC), config.LeaderID, &RiskScoreReason,
+	suite.storeHuddle(time.Date(2016, time.February, 1, 0, 0, 0, 0, time.UTC), config.LeaderID, riskScoreReason(),
 		bsonID(5), bsonID(7))
-	suite.storeHuddle(time.Date(2016, time.February, 22, 0, 0, 0, 0, time.UTC), config.LeaderID, &RiskScoreReason,
+	suite.storeHuddle(time.Date(2016, time.February, 22, 0, 0, 0, 0, time.UTC), config.LeaderID, riskScoreReason(),
 		bsonID(10))
-	suite.storeHuddle(time.Date(2016, time.February, 29, 0, 0, 0, 0, time.UTC), config.LeaderID, &RiskScoreReason,
+	suite.storeHuddle(time.Date(2016, time.February, 29, 0, 0, 0, 0, time.UTC), config.LeaderID, riskScoreReason(),
 		bsonID(12))
-	suite.storeHuddle(time.Date(2016, time.March, 7, 0, 0, 0, 0, time.UTC), config.LeaderID, &RiskScoreReason,
+	suite.storeHuddle(time.Date(2016, time.March, 7, 0, 0, 0, 0, time.UTC), config.LeaderID, riskScoreReason(),
 		bsonID(9), bsonID(15), bsonID(18))
-	suite.storeHuddle(time.Date(2016, time.March, 14, 0, 0, 0, 0, time.UTC), config.LeaderID, &RiskScoreReason,
+	suite.storeHuddle(time.Date(2016, time.March, 14, 0, 0, 0, 0, time.UTC), config.LeaderID, riskScoreReason(),
 		bsonID(6), bsonID(11), bsonID(14), bsonID(17), bsonID(19), bsonID(20))
 
-	group, err := CreatePopulatedHuddle(time.Date(2016, time.March, 21, 9, 0, 0, 0, time.UTC), config)
+	group, err := createPopulatedHuddle(time.Date(2016, time.March, 21, 9, 0, 0, 0, time.UTC), config, false)
 	require.NoError(err)
 	ha := NewHuddleAssertions(group, assert)
 	ha.AssertValidHuddleProfile()
@@ -106,15 +104,11 @@ func (suite *HuddleSchedulerSuite) TestCreatePopulatedHuddleForNewHuddle() {
 	for i, expectedID := range expectedIDs {
 		switch i {
 		case 0, 1:
-			reason := RecentEncounterReason
-			reason.Text = "Emergency Room Visit"
-			ha.AssertMember(i, expectedID, &reason)
+			ha.AssertMember(i, expectedID, recentEncounterReason("Emergency Room Visit"))
 		case 2:
-			reason := RecentEncounterReason
-			reason.Text = "Hospital Discharge"
-			ha.AssertMember(i, expectedID, &reason)
+			ha.AssertMember(i, expectedID, recentEncounterReason("Hospital Discharge"))
 		default:
-			ha.AssertMember(i, expectedID, &RiskScoreReason)
+			ha.AssertMember(i, expectedID, riskScoreReason())
 		}
 	}
 }
@@ -131,14 +125,13 @@ func (suite *HuddleSchedulerSuite) TestCreatePopulatedHuddleForExistingHuddle() 
 	suite.storePatientAndScores(bsonID(3), 8, 8, 7) // 0e  | 2 weeks | 1 week ago  (3/14) | 3/28
 	suite.storePatientAndScores(bsonID(4), 8, 9, 8) // 11  | 1 week  | 1 week ago  (3/14) | 3/21
 
-	config := createHuddleConfig(true, true, time.Monday)
-	suite.storeHuddle(time.Date(2016, time.March, 14, 0, 0, 0, 0, time.Local), config.LeaderID, &RiskScoreReason, bsonID(3), bsonID(4))
-	hunchReason := ManualAdditionReason
-	hunchReason.Text = "I've got a hunch"
-	suite.storeHuddleWithReasons(time.Date(2016, time.March, 21, 0, 0, 0, 0, time.Local), config.LeaderID, &RiskScoreReason,
-		map[string]*models.CodeableConcept{bsonID(1): &hunchReason}, bsonID(1), bsonID(2), bsonID(3), bsonID(4))
+	config := createHuddleConfig(true, true, 0, time.Monday)
+	suite.storeHuddle(time.Date(2016, time.March, 14, 0, 0, 0, 0, time.Local), config.LeaderID, riskScoreReason(), bsonID(3), bsonID(4))
+	hunchReason := manualAdditionReason("I've got a hunch")
+	suite.storeHuddleWithDetails(time.Date(2016, time.March, 21, 0, 0, 0, 0, time.Local), config.LeaderID, riskScoreReason(),
+		map[string]*models.CodeableConcept{bsonID(1): hunchReason}, nil, bsonID(1), bsonID(2), bsonID(3), bsonID(4))
 
-	group, err := CreatePopulatedHuddle(time.Date(2016, time.March, 21, 0, 0, 0, 0, time.Local), config)
+	group, err := createPopulatedHuddle(time.Date(2016, time.March, 21, 0, 0, 0, 0, time.Local), config, false)
 	require.NoError(err)
 
 	ha := NewHuddleAssertions(group, assert)
@@ -148,9 +141,9 @@ func (suite *HuddleSchedulerSuite) TestCreatePopulatedHuddleForExistingHuddle() 
 	assert.True(strings.HasPrefix(ha.Name, "Test Huddle"))
 
 	require.Len(ha.Member, 3)
-	ha.AssertMember(0, bsonID(1), &hunchReason)
-	ha.AssertMember(1, bsonID(4), &RiskScoreReason)
-	ha.AssertMember(2, bsonID(2), &RiskScoreReason)
+	ha.AssertMember(0, bsonID(1), hunchReason)
+	ha.AssertMember(1, bsonID(4), riskScoreReason())
+	ha.AssertMember(2, bsonID(2), riskScoreReason())
 }
 
 func (suite *HuddleSchedulerSuite) TestScheduleHuddlesByRiskScore() {
@@ -163,7 +156,7 @@ func (suite *HuddleSchedulerSuite) TestScheduleHuddlesByRiskScore() {
 	suite.storePatientAndScores(bsonID(4), 9, 9, 10) // every week
 	suite.storePatientAndScores(bsonID(5), 7, 6, 5)  // every 4 weeks
 
-	config := createHuddleConfig(true, false, time.Monday)
+	config := createHuddleConfig(true, false, 0, time.Monday)
 	huddles, err := ScheduleHuddles(config)
 	require.NoError(err)
 	assert.Len(huddles, 4)
@@ -226,7 +219,7 @@ func (suite *HuddleSchedulerSuite) TestScheduleHuddlesByEncounterEvents() {
 	suite.storeEncounter(bsonID(6), "ER", daysAgo(1), daysAgo(1))     // ED visit yesterday -- trigger ED
 	suite.storeEncounter(bsonID(7), "FOO", daysAgo(2), daysAgo(1))    // Unrecognized code -- don't trigger
 
-	config := createHuddleConfig(false, true, t.Weekday())
+	config := createHuddleConfig(false, true, 0, t.Weekday())
 	huddles, err := ScheduleHuddles(config)
 	require.NoError(err)
 	assert.Len(huddles, 4)
@@ -294,7 +287,7 @@ func (suite *HuddleSchedulerSuite) TestScheduleHuddlesByEncounterEventsWithResch
 
 	// Set t to midnight (huddle time) to start checking dates
 	t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
-	config := createHuddleConfig(false, true, t.Weekday())
+	config := createHuddleConfig(false, true, 0, t.Weekday())
 	config.EventConfig.EncounterConfigs[0].LookBackDays = 30
 
 	// Do this five times just to ensure the same results every time
@@ -339,7 +332,7 @@ func (suite *HuddleSchedulerSuite) TestManuallyAddPatientToExistingHuddle() {
 	suite.storePatientAndScores(bsonID(2), 7)
 
 	t := time.Now()
-	config := createHuddleConfig(true, true, t.Weekday())
+	config := createHuddleConfig(true, true, 0, t.Weekday())
 	// The bug indicates there must be a huddle TODAY, so set the day of the week to today's
 	config.Days[0] = time.Now().Weekday()
 
@@ -381,7 +374,7 @@ func (suite *HuddleSchedulerSuite) TestManuallyAddPatientToExistingHuddle() {
 				Extension: []models.Extension{
 					{
 						Url:                  "http://interventionengine.org/fhir/extension/group/member/reason",
-						ValueCodeableConcept: &ManualAdditionReason,
+						ValueCodeableConcept: manualAdditionReason("Just Because"),
 					},
 				},
 			},
@@ -443,7 +436,7 @@ func (suite *HuddleSchedulerSuite) TestManuallyAddMultiplePatientsToTodaysHuddle
 	suite.storePatientAndScores(bsonID(5), 1)
 
 	t := time.Now()
-	config := createHuddleConfig(true, true, t.Weekday())
+	config := createHuddleConfig(true, true, 0, t.Weekday())
 	config.Days[0] = time.Now().Weekday()
 
 	// Schedule the huddles
@@ -484,7 +477,7 @@ func (suite *HuddleSchedulerSuite) TestManuallyAddMultiplePatientsToTodaysHuddle
 				Extension: []models.Extension{
 					{
 						Url:                  "http://interventionengine.org/fhir/extension/group/member/reason",
-						ValueCodeableConcept: &ManualAdditionReason,
+						ValueCodeableConcept: manualAdditionReason("I have my reasons"),
 					},
 				},
 			},
@@ -502,7 +495,7 @@ func (suite *HuddleSchedulerSuite) TestManuallyAddMultiplePatientsToTodaysHuddle
 				Extension: []models.Extension{
 					{
 						Url:                  "http://interventionengine.org/fhir/extension/group/member/reason",
-						ValueCodeableConcept: &ManualAdditionReason,
+						ValueCodeableConcept: manualAdditionReason("Because I said so"),
 					},
 				},
 			},
@@ -520,7 +513,7 @@ func (suite *HuddleSchedulerSuite) TestManuallyAddMultiplePatientsToTodaysHuddle
 				Extension: []models.Extension{
 					{
 						Url:                  "http://interventionengine.org/fhir/extension/group/member/reason",
-						ValueCodeableConcept: &ManualAdditionReason,
+						ValueCodeableConcept: manualAdditionReason("On a hunch"),
 					},
 				},
 			},
@@ -577,7 +570,7 @@ func (suite *HuddleSchedulerSuite) TestManuallyAddPatientToTodaysHuddle() {
 	suite.storePatientAndScores(bsonID(3), 1)
 
 	t := time.Now()
-	config := createHuddleConfig(true, true, t.Weekday())
+	config := createHuddleConfig(true, true, 0, t.Weekday())
 	// The bug indicates there must be a huddle TODAY, so set the day of the week to today's
 	config.Days[0] = time.Now().Weekday()
 
@@ -619,7 +612,7 @@ func (suite *HuddleSchedulerSuite) TestManuallyAddPatientToTodaysHuddle() {
 				Extension: []models.Extension{
 					{
 						Url:                  "http://interventionengine.org/fhir/extension/group/member/reason",
-						ValueCodeableConcept: &ManualAdditionReason,
+						ValueCodeableConcept: manualAdditionReason("Why not?"),
 					},
 				},
 			},
@@ -670,6 +663,272 @@ func (suite *HuddleSchedulerSuite) TestManuallyAddPatientToTodaysHuddle() {
 	assert.Equal(huddles, storedHuddles, "Stored huddles should match returned huddles")
 }
 
+func (suite *HuddleSchedulerSuite) TestRollOverPatientsToTodaysHuddle() {
+	require := require.New(suite.T())
+
+	lastHuddle := today().AddDate(0, 0, -3)
+	ha := suite.setupAndStartRollOverTest(3, lastHuddle, today())
+
+	// The two unreviewed patients should roll over to today's huddle
+	require.Len(ha.Member, 3)
+	ha.AssertMember(0, bsonID(2), riskScoreReason())
+	ha.AssertMember(1, bsonID(4), &models.CodeableConcept{
+		Coding: []models.Coding{
+			models.Coding{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "ROLLOVER"},
+		},
+		Text: fmt.Sprintf("Rolled Over from %s (Manually Added - I've got a hunch)", lastHuddle.Format("Jan 2")),
+	})
+	ha.AssertMember(2, bsonID(6), &models.CodeableConcept{
+		Coding: []models.Coding{
+			models.Coding{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "ROLLOVER"},
+		},
+		Text: fmt.Sprintf("Rolled Over from %s (Risk Score Warrants Discussion)", lastHuddle.Format("Jan 2")),
+	})
+}
+
+func (suite *HuddleSchedulerSuite) TestRollOverPatientsToNextHuddle() {
+	require := require.New(suite.T())
+
+	lastHuddle := today().AddDate(0, 0, -3)
+	nextHuddle := today().AddDate(0, 0, 1)
+	ha := suite.setupAndStartRollOverTest(3, lastHuddle, nextHuddle)
+
+	// The two unreviewed patients should roll over to tomorrow's huddle
+	require.Len(ha.Member, 3)
+	ha.AssertMember(0, bsonID(2), riskScoreReason())
+	ha.AssertMember(1, bsonID(4), &models.CodeableConcept{
+		Coding: []models.Coding{
+			models.Coding{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "ROLLOVER"},
+		},
+		Text: fmt.Sprintf("Rolled Over from %s (Manually Added - I've got a hunch)", lastHuddle.Format("Jan 2")),
+	})
+	ha.AssertMember(2, bsonID(6), &models.CodeableConcept{
+		Coding: []models.Coding{
+			models.Coding{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "ROLLOVER"},
+		},
+		Text: fmt.Sprintf("Rolled Over from %s (Risk Score Warrants Discussion)", lastHuddle.Format("Jan 2")),
+	})
+}
+
+func (suite *HuddleSchedulerSuite) TestRollOverPatientsAlreadyInTodaysHuddle() {
+	require := require.New(suite.T())
+
+	// First setup an existing huddle today with one risk score patient and one rollover patient
+	existingROFromDate := today().AddDate(0, 0, -5)
+	reasonMap := map[string]*models.CodeableConcept{
+		bsonID(5): rollOverReason(existingROFromDate, riskScoreReason()),
+	}
+	suite.storeHuddleWithDetails(today(), "123", riskScoreReason(), reasonMap, nil, bsonID(1), bsonID(5))
+
+	// Then setup the rollover stuff
+	lastHuddle := today().AddDate(0, 0, -3)
+	ha := suite.setupAndStartRollOverTest(3, lastHuddle, today())
+
+	// The risk score patient should be first, then the previously rolled over patient, then new rollover patients
+	require.Len(ha.Member, 4)
+	ha.AssertMember(0, bsonID(2), riskScoreReason())
+	ha.AssertMember(1, bsonID(5), &models.CodeableConcept{
+		Coding: []models.Coding{
+			models.Coding{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "ROLLOVER"},
+		},
+		Text: fmt.Sprintf("Rolled Over from %s (Risk Score Warrants Discussion)", existingROFromDate.Format("Jan 2")),
+	})
+	ha.AssertMember(2, bsonID(4), &models.CodeableConcept{
+		Coding: []models.Coding{
+			models.Coding{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "ROLLOVER"},
+		},
+		Text: fmt.Sprintf("Rolled Over from %s (Manually Added - I've got a hunch)", lastHuddle.Format("Jan 2")),
+	})
+	ha.AssertMember(3, bsonID(6), &models.CodeableConcept{
+		Coding: []models.Coding{
+			models.Coding{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "ROLLOVER"},
+		},
+		Text: fmt.Sprintf("Rolled Over from %s (Risk Score Warrants Discussion)", lastHuddle.Format("Jan 2")),
+	})
+}
+
+func (suite *HuddleSchedulerSuite) TestRollOverPatientsGetNewReasonIfApplicable() {
+	require := require.New(suite.T())
+
+	// First setup an existing huddle today with one risk score patient and one rollover patient
+	existingROFromDate := today().AddDate(0, 0, -5)
+	reasonMap := map[string]*models.CodeableConcept{
+		bsonID(2): rollOverReason(existingROFromDate, riskScoreReason()),
+	}
+	suite.storeHuddleWithDetails(today(), "123", riskScoreReason(), reasonMap, nil, bsonID(1), bsonID(2))
+
+	// Then setup the rollover stuff
+	lastHuddle := today().AddDate(0, 0, -3)
+	ha := suite.setupAndStartRollOverTest(3, lastHuddle, today())
+
+	// The previously rolled over patient should not show RO as a reason since Risk Score brings him up again anyway
+	require.Len(ha.Member, 3)
+	ha.AssertMember(0, bsonID(2), riskScoreReason())
+	ha.AssertMember(1, bsonID(4), &models.CodeableConcept{
+		Coding: []models.Coding{
+			models.Coding{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "ROLLOVER"},
+		},
+		Text: fmt.Sprintf("Rolled Over from %s (Manually Added - I've got a hunch)", lastHuddle.Format("Jan 2")),
+	})
+	ha.AssertMember(2, bsonID(6), &models.CodeableConcept{
+		Coding: []models.Coding{
+			models.Coding{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "ROLLOVER"},
+		},
+		Text: fmt.Sprintf("Rolled Over from %s (Risk Score Warrants Discussion)", lastHuddle.Format("Jan 2")),
+	})
+}
+
+func (suite *HuddleSchedulerSuite) TestRollOverPatientsWithNoRollOverConfigured() {
+	require := require.New(suite.T())
+
+	ha := suite.setupAndStartRollOverTest(0, today().AddDate(0, 0, -3), today())
+
+	// Since no rollover is configured, no rollover is expected
+	require.Len(ha.Member, 1)
+	ha.AssertMember(0, bsonID(2), riskScoreReason())
+}
+
+func (suite *HuddleSchedulerSuite) TestRollOverPatientsNotReadyToRoll() {
+	require := require.New(suite.T())
+
+	ha := suite.setupAndStartRollOverTest(4, today().AddDate(0, 0, -3), today())
+
+	// Since configuration says there is a 4-day delay, and the huddle was only 3 days ago, no one is rolled over
+	require.Len(ha.Member, 1)
+	ha.AssertMember(0, bsonID(2), riskScoreReason())
+}
+
+func (suite *HuddleSchedulerSuite) TestRollOverPatientsTooManyDaysBack() {
+	require := require.New(suite.T())
+
+	ha := suite.setupAndStartRollOverTest(2, today().AddDate(0, 0, -3), today())
+
+	// Since configuration says there is a 2-day delay, and the huddle was 4 days ago, no one is rolled over.
+	// This is partially an implementation for simplicity, but it works under the assumption that they should
+	// have already been rolled over
+	require.Len(ha.Member, 1)
+	ha.AssertMember(0, bsonID(2), riskScoreReason())
+}
+
+func (suite *HuddleSchedulerSuite) setupAndStartRollOverTest(rollOverDelay int, lastHuddleDate, huddleToTestDate time.Time) *HuddleAssertions {
+	assert := assert.New(suite.T())
+	require := require.New(suite.T())
+
+	// PATIENT                                      // Hex | FREQ.   | LAST HUDDLE | DUE BY
+	suite.storePatientAndScores(bsonID(1), 1, 1, 1) // 01  | never   |             |
+	suite.storePatientAndScores(bsonID(2), 5, 5, 4) // 02  | 4 weeks |             | Today (overdue)
+	suite.storePatientAndScores(bsonID(3), 8, 8, 7) // 03  | 2 weeks | 3 days ago  | 11 days from today
+	suite.storePatientAndScores(bsonID(4), 8, 9, 8) // 04  | 1 week  | 3 days ago  | 4 days from today
+	suite.storePatientAndScores(bsonID(5), 8, 9, 8) // 05  | 1 week  | 3 days ago  | 4 days from today
+	suite.storePatientAndScores(bsonID(6), 8, 8, 7) // 06  | 2 weeks | 3 days ago  | 11 days from today
+
+	config := createHuddleConfig(true, true, rollOverDelay, lastHuddleDate.Weekday(), huddleToTestDate.Weekday())
+
+	// Store a huddle 3 days ago with four patients, two of whom were reviewed
+	reasonMap := map[string]*models.CodeableConcept{
+		bsonID(4): manualAdditionReason("I've got a hunch"),
+	}
+	reviewedMap := map[string]time.Time{
+		bsonID(3): lastHuddleDate,
+		bsonID(5): lastHuddleDate,
+	}
+	suite.storeHuddleWithDetails(lastHuddleDate, config.LeaderID, riskScoreReason(), reasonMap, reviewedMap, bsonID(3), bsonID(4), bsonID(5), bsonID(6))
+
+	groups, err := ScheduleHuddles(config)
+	require.NoError(err)
+
+	// First check them all for common huddle stuff
+	require.Len(groups, 4)
+	for _, g := range groups {
+		ha := NewHuddleAssertions(g, assert)
+		ha.AssertValidHuddleProfile()
+		ha.AssertLeaderIDEqual("123")
+		assert.True(strings.HasPrefix(ha.Name, "Test Huddle"))
+	}
+
+	// Now check the first one to ensure it's the right date
+	ha := NewHuddleAssertions(groups[0], assert)
+	ha.AssertActiveDateTimeEqual(huddleToTestDate)
+
+	// And check all the others to make sure they *don't* have rollover patients
+	for i := 1; i < 4; i++ {
+		for _, member := range groups[i].Member {
+			hm := HuddleMember(member)
+			assert.False(hm.ReasonIsRollOver())
+		}
+	}
+
+	return ha
+}
+
+func (suite *HuddleSchedulerSuite) TestInProgressHuddleIsntOverwritten() {
+	assert := assert.New(suite.T())
+	require := require.New(suite.T())
+
+	// PATIENT                                      // Hex | FREQ.   | LAST HUDDLE | DUE BY
+	suite.storePatientAndScores(bsonID(1), 1, 1, 1) // 01  | never   |             |
+	suite.storePatientAndScores(bsonID(2), 5, 5, 4) // 02  | 4 weeks |             | Today (overdue)
+	suite.storePatientAndScores(bsonID(3), 8, 8, 7) // 03  | 2 weeks | 3 days ago  | 11 days from today
+	suite.storePatientAndScores(bsonID(4), 8, 9, 8) // 04  | 1 week  | 3 days ago  | 4 days from today
+	suite.storePatientAndScores(bsonID(5), 8, 9, 8) // 05  | 1 week  | 3 days ago  | 4 days from today
+	suite.storePatientAndScores(bsonID(6), 8, 8, 7) // 06  | 2 weeks | 3 days ago  | 11 days from today
+
+	lastHuddleDate := today().AddDate(0, 0, -3)
+	config := createHuddleConfig(true, true, 3, lastHuddleDate.Weekday(), today().Weekday())
+
+	// Store a huddle 3 days ago with three patients, two of whom were reviewed
+	reasonMap := map[string]*models.CodeableConcept{
+		bsonID(4): manualAdditionReason("I've got a hunch"),
+	}
+	reviewedMap := map[string]time.Time{
+		bsonID(3): lastHuddleDate,
+		bsonID(5): lastHuddleDate,
+	}
+	suite.storeHuddleWithDetails(lastHuddleDate, config.LeaderID, riskScoreReason(), reasonMap, reviewedMap, bsonID(3), bsonID(4), bsonID(5), bsonID(6))
+
+	// Store a huddle today with two patients, one of whom was reviewed -- this is our IN PROGRESS huddle
+	reviewedMap = map[string]time.Time{
+		bsonID(2): today(),
+	}
+	suite.storeHuddleWithDetails(today(), config.LeaderID, riskScoreReason(), nil, reviewedMap, bsonID(1), bsonID(2))
+
+	// Schedule the huddles
+	groups, err := ScheduleHuddles(config)
+	require.NoError(err)
+
+	// First check them all for common huddle stuff
+	require.Len(groups, 4)
+	for _, g := range groups {
+		ha := NewHuddleAssertions(g, assert)
+		ha.AssertValidHuddleProfile()
+		ha.AssertLeaderIDEqual("123")
+		assert.True(strings.HasPrefix(ha.Name, "Test Huddle"))
+	}
+
+	// Now check the first one to ensure it's the right date -- which *shouldn't* be today
+	ha := NewHuddleAssertions(groups[0], assert)
+	ha.AssertActiveDateTimeEqual(today().AddDate(0, 0, 4))
+
+	// And check all the others to make sure they *don't* have rollover patients
+	for i := 1; i < 3; i++ {
+		for _, member := range groups[i].Member {
+			hm := HuddleMember(member)
+			assert.False(hm.ReasonIsRollOver())
+		}
+	}
+
+	// And last, check that the next huddle (not today) has everything we expect
+	require.Len(ha.Member, 3)
+	ha.AssertMember(0, bsonID(4), riskScoreReason())
+	ha.AssertMember(1, bsonID(5), riskScoreReason())
+	ha.AssertMember(2, bsonID(6), &models.CodeableConcept{
+		Coding: []models.Coding{
+			models.Coding{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "ROLLOVER"},
+		},
+		Text: fmt.Sprintf("Rolled Over from %s (Risk Score Warrants Discussion)", lastHuddleDate.Format("Jan 2")),
+	})
+}
+
 func (suite *HuddleSchedulerSuite) TestFindEligiblePatientIDsByRiskScoreWithNoPreviousHuddles() {
 	assert := assert.New(suite.T())
 	require := require.New(suite.T())
@@ -680,7 +939,7 @@ func (suite *HuddleSchedulerSuite) TestFindEligiblePatientIDsByRiskScoreWithNoPr
 	suite.storePatientAndScores(bsonID(4), 9, 9, 10) // every week
 	suite.storePatientAndScores(bsonID(5), 7, 6, 5)  // every 4 weeks
 
-	config := createHuddleConfig(true, false, time.Monday)
+	config := createHuddleConfig(true, false, 0, time.Monday)
 
 	eligibles, err := findEligiblePatientIDsByRiskScore(time.Date(2016, time.March, 21, 9, 0, 0, 0, time.UTC), config)
 	require.NoError(err)
@@ -718,17 +977,17 @@ func (suite *HuddleSchedulerSuite) TestFindEligiblePatientIDsByRiskScore() {
 	suite.storePatientAndScores(bsonID(19), 9, 9, 9)  // 13  | 1 week  | 1 week ago  (3/14) | 3/21
 	suite.storePatientAndScores(bsonID(20), 9, 9, 10) // 14  | 1 week  | 1 week ago  (3/14) | 3/21
 
-	config := createHuddleConfig(true, false, time.Monday)
+	config := createHuddleConfig(true, false, 0, time.Monday)
 
-	suite.storeHuddle(time.Date(2016, time.February, 1, 0, 0, 0, 0, time.UTC), config.LeaderID, &RiskScoreReason,
+	suite.storeHuddle(time.Date(2016, time.February, 1, 0, 0, 0, 0, time.UTC), config.LeaderID, riskScoreReason(),
 		bsonID(5), bsonID(7))
-	suite.storeHuddle(time.Date(2016, time.February, 22, 0, 0, 0, 0, time.UTC), config.LeaderID, &RiskScoreReason,
+	suite.storeHuddle(time.Date(2016, time.February, 22, 0, 0, 0, 0, time.UTC), config.LeaderID, riskScoreReason(),
 		bsonID(10))
-	suite.storeHuddle(time.Date(2016, time.February, 29, 0, 0, 0, 0, time.UTC), config.LeaderID, &RiskScoreReason,
+	suite.storeHuddle(time.Date(2016, time.February, 29, 0, 0, 0, 0, time.UTC), config.LeaderID, riskScoreReason(),
 		bsonID(12))
-	suite.storeHuddle(time.Date(2016, time.March, 7, 0, 0, 0, 0, time.UTC), config.LeaderID, &RiskScoreReason,
+	suite.storeHuddle(time.Date(2016, time.March, 7, 0, 0, 0, 0, time.UTC), config.LeaderID, riskScoreReason(),
 		bsonID(9), bsonID(15), bsonID(18))
-	suite.storeHuddle(time.Date(2016, time.March, 14, 0, 0, 0, 0, time.UTC), config.LeaderID, &RiskScoreReason,
+	suite.storeHuddle(time.Date(2016, time.March, 14, 0, 0, 0, 0, time.UTC), config.LeaderID, riskScoreReason(),
 		bsonID(6), bsonID(11), bsonID(14), bsonID(17), bsonID(19), bsonID(20))
 
 	eligibles, err := findEligiblePatientIDsByRiskScore(time.Date(2016, time.March, 21, 9, 0, 0, 0, time.UTC), config)
@@ -762,7 +1021,7 @@ func (suite *HuddleSchedulerSuite) TestFindEligiblePatientIDsByRiskScore() {
 
 }
 
-func createHuddleConfig(inclRisk bool, inclEvents bool, days ...time.Weekday) *HuddleConfig {
+func createHuddleConfig(inclRisk bool, inclEvents bool, rollOverDelay int, days ...time.Weekday) *HuddleConfig {
 	c := new(HuddleConfig)
 	c.Name = "Test Huddle Config"
 	c.LeaderID = "123"
@@ -818,6 +1077,7 @@ func createHuddleConfig(inclRisk bool, inclEvents bool, days ...time.Weekday) *H
 			},
 		}
 	}
+	c.RollOverDelayInDays = rollOverDelay
 	return c
 }
 
@@ -902,7 +1162,7 @@ func (suite *HuddleSchedulerSuite) storeEncounter(patientID string, code string,
 	return enc
 }
 
-func (suite *HuddleSchedulerSuite) storeHuddleWithReasons(date time.Time, leaderID string, defaultReason *models.CodeableConcept, reasonMap map[string]*models.CodeableConcept, patients ...string) {
+func (suite *HuddleSchedulerSuite) storeHuddleWithDetails(date time.Time, leaderID string, defaultReason *models.CodeableConcept, reasonMap map[string]*models.CodeableConcept, reviewedMap map[string]time.Time, patients ...string) {
 	require := require.New(suite.T())
 
 	g := new(models.Group)
@@ -948,6 +1208,12 @@ func (suite *HuddleSchedulerSuite) storeHuddleWithReasons(date time.Time, leader
 				ValueCodeableConcept: reason,
 			},
 		}
+		if reviewed, found := reviewedMap[patients[i]]; found {
+			g.Member[i].Extension = append(g.Member[i].Extension, models.Extension{
+				Url:           "http://interventionengine.org/fhir/extension/group/member/reviewed",
+				ValueDateTime: &models.FHIRDateTime{Time: reviewed, Precision: models.Timestamp},
+			})
+		}
 		g.Member[i].Entity = &models.Reference{
 			Reference:    "Patient/" + patients[i],
 			ReferencedID: patients[i],
@@ -960,7 +1226,7 @@ func (suite *HuddleSchedulerSuite) storeHuddleWithReasons(date time.Time, leader
 }
 
 func (suite *HuddleSchedulerSuite) storeHuddle(date time.Time, leaderID string, reason *models.CodeableConcept, patients ...string) {
-	suite.storeHuddleWithReasons(date, leaderID, reason, nil, patients...)
+	suite.storeHuddleWithDetails(date, leaderID, reason, nil, nil, patients...)
 }
 
 func bsonID(id int) string {

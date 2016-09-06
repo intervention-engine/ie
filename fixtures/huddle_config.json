@@ -60,5 +60,6 @@
       }
     ]
   },
+  "rollOverDelayInDays": 3,
   "schedulerCronSpec": "@midnight"
 }
