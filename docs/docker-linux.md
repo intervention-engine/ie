@@ -115,6 +115,12 @@ To add users to Intervention Engine, you must use the `htpasswd` utility to appe
 sudo apt-get install apache2-utils
 ```
 
+Note: If running on RHEL 7.2, you must use `yum` instead of `apt-get`, so to install the `htpasswd` utility, run the following command instead of the above:
+
+```
+yum install httpd-tools
+```
+
 Navigate to the `nginx` repository and run the following command, replacing `exampleuser` with the username you would like to add:
 
 ```
