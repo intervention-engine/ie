@@ -24,8 +24,6 @@ services:
       - FHIR_URL=http://ie:3001
   mongodb:
     image: mongo
-    volumes:
-      - /data/db:/data/db
     ports:
       - "27017"
   multifactorriskservice:
@@ -78,6 +76,9 @@ services:
     depends_on:
       - ie
       - multifactorriskservice
+    volumes:
+      # The path prior to the colon in the value below should be set to the desired location of nginx access and error logs on the host machine
+      - /usr/local/var/log/nginx:/etc/nginx/logs
     environment:
       # The value below should not be modified under normal circumstances
       - IE_URL=http://ie:3001
