@@ -12,7 +12,7 @@ services:
       - MONGO_URL=mongodb://mongodb:27017
       - RISK_SERVICE_URL=http://multifactorriskservice:9000
       - GIN_MODE=release
-    command: ./server -loadCodes
+    command: dockerize -wait tcp://mongodb:27017 -timeout 300s ./server -loadCodes
   endpoint:
     build: ../ie-ccda-endpoint
     ports:
@@ -44,8 +44,8 @@ services:
       - MONGO_URL=mongodb://mongodb:27017
       - HTTP_HOST_AND_PORT=multifactorriskservice:9000
       - GIN_MODE=release
-    command: ./multifactorriskservice
-    # command: ./mock -gen # for testing only!
+    command: dockerize -wait tcp://mongodb:27017 -timeout 300s ./multifactorriskservice
+    # command: dockerize -wait tcp://mongodb:27017 -timeout 300s ./mock # for testing only!
   integrator:
     build: ../integrator
     depends_on:
@@ -70,7 +70,7 @@ services:
       - INGEST_URL=http://endpoint:3000/ccda
       - MONGO_URL=mongodb://mongodb:27017
       #- COPY_DIR=/data/integrator/ccda # for debugging only
-    command: dockerize -wait http://endpoint:3000 -timeout 300s ./integrator
+    command: dockerize -wait http://endpoint:3000 -wait tcp://mongodb:27017 -timeout 300s ./integrator
   nginx:
     build: ../nginx
     ports:
