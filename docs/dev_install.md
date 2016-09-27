@@ -116,23 +116,23 @@ Clone Intervention Engine GitHub Repositories Locally
 
 Intervention Engine source code is hosted on Github. The following repositories need to be cloned to test and run a full instance of Intervention Engine:
 
--	ie: https://github.com/intervention-engine/ie
--	multifactorriskservice: https://github.com/intervention-engine/multifactorriskservice
--	tools: https://github.com/intervention-engine/tools
--	frontend: https://github.com/intervention-engine/frontend
+-	ie: [https://github.com/intervention-engine/ie](https://github.com/intervention-engine/ie)
+-	multifactorriskservice: [https://github.com/intervention-engine/multifactorriskservice](https://github.com/intervention-engine/multifactorriskservice)
+-	tools: [https://github.com/intervention-engine/tools](https://github.com/intervention-engine/tools)
+-	frontend: [https://github.com/intervention-engine/frontend](https://github.com/intervention-engine/frontend)
 
 In addition to the above, the following repositories are also used by different aspects of Intervention Engine. Although they do not need to be cloned locally to run Intervention Engine, they should be cloned if you want to do any further development on Intervention Engine -- as they are important underlying components of Intervention Engine:
 
--	fhir: https://github.com/intervention-engine/fhir
--	ptgen: https://github.com/intervention-engine/ptgen
--	hdsfhir: https://github.com/intervention-engine/hdsfhir
--	ember-fhir-adapter: https://github.com/intervention-engine/ember-fhir-adapter
--	fhir-golang-generator: https://github.com/intervention-engine/fhir-golang-generator
+-	fhir: [https://github.com/intervention-engine/fhir](https://github.com/intervention-engine/fhir)
+-	ptgen: [https://github.com/intervention-engine/ptgen](https://github.com/intervention-engine/ptgen)
+-	hdsfhir: [https://github.com/intervention-engine/hdsfhir](https://github.com/intervention-engine/hdsfhir)
+-	ember-fhir-adapter: [https://github.com/intervention-engine/ember-fhir-adapter](https://github.com/intervention-engine/ember-fhir-adapter)
+-	fhir-golang-generator: [https://github.com/intervention-engine/fhir-golang-generator](https://github.com/intervention-engine/fhir-golang-generator)
 
 Clone ie Repository
 -------------------
 
-The *ie* repository contains the source code for the backend Intervention Engine server. The *ie* server provides RESTful services needed by other components of the Intervention Engine stack. In addition to custom Intervention Engine features (such as authentication, notifications, and insta-count), it also doubles as a FHIR server (by integrating code from the [fhir](https://github.com/intervention-engine/fhir) repository).
+The *ie* repository contains the source code for the backend Intervention Engine server. The *ie* server provides RESTful services needed by other components of the Intervention Engine stack. In addition to custom Intervention Engine features (such as notifications and insta-count), it also doubles as a FHIR server (by integrating code from the [fhir](https://github.com/intervention-engine/fhir) repository).
 
 Following standard Go practices, you should clone the *ie* repository under your `$GOPATH` src folder, using a package-based sub-path:
 
@@ -159,7 +159,7 @@ $ git clone https://github.com/intervention-engine/multifactorriskservice.git
 Clone tools Repository
 ----------------------
 
-The *tools* repository contains command-line tools for managing Intervention Engine users, generating and uploading synthetic patient data, uploading FHIR bundles, and converting and uploading Health Data Standards (HDS) records.
+The *tools* repository contains command-line tools for generating and uploading synthetic patient data, uploading FHIR bundles, and converting and uploading Health Data Standards (HDS) records.
 
 Following standard Go practices, you should clone the *tools* repository under your `$GOPATH` src folder, using a package-based sub-path:
 
@@ -171,7 +171,7 @@ $ git clone https://github.com/intervention-engine/tools.git
 Clone frontend Repository
 -------------------------
 
-The *frontend* repository contains the source code for the Ember web application. This application communicates with the *ie* server and *riskservice* server to provide the Intervention Engine browser-based user interface.
+The *frontend* repository contains the source code for the Ember web application. This application communicates with the *ie* server and *multifactorriskservice* server to provide the Intervention Engine browser-based user interface.
 
 Since this is not a Go project, it should not be cloned under the $GOPATH. Instead, we recommend you create an *intervention-engine* folder within your favorite development location and clone the *frontend* repository there. For this documentation, we'll assume that "your favorite development location" is `~/development`.
 
@@ -184,7 +184,7 @@ $ git clone https://github.com/intervention-engine/frontend.git
 Clone fhir Repository
 ---------------------
 
-The *fhir* repository contains the source code for the FHIR DSTU2 server. This server can be run standalone without the other *ie* services (if you want only a FHIR DSTU2 server). If you are only concerned with running Intervention Engine, you do not need to clone this repository (it will automatically be downloaded by `go get` when you build the *ie* server). If you wish to modify components of the FHIR server (for the standalone use case *or* the Intervention Engine use case), however, you should clone the *fhir* repository.
+The *fhir* repository contains the source code for the FHIR DSTU2 server. This server can be run standalone without the other *ie* services (if you want only a FHIR DSTU2 server). If you are only concerned with running Intervention Engine, you do not need to clone this repository (a version of it is already a vendored dependency of the *ie* project). If you wish to modify components of the FHIR server (for the standalone use case *or* the Intervention Engine use case), however, you should clone the *fhir* repository.
 
 *NOTE: Most of the fhir source code is generated by the [fhir-golang-generator](https://github.com/intervention-engine/fhir-golang-generator). In most cases, updates to source code in the fhir repository need to be accompanied by corresponding updates in the fhir-golang-generator.*
 
@@ -198,7 +198,7 @@ $ git clone https://github.com/intervention-engine/fhir.git
 Clone ptgen Repository
 ----------------------
 
-The *ptgen* repository contains the source code for the synthetic patient generation library. If you are only concerned with generating patients for Intervention Engine, you do not need to clone this repository (it will automatically be downloaded by `go get` when you build the *tools generate* executable). If you wish to modify synthetic patient generation logic, however, you should clone the *ptgen* repository.
+The *ptgen* repository contains the source code for the synthetic patient generation library. If you are only concerned with generating patients for Intervention Engine, you do not need to clone this repository (it is already a vendored dependency of the *tools* project). If you wish to modify synthetic patient generation logic, however, you should clone the *ptgen* repository.
 
 *NOTE: Due to Intervention Engine's prominent use case, all synthetic records are tuned to a geriatric population.*
 
@@ -212,7 +212,7 @@ $ git clone https://github.com/intervention-engine/ptgen.git
 Clone hdsfhir Repository
 ------------------------
 
-The *hdsfhir* repository contains the source code for converting Health Data Standards (HDS) records to FHIR resources. If you are only concerned with running the conversion and uploading it to a FHIR server (or Intervention Engine), you do not need to clone this repository (it will automatically be downloaded by `go get` when you build the *tools uploadhds* executable). If you wish to modify HDS-to-FHIR conversion logic, however, you should clone the *hdsfhir* repository.
+The *hdsfhir* repository contains the source code for converting Health Data Standards (HDS) records to FHIR resources. If you are only concerned with running the conversion and uploading it to a FHIR server (or Intervention Engine), you do not need to clone this repository (it is already a vendored dependency of the *tools* project). If you wish to modify HDS-to-FHIR conversion logic, however, you should clone the *hdsfhir* repository.
 
 *NOTE: The HDS-to-FHIR conversion focuses only on those data elements that are needed by Intervention Engine. It is not a complete and robust conversion.*
 
@@ -283,17 +283,16 @@ $ mongod --config /usr/local/etc/mongod.conf
 Build and Run Intervention Engine Server
 ========================================
 
-Before you can run the Intervention Engine server, you must install its dependencies via `go get` and build the `ie` executable:
+Before you can run the Intervention Engine server, you must build the `ie` executable:
 
 ```
 $ cd $GOPATH/src/github.com/intervention-engine/ie
-$ go get
 $ go build
 ```
 
 The above commands do not need to be run again unless you make (or download) changes to the *ie* or *fhir* source code.
 
-To support automatic huddle scheduling, you must pass the `ie` executable a `-huddle` argument to indicate the path to the huddle configuration file.  For more information of the huddle configuration file, see the [annotated huddle configuration file](https://github.com/intervention-engine/ie/blob/master/docs/huddle_config.md).  
+To support automatic huddle scheduling, you must pass the `ie` executable a `-huddle` argument to indicate the path to the huddle configuration file.  For more information of the huddle configuration file, see the [annotated huddle configuration file](https://github.com/intervention-engine/ie/blob/master/docs/huddle_config.md).
 
 In addition, the first time you run the `ie` executable, you should also pass the `-loadCodes` option to load the ICD-9 and ICD-10 codes that are needed for the ICD-9/ICD-10 auto-complete feature:
 
@@ -309,7 +308,7 @@ Subsequent runs of *ie* do not need to load the codes again:
 $ ./ie -huddle ./configs/multifactor_huddle_config.json
 ```
 
-If you are concurrently modifying the *ie* or *fhir* source code, sometimes it is easier to combine the build and run steps into a single command (forcing a recompile on every run):
+If you are concurrently modifying the *ie* source code, sometimes it is easier to combine the build and run steps into a single command (forcing a recompile on every run):
 
 ```
 $ go run server.go -huddle ./configs/multifactor_huddle_config.json
@@ -322,11 +321,10 @@ Build and Run Multi-Factor Risk Service Server
 
 *NOTE: If you wish to run the MOCK Multi-Factor Risk Service server instead, please see the [multifactorriskservice README](https://github.com/intervention-engine/multifactorriskservice/blob/master/README.md).*
 
-Before you can run the Multi-Factor Risk Service server, you must install its dependencies via `go get` and build the `multifactorriskservice` executable:
+Before you can run the Multi-Factor Risk Service server, you must build the `multifactorriskservice` executable:
 
 ```
 $ cd $GOPATH/src/github.com/intervention-engine/multifactorriskservice
-$ go get
 $ go build
 ```
 
@@ -379,36 +377,18 @@ npm-exec ember s --proxy http://localhost:3001
 
 The *frontend* server accepts connections on port 4200 by default.
 
-Populate Intervention Engine Data
-=================================
+Populate Intervention Engine Data (OPTIONAL)
+============================================
 
-Once the Intervention Engine servers are running, you need to create a user account to log in with. In addition, you'll likely want to populate the server with synthetic data in order to test it.
+Once the Intervention Engine servers are running, you'll likely want to populate the server with synthetic data in order to test it.
 
-Create Intervention Engine User
--------------------------------
+Generate and Upload Synthetic Patient Data (OPTIONAL)
+-----------------------------------------------------
 
-Creating an Intervention Engine user requires the *ieuser* command-line tool in the *tools* repository. Before you can run the *ieuser* tool, you must install its dependencies via `go get` and build the `ieuser` executable:
-
-```
-$ cd $GOPATH/src/github.com/intervention-engine/tools/cmd/ieuser
-$ go get
-$ go build
-```
-
-The following example uses the *ieuser* executable to create the user *bob* with the password *mypassword*:
-
-```
-$ ./ieuser add bob mypassword
-```
-
-Generate and Upload Synthetic Patient Data
-------------------------------------------
-
-Generating synthetic patient data requires the *generate* command-line tool in the *tools* repository. Before you can run the *generate* tool, you must install its dependencies via `go get` and build the `generate` executable:
+Generating synthetic patient data requires the *generate* command-line tool in the *tools* repository. Before you can run the *generate* tool, you must build the `generate` executable:
 
 ```
 $ cd $GOPATH/src/github.com/intervention-engine/tools/cmd/generate
-$ go get
 $ go build
 ```
 
@@ -418,16 +398,34 @@ The *generate* tool takes a `-fhirURL` flag to indicate the FHIR server to uploa
 $ ./generate -fhirURL http://localhost:3001 -n 20
 ```
 
-When you generate patients, you should see logging statements in the *ie* and *riskservice* consoles indicating the posting of patient records and risk scores.
+When you generate patients, you should see logging statements in the *ie* console indicating the posting of patient records.
+
+Refresh Multifactor Risk Assessments (OPTIONAL)
+-----------------------------------------------
+
+With patient data now in the system, you may want to trigger the multifactor risk service to refresh its risk assessments.  If you're using the _mock_ multifactor risk service, this will generate fake risk assessments for every patient in the database.  If you are using the normal multifactor risk service, it will communicate with REDCap to update patient risk assessments.  To trigger a refresh (or generation) of the mock assessments, issue an HTTP POST to [http://localhost:9000/refresh](http://localhost:9000/refresh).
+
+```
+$ curl -X POST http://localhost:9000/refresh
+```
+
+Schedule Huddles (OPTIONAL)
+---------------------------
+
+With patient data and risk scores now in the system, you may want to trigger a rescheduling of the huddles.  To trigger huddles scheduling issue an HTTP GET to [http://localhost:3001/ScheduleHuddles](http://localhost:3001/ScheduleHuddles).
+
+```
+$ curl http://localhost:3001/ScheduleHuddles
+```
 
 Troubleshoot Slow Server Communications
----------------------------------------
+=======================================
 
-The Intervention Engine servers all interconnect via network protocols. In environments that use network proxies, sometimes better results are achieved when local client proxy handling is turned off in each shell that executes a server process (e.g., `unset http_proxy`). Keep in mind, however, that the `go get` command and the `-loadCodes` option may need the proxy to reach Internet servers.
+The Intervention Engine servers all interconnect via network protocols. In environments that use network proxies, sometimes better results are achieved when local client proxy handling is turned off in each shell that executes a server process (e.g., `unset http_proxy`). Keep in mind, however, that the `-loadCodes` option may need the proxy to reach Internet servers.
 
 Test
 ====
 
-Now that the Intervention Engine servers are running, a user has been created, and data has been populated, it's time to try it out! Simply browse to the following URL and login using the credentials you created with *ieuser* (e.g., bob/mypassword):
+Now that the Intervention Engine servers are running and data has been populated, it's time to try it out! Simply browse to the following URL:
 
 http://localhost:4200
