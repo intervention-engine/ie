@@ -8,7 +8,7 @@ services:
       - mongodb
     environment:
       # The values below should not be modified under normal circumstances
-      - HUDDLE_CONFIGS=./configs/multifactor_huddle_config.json
+      - HUDDLE_CONFIGS=./config/multifactor_huddle_config.json
       - MONGO_URL=mongodb://mongodb:27017
       - RISK_SERVICE_URL=http://multifactorriskservice:9000
       - GIN_MODE=release

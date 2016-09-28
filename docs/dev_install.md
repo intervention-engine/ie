@@ -297,7 +297,7 @@ To support automatic huddle scheduling, you must pass the `ie` executable a `-hu
 In addition, the first time you run the `ie` executable, you should also pass the `-loadCodes` option to load the ICD-9 and ICD-10 codes that are needed for the ICD-9/ICD-10 auto-complete feature:
 
 ```
-$ ./ie -huddle ./configs/multifactor_huddle_config.json -loadCodes
+$ ./ie -huddle ./config/multifactor_huddle_config.json -loadCodes
 ```
 
 Automatic huddle scheduling will happen at the times indicated by the cron expression in the huddle configuration file.  You can also force huddles to be rescheduled by performing an HTTP GET on [http://localhost:3001/ScheduleHuddles](http://localhost:3001/ScheduleHuddles).
@@ -305,13 +305,13 @@ Automatic huddle scheduling will happen at the times indicated by the cron expre
 Subsequent runs of *ie* do not need to load the codes again:
 
 ```
-$ ./ie -huddle ./configs/multifactor_huddle_config.json
+$ ./ie -huddle ./config/multifactor_huddle_config.json
 ```
 
 If you are concurrently modifying the *ie* source code, sometimes it is easier to combine the build and run steps into a single command (forcing a recompile on every run):
 
 ```
-$ go run server.go -huddle ./configs/multifactor_huddle_config.json
+$ go run server.go -huddle ./config/multifactor_huddle_config.json
 ```
 
 The *ie* server accepts connections on port 3001 by default.
