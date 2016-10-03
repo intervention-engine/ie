@@ -42,18 +42,23 @@ func main() {
 	icd10URL := flag.String("icd10URL", "https://www.cms.gov/Medicare/Coding/ICD10/Downloads/2016-Code-Descriptions-in-Tabular-Order.zip", "url for icd-10 code definition zip")
 	subscriptionFlag := flag.Bool("subscriptions", false, "enables limited support for resource subscriptions (default: false)")
 	reqLog := flag.Bool("reqlog", false, "Enables request logging -- do NOT use in production")
+	logFileFlag := flag.String("logfile", "", "Path to a directory for ie and gin logs to be written to.")
 	flag.Parse()
 
-	err := os.Mkdir("/etc/ielogs", 0755)
-	if err != nil && !os.IsExist(err){
-		fmt.Println("Error creating log directory:" + err.Error())
+	lfpath := getConfigValue(logFileFlag, "IE_LOG_DIR", "")
+	if lfpath != "" {
+		err := os.Mkdir(lfpath, 0755)
+		if err != nil && !os.IsExist(err){
+			fmt.Println("Error creating log directory:" + err.Error())
+		}
+
+		lf, err := os.OpenFile(lfpath + "/ie.log", os.O_RDWR|os.O_APPEND, 0755)
+		if os.IsNotExist(err) {
+			lf, err = os.Create(lfpath + "/ie.log")
+		} else if err != nil {
+			fmt.Println("Unable to create ie log file:" + err.Error())
+		} else {log.SetOutput(lf)}
 	}
-
-	lf, err := os.Create("/etc/ielogs/ie.log")
-	if err != nil {
-		fmt.Println("Unable to create ie log file:" + err.Error())
-	} else { log.SetOutput(lf) }
-
 
 	mongoURL := os.Getenv("MONGO_URL")
 	if mongoURL == "" {
@@ -140,10 +145,14 @@ func main() {
 	}
 	s.Engine.GET("/ScheduleHuddles", huddleController.ScheduleHandler)
 
-	ginLogFile, err := os.Create("/etc/ielogs/gin.log")
-	if err != nil {
-		fmt.Println("Unable to create gin log file." + err.Error())
-	} else { s.Engine.Use(gin.LoggerWithWriter(ginLogFile)) }
+	if lfpath != "" {
+		glf, err := os.OpenFile(lfpath + "/gin.log", os.O_RDWR|os.O_APPEND, 0755)
+		if os.IsNotExist(err) {
+			glf, err = os.Create(lfpath + "/gin.log")
+		} else if err != nil {
+			fmt.Println("Unable to create ie log file:" + err.Error())
+		} else{s.Engine.Use(gin.LoggerWithWriter(glf))}
+	}
 
 
 	if len(huddleConfigs) > 0 {
@@ -155,4 +164,15 @@ func main() {
 	defer closer()
 
 	s.Run(server.DefaultConfig)
+}
+
+func getConfigValue(parsedFlag *string, envVar string, defaultVal string) string {
+	val := *parsedFlag
+	if val == "" {
+		val = os.Getenv(envVar)
+		if val == "" {
+			val = defaultVal
+		}
+	}
+	return val
 }
