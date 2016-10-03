@@ -55,7 +55,8 @@ func main() {
 		lf, err := os.OpenFile(lfpath + "/ie.log", os.O_RDWR|os.O_APPEND, 0755)
 		if os.IsNotExist(err) {
 			lf, err = os.Create(lfpath + "/ie.log")
-		} else if err != nil {
+		}
+		if err != nil {
 			fmt.Println("Unable to create ie log file:" + err.Error())
 		} else {log.SetOutput(lf)}
 	}
@@ -149,7 +150,8 @@ func main() {
 		glf, err := os.OpenFile(lfpath + "/gin.log", os.O_RDWR|os.O_APPEND, 0755)
 		if os.IsNotExist(err) {
 			glf, err = os.Create(lfpath + "/gin.log")
-		} else if err != nil {
+		}
+		if err != nil {
 			fmt.Println("Unable to create ie log file:" + err.Error())
 		} else{s.Engine.Use(gin.LoggerWithWriter(glf))}
 	}
