@@ -53,8 +53,8 @@ func main() {
 	lf, err := os.Create("/etc/ielogs/ie.log")
 	if err != nil {
 		fmt.Println("Unable to create ie log file:" + err.Error())
-	}
-	log.SetOutput(lf)
+	} else { log.SetOutput(lf) }
+
 
 	mongoURL := os.Getenv("MONGO_URL")
 	if mongoURL == "" {
@@ -144,8 +144,8 @@ func main() {
 	ginLogFile, err := os.Create("/etc/ielogs/gin.log")
 	if err != nil {
 		fmt.Println("Unable to create gin log file." + err.Error())
-	}
-	s.Engine.Use(gin.LoggerWithWriter(ginLogFile))
+	} else { s.Engine.Use(gin.LoggerWithWriter(ginLogFile)) }
+
 
 	if len(huddleConfigs) > 0 {
 		c.Start()
