@@ -11,7 +11,7 @@ services:
       - /usr/local/var/log/ie:/etc/ielogs
     environment:
       # The values below should not be modified under normal circumstances
-      - HUDDLE_CONFIGS=./configs/multifactor_huddle_config.json
+      - HUDDLE_CONFIGS=./config/multifactor_huddle_config.json
       - MONGO_URL=mongodb://mongodb:27017
       - RISK_SERVICE_URL=http://multifactorriskservice:9000
       - GIN_MODE=release
@@ -28,6 +28,8 @@ services:
       - FHIR_URL=http://ie:3001
   mongodb:
     image: mongo
+    volumes:
+      - /data/db:/data/db
     ports:
       - "27017"
   multifactorriskservice:
