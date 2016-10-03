@@ -176,3 +176,14 @@ func getConfigValue(parsedFlag *string, envVar string, defaultVal string) string
 	}
 	return val
 }
+
+func getConfigValue(parsedFlag *string, envVar string, defaultVal string) string {
+	val := *parsedFlag
+	if val == "" {
+		val = os.Getenv(envVar)
+		if val == "" {
+			val = defaultVal
+		}
+	}
+	return val
+}
