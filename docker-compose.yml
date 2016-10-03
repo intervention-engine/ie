@@ -6,6 +6,9 @@ services:
       - "3001"
     depends_on:
       - mongodb
+    volumes:
+      # The path prior to the colon in the value below should be set to the desired location of ie and fhir server gin logs
+      - /usr/local/var/log/ie:/etc/ielogs
     environment:
       # The values below should not be modified under normal circumstances
       - HUDDLE_CONFIGS=./configs/multifactor_huddle_config.json
@@ -52,6 +55,8 @@ services:
       - endpoint
     volumes:
       - /data/integrator:/data/integrator
+      # The path prior to the colon in the value below should be set to the desired location of ie and fhir server gin logs
+      - /usr/local/var/log/integrator:/etc/integratorlogs
     environment:
       # The following variables all have site-specific values -- they must be set before running!
       - HIE_URL=http://myhieserver/api

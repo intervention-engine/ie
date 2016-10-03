@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/intervention-engine/ie/huddles"
 	"github.com/intervention-engine/ie/utilities"
 	"github.com/robfig/cron"
+	"github.com/gin-gonic/gin"
 )
 
 // Setup the huddle flag to accumulate huddle config file paths
@@ -42,6 +44,17 @@ func main() {
 	subscriptionFlag := flag.Bool("subscriptions", false, "enables limited support for resource subscriptions (default: false)")
 	reqLog := flag.Bool("reqlog", false, "Enables request logging -- do NOT use in production")
 	flag.Parse()
+
+	err := os.Mkdir("/etc/ielogs", 0755)
+	if err != nil && !os.IsExist(err){
+		fmt.Println("Error creating log directory:" + err.Error())
+	}
+
+	lf, err := os.Create("/etc/ielogs/ie.log")
+	if err != nil {
+		fmt.Println("Unable to create ie log file:" + err.Error())
+	}
+	log.SetOutput(lf)
 
 	mongoURL := os.Getenv("MONGO_URL")
 	if mongoURL == "" {
@@ -127,6 +140,12 @@ func main() {
 		})
 	}
 	s.Engine.GET("/ScheduleHuddles", huddleController.ScheduleHandler)
+
+	ginLogFile, err := os.Create("/etc/ielogs/gin.log")
+	if err != nil {
+		fmt.Println("Unable to create gin log file." + err.Error())
+	}
+	s.Engine.Use(gin.LoggerWithWriter(ginLogFile))
 
 	if len(huddleConfigs) > 0 {
 		c.Start()

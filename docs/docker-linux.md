@@ -95,6 +95,8 @@ In addition, you must configure the multifactorriskservice to correctly point to
       - REDCAP_TOKEN=MYREDCAPTOKEN
 ```
 
+Finally, you need to configure the host-side directories of the log files for `ie`, `nginx`, and `integrator`. These are set as the paths prior to the colon in the string under the `volumes` tag for each of those entries.
+
 Create or Configure SSL Certificates and Keys
 =============================================
 In order for nginx to use secure http (`https`), it requires an ssl certificate and key. These can be generated (self-signed certificate) or obtained from a Certificate Authority. To generate a certificate and key, run the following command:
@@ -235,3 +237,24 @@ Now you will make whatever modifications you need to the `ie` repository. This w
 ```
 docker-compose up
 ```
+
+Configuring Rolling Logs
+========================
+
+To configure rolling logs, you'll need to add a `logrotate` configuration in `/etc/logrotate.d` for the volumes that you set on your host machine when configuring the docker-compose file. An example configuration is as follows:
+
+```
+/var/log/ie/*.log {
+        weekly
+        missingok
+        rotate 52
+        compress
+        delaycompress
+        notifempty
+        create 640 root adm
+}
+```
+
+The path that the configuration begins with should match the host-side log directories that were set when configuring `docker-compose.yml`. You can create a `logrotate` configuration for each directory, or you can use a wildcard to capture them all (for example, `/var/log/*/*.log`).
+
+For more information on configuring `logrotate`, see the [Logrotate Man Page](https://linuxconfig.org/logrotate-8-manual-page)
