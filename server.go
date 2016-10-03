@@ -42,7 +42,7 @@ func main() {
 	icd10URL := flag.String("icd10URL", "https://www.cms.gov/Medicare/Coding/ICD10/Downloads/2016-Code-Descriptions-in-Tabular-Order.zip", "url for icd-10 code definition zip")
 	subscriptionFlag := flag.Bool("subscriptions", false, "enables limited support for resource subscriptions (default: false)")
 	reqLog := flag.Bool("reqlog", false, "Enables request logging -- do NOT use in production")
-	logFileFlag := flag.String("logfile", "", "Path to a directory for ie and gin logs to be written to.")
+	logFileFlag := flag.String("logdir", "", "Path to a directory for ie and gin logs to be written to.")
 	flag.Parse()
 
 	lfpath := getConfigValue(logFileFlag, "IE_LOG_DIR", "")
