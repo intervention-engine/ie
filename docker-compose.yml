@@ -15,6 +15,7 @@ services:
       - MONGO_URL=mongodb://mongodb:27017
       - RISK_SERVICE_URL=http://multifactorriskservice:9000
       - GIN_MODE=release
+      - IE_LOG_DIR=/etc/ielogs
     command: ./server -loadCodes
   endpoint:
     build: ../ie-ccda-endpoint
@@ -73,6 +74,7 @@ services:
       - INGEST_URL=http://endpoint:3000/ccda
       - MONGO_URL=mongodb://mongodb:27017
       #- COPY_DIR=/data/integrator/ccda # for debugging only
+      - INTEGRATOR_LOG_DIR=/etc/integratorlogs
     command: dockerize -wait http://endpoint:3000 -timeout 300s ./integrator
   nginx:
     build: ../nginx
