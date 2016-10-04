@@ -18,7 +18,7 @@ Install Prerequisite Tools and Servers
 
 Building and running the Intervention Engine backend requires the following 3rd party tools and servers:
 
--	Go 1.6+
+-	Go 1.7+
 -	MongoDB 3.2+
 -	Git
 
@@ -31,7 +31,7 @@ Building and running the Intervention Engine frontend (web UI server) additional
 Install Go
 ----------
 
-Intervention Engine's backend services and FHIR tools are written in Go. The Go tools are needed to install Intervention Engine's dependencies and compile Intervention Engine's code into binaries. Intervention Engine requires Go 1.6 or above. At the time this documentation was written, Go 1.6.2 was the latest available release.
+Intervention Engine's backend services and FHIR tools are written in Go. The Go tools are needed to install Intervention Engine's dependencies and compile Intervention Engine's code into binaries. Intervention Engine requires Go 1.7 or above. At the time this documentation was written, Go 1.7.1 was the latest available release.
 
 To install Go, follow the instructions found in the [Go Programming Language Getting Started guide](http://golang.org/doc/install).
 
