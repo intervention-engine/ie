@@ -2,30 +2,34 @@
   "name": "Interdisciplinary Huddle",
   "leaderID": "1",
   "days": [1],
-  "lookAhead": 14,
+  "lookAhead": 40,
   "riskConfig": {
     "riskMethod": {"system": "http://interventionengine.org/risk-assessments", "code": "MultiFactor"},
     "frequencyConfigs": [
       {
         "minScore": 4,
         "maxScore": 4,
-        "minDaysBetweenHuddles": 5,
-        "maxDaysBetweenHuddles": 7
+        "idealFrequency": 1,
+        "minFrequency": 1,
+        "maxFrequency": 1
       }, {
         "minScore": 3,
         "maxScore": 3,
-        "minDaysBetweenHuddles": 15,
-        "maxDaysBetweenHuddles": 21
+        "idealFrequency": 3,
+        "minFrequency": 2,
+        "maxFrequency": 4
       }, {
         "minScore": 2,
         "maxScore": 2,
-        "minDaysBetweenHuddles": 36,
-        "maxDaysBetweenHuddles": 42
+        "idealFrequency": 6,
+        "minFrequency": 4,
+        "maxFrequency": 8
       }, {
         "minScore": 1,
         "maxScore": 1,
-        "minDaysBetweenHuddles": 85,
-        "maxDaysBetweenHuddles": 91
+        "idealFrequency": 13,
+        "minFrequency": 10,
+        "maxFrequency": 16
       }
     ]
   },

@@ -22,10 +22,10 @@ The following annotated huddle configuration file describes the configurable poi
      you do not wish to use risk scores as a factor for scheduling huddles. */
   "riskConfig": {
     /* RiskMethod needs to correspond to the method code used in the FHIR RiskAssessment resources.  It will be used
-       to lookup the risk scores of patients. */ 
+       to lookup the risk scores of patients. */
     "riskMethod": {"system": "http://interventionengine.org/risk-assessments", "code": "ExampleRisk"},
     /* FrequencyConfigs is a list of configurations indicating the frequency at which patients should be scheduled,
-       based on their risk score.  Usually, the higher the score, the more frequently they should be scheduled. 
+       based on their risk score.  Usually, the higher the score, the more frequently they should be scheduled.
        This example uses a fiction risk scoring algorithm that range from 0 to 20. */
     "frequencyConfigs": [
       /* This config indicates that patients with a risk score of 18-20 should be discussed about once a week. */
@@ -34,33 +34,41 @@ The following annotated huddle configuration file describes the configurable poi
         "minScore": 18,
         /* MaxScore indicates the high (inclusive) value of the risk score indicating this frequency configuration. */
         "maxScore": 20,
-        /* MinDaysBetweenHuddles indicates the smallest number of days that should pass between huddles in which this
-           patient is discussed.  In other words, discuss this patient no more frequently than every 5 days. */
-        "minDaysBetweenHuddles": 5,
-        /* MaxDaysBetweenHuddles indicates the largest number of days that should pass between huddles in which this
-           patient is discussed.  In other words, discuss this patient no less frequently than every 7 days. */
-        "maxDaysBetweenHuddles": 7
+        /* IdealFrequency indicates the ideal huddle frequency for scheduling patients (e.g., every n huddles).
+           The scheduler will attempt to accomplish this frequency if possible. */
+        "idealFrequency": 1,
+        /* MinFrequency indicates the minimum huddle frequency for scheduling patients (e.g., no more frequent than
+           every n huddles). The scheduler may use MinFrequency to help ensure an even distribution of patients
+           across huddles. */
+        "minFrequency": 1,
+        /* MaxFrequency indicates the maximum huddle frequency for scheduling patients (e.g., no less frequent than
+           every n huddles). The scheduler may use MaxFrequency to help ensure an even distribution of patients
+           across huddles. */
+        "maxFrequency": 1
       },
       /* This config indicates that patients with a risk score of 12-17 should be discussed about once every 3 weeks. */
       {
         "minScore": 12,
         "maxScore": 17,
-        "minDaysBetweenHuddles": 15,
-        "maxDaysBetweenHuddles": 21
+        "idealFrequency": 3,
+        "minFrequency": 2,
+        "maxFrequency": 4
       },
       /* This config indicates that patients with a risk score of 5-11 should be discussed about once every 6 weeks. */
       {
         "minScore": 5,
         "maxScore": 11,
-        "minDaysBetweenHuddles": 36,
-        "maxDaysBetweenHuddles": 42
+        "idealFrequency": 6,
+        "minFrequency": 4,
+        "maxFrequency": 8
       },
       /* This config indicates that patients with a risk score of 0-4 should be discussed about once every 13 weeks. */
       {
         "minScore": 0,
         "maxScore": 4,
-        "minDaysBetweenHuddles": 85,
-        "maxDaysBetweenHuddles": 91
+        "idealFrequency": 13,
+        "minFrequency": 9,
+        "maxFrequency": 17
       }
     ]
   },
@@ -118,6 +126,9 @@ The following annotated huddle configuration file describes the configurable poi
       }
     ]
   },
+  /* RollOverDelayInDays indicates how many days to wait before rolling over undiscussed patients to the next huddle.
+     If it is 0 (or less) then rollovers are disabled. */
+  "rollOverDelayInDays": 3,
   /* SchedulerCronSpec indicates when the scheduling algorithm should be run.  The six digits corresond to seconds,
      minutes, hours, day of month, month, day of week.  In the example below, the algorithm is run every day at
      00:00:00.  For more information, see: https://godoc.org/github.com/robfig/cron#hdr-CRON_Expression_Format */
