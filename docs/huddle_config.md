@@ -1,6 +1,8 @@
 Annotated Huddle Configuration File
 ===================================
 
+TODO
+
 The following annotated huddle configuration file describes the configurable points used to schedule huddles in Intervention Engine.  Note that the JSON specification does *not* allow for inline comments, so this annotated version is technically invalid JSON.  Please ensure any huddle configuration file you use does *not* contain any comments.
 
 ```js
@@ -22,10 +24,10 @@ The following annotated huddle configuration file describes the configurable poi
      you do not wish to use risk scores as a factor for scheduling huddles. */
   "riskConfig": {
     /* RiskMethod needs to correspond to the method code used in the FHIR RiskAssessment resources.  It will be used
-       to lookup the risk scores of patients. */ 
+       to lookup the risk scores of patients. */
     "riskMethod": {"system": "http://interventionengine.org/risk-assessments", "code": "ExampleRisk"},
     /* FrequencyConfigs is a list of configurations indicating the frequency at which patients should be scheduled,
-       based on their risk score.  Usually, the higher the score, the more frequently they should be scheduled. 
+       based on their risk score.  Usually, the higher the score, the more frequently they should be scheduled.
        This example uses a fiction risk scoring algorithm that range from 0 to 20. */
     "frequencyConfigs": [
       /* This config indicates that patients with a risk score of 18-20 should be discussed about once a week. */

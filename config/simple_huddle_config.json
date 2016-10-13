@@ -9,18 +9,21 @@
       {
         "minScore": 6,
         "maxScore": 10,
-        "minDaysBetweenHuddles": 5,
-        "maxDaysBetweenHuddles": 7
+        "idealFrequency": 1,
+        "minFrequency": 1,
+        "maxFrequency": 1
       }, {
         "minScore": 4,
         "maxScore": 5,
-        "minDaysBetweenHuddles": 12,
-        "maxDaysBetweenHuddles": 14
+        "idealFrequency": 2,
+        "minFrequency": 1,
+        "maxFrequency": 3
       }, {
         "minScore": 1,
         "maxScore": 3,
-        "minDaysBetweenHuddles": 25,
-        "maxDaysBetweenHuddles": 28
+        "idealFrequency": 4,
+        "minFrequency": 2,
+        "maxFrequency": 6
       }
     ]
   },

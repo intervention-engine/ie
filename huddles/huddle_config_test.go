@@ -54,20 +54,23 @@ func (suite *HuddleConfigSuite) TestLoadHuddleFromJSON() {
 	}, config.RiskConfig.RiskMethod)
 	assert.Equal([]RiskScoreFrequencyConfig{
 		{
-			MinScore:              6,
-			MaxScore:              10,
-			MinDaysBetweenHuddles: 5,
-			MaxDaysBetweenHuddles: 7,
+			MinScore:       6,
+			MaxScore:       10,
+			IdealFrequency: 1,
+			MinFrequency:   1,
+			MaxFrequency:   1,
 		}, {
-			MinScore:              4,
-			MaxScore:              5,
-			MinDaysBetweenHuddles: 12,
-			MaxDaysBetweenHuddles: 14,
+			MinScore:       4,
+			MaxScore:       5,
+			IdealFrequency: 2,
+			MinFrequency:   1,
+			MaxFrequency:   3,
 		}, {
-			MinScore:              1,
-			MaxScore:              3,
-			MinDaysBetweenHuddles: 25,
-			MaxDaysBetweenHuddles: 28,
+			MinScore:       1,
+			MaxScore:       3,
+			IdealFrequency: 4,
+			MinFrequency:   2,
+			MaxFrequency:   6,
 		},
 	}, config.RiskConfig.FrequencyConfigs)
 	require.NotNil(config.EventConfig)

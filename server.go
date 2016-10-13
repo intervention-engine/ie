@@ -5,18 +5,17 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"log"
+	"net"
 	"os"
 	"strings"
-	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/controllers"
 	"github.com/intervention-engine/ie/huddles"
 	"github.com/intervention-engine/ie/utilities"
 	"github.com/robfig/cron"
-	"github.com/gin-gonic/gin"
 )
 
 // Setup the huddle flag to accumulate huddle config file paths
@@ -48,17 +47,19 @@ func main() {
 	lfpath := getConfigValue(logFileFlag, "IE_LOG_DIR", "")
 	if lfpath != "" {
 		err := os.Mkdir(lfpath, 0755)
-		if err != nil && !os.IsExist(err){
+		if err != nil && !os.IsExist(err) {
 			fmt.Println("Error creating log directory:" + err.Error())
 		}
 
-		lf, err := os.OpenFile(lfpath + "/ie.log", os.O_RDWR|os.O_APPEND, 0755)
+		lf, err := os.OpenFile(lfpath+"/ie.log", os.O_RDWR|os.O_APPEND, 0755)
 		if os.IsNotExist(err) {
 			lf, err = os.Create(lfpath + "/ie.log")
 		}
 		if err != nil {
 			fmt.Println("Unable to create ie log file:" + err.Error())
-		} else {log.SetOutput(lf)}
+		} else {
+			log.SetOutput(lf)
+		}
 	}
 
 	mongoURL := os.Getenv("MONGO_URL")
@@ -119,43 +120,45 @@ func main() {
 			panic(err)
 		}
 		huddleController.AddConfig(config)
+		/*
+			// Wait 1 minute before doing initial runs or setting up cron jobs.  This allows the server to get
+			// started (since it needs to initiate the db connection, etc).
+			time.AfterFunc(1*time.Minute, func() {
+				// Do an initial run
+				fmt.Println("Initial scheduling for huddle with name ", config.Name)
+				huddles.ScheduleHuddles(config)
 
-		// Wait 1 minute before doing initial runs or setting up cron jobs.  This allows the server to get
-		// started (since it needs to initiate the db connection, etc).
-		time.AfterFunc(1*time.Minute, func() {
-			// Do an initial run
-			fmt.Println("Initial scheduling for huddle with name ", config.Name)
-			huddles.ScheduleHuddles(config)
-
-			// Set up the cron job for future runs
-			if config.SchedulerCronSpec != "" {
-				err := c.AddFunc(config.SchedulerCronSpec, func() {
-					_, err := huddles.ScheduleHuddles(config)
+				// Set up the cron job for future runs
+				if config.SchedulerCronSpec != "" {
+					err := c.AddFunc(config.SchedulerCronSpec, func() {
+						_, err := huddles.ScheduleHuddles(config)
+						if err != nil {
+							fmt.Printf("ERROR: Could not schedule huddles for huddle with name %s: %v", config.Name, err)
+						}
+					})
 					if err != nil {
-						fmt.Printf("ERROR: Could not schedule huddles for huddle with name %s: %v", config.Name, err)
+						panic(err)
 					}
-				})
-				if err != nil {
-					panic(err)
+					fmt.Printf("Huddle with name %s scheduled with cron spec: %s\n", config.Name, config.SchedulerCronSpec)
+				} else {
+					fmt.Printf("Warning: Huddle with name %s is not configured with a scheduler cron job.\n", config.Name)
 				}
-				fmt.Printf("Huddle with name %s scheduled with cron spec: %s\n", config.Name, config.SchedulerCronSpec)
-			} else {
-				fmt.Printf("Warning: Huddle with name %s is not configured with a scheduler cron job.\n", config.Name)
-			}
-		})
+			})
+		*/
 	}
 	s.Engine.GET("/ScheduleHuddles", huddleController.ScheduleHandler)
 
 	if lfpath != "" {
-		glf, err := os.OpenFile(lfpath + "/gin.log", os.O_RDWR|os.O_APPEND, 0755)
+		glf, err := os.OpenFile(lfpath+"/gin.log", os.O_RDWR|os.O_APPEND, 0755)
 		if os.IsNotExist(err) {
 			glf, err = os.Create(lfpath + "/gin.log")
 		}
 		if err != nil {
 			fmt.Println("Unable to create ie log file:" + err.Error())
-		} else{s.Engine.Use(gin.LoggerWithWriter(glf))}
+		} else {
+			s.Engine.Use(gin.LoggerWithWriter(glf))
+		}
 	}
-
 
 	if len(huddleConfigs) > 0 {
 		c.Start()
