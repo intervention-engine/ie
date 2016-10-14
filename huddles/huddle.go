@@ -106,6 +106,17 @@ func (h *Huddle) AddHuddleMemberDueToRiskScore(patientID string) {
 	})
 }
 
+// AddHuddleMemberDueToRecentEvent adds the patient to the huddle using RECENT_ENCOUNTER event code as the reason.
+// If the patient is already in the huddle, nothing will be updated.
+func (h *Huddle) AddHuddleMemberDueToRecentEvent(patientID string, code EventCode) {
+	h.addHuddleMember(patientID, &models.CodeableConcept{
+		Coding: []models.Coding{
+			{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "RECENT_ENCOUNTER"},
+		},
+		Text: code.Name,
+	})
+}
+
 func (h *Huddle) addHuddleMember(patientID string, reason *models.CodeableConcept) {
 	// First look to see if the patient is already in the group, and if so, return
 	if h.FindHuddleMember(patientID) != nil {
