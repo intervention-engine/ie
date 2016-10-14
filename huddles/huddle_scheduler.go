@@ -182,28 +182,28 @@ func (hs *HuddleScheduler) createInitialHuddles() error {
 
 		totalHuddleIdx := hs.pastHuddleCount + len(hs.FutureHuddles)
 
-		huddle, err := findExistingHuddle(t, hs.Config)
+		huddle, err := hs.findExistingHuddle(t)
 		if err != nil {
 			return err
 		}
 
+		var originalMembers []HuddleMember
 		if huddle == nil {
 			// Create a new huddle
 			huddle = NewHuddle(hs.Config.Name, hs.Config.LeaderID, t)
 		} else {
-			// Reuse the existing huddle
-			originalMembers := huddle.HuddleMembers()
-
-			// Clear the existing huddle of all but the manually added and rollover patients
+			// Remember the original members
+			originalMembers = huddle.HuddleMembers()
+			// Clear the original members so we start from clean slate
 			huddle.Member = nil
+		}
 
-			// Add back the manually added and rollover patients
-			for _, member := range originalMembers {
-				if member.ReasonIsManuallyAdded() || member.ReasonIsRollOver() {
-					huddle.addHuddleMember(member.ID(), member.Reason())
-					pInfo := hs.patientInfos.SafeGet(member.ID())
-					pInfo.Huddles = append(pInfo.Huddles, totalHuddleIdx)
-				}
+		// Add back the manually added patients
+		for _, member := range originalMembers {
+			if member.ReasonIsManuallyAdded() {
+				huddle.addHuddleMember(member.ID(), member.Reason())
+				pInfo := hs.patientInfos.SafeGet(member.ID())
+				pInfo.Huddles = append(pInfo.Huddles, totalHuddleIdx)
 			}
 		}
 
@@ -218,14 +218,28 @@ func (hs *HuddleScheduler) createInitialHuddles() error {
 			}
 		}
 
+		// Add back any previously rolled over patients
+		for _, member := range originalMembers {
+			if member.ReasonIsRollOver() {
+				huddle.addHuddleMember(member.ID(), member.Reason())
+				pInfo := hs.patientInfos.SafeGet(member.ID())
+				pInfo.Huddles = append(pInfo.Huddles, totalHuddleIdx)
+			}
+		}
+
+		// Now add the newly rolled over patients (only to the first huddle we schedule)
+		if len(hs.FutureHuddles) == 0 {
+			hs.addMembersBasedOnRollOvers(huddle)
+		}
+
 		hs.FutureHuddles = append(hs.FutureHuddles, huddle)
 	}
 	return nil
 }
 
-func findExistingHuddle(date time.Time, config *HuddleConfig) (*Huddle, error) {
+func (hs *HuddleScheduler) findExistingHuddle(date time.Time) (*Huddle, error) {
 	searcher := search.NewMongoSearcher(server.Database)
-	queryStr := fmt.Sprintf("leader=Practitioner/%s&activedatetime=%s&_sort=activedatetime&_count=1", config.LeaderID, date.Format("2006-01-02T-07:00"))
+	queryStr := fmt.Sprintf("leader=Practitioner/%s&activedatetime=%s&_sort=activedatetime&_count=1", hs.Config.LeaderID, date.Format("2006-01-02T-07:00"))
 	var huddles []*models.Group
 	if err := searcher.CreateQuery(search.Query{Resource: "Group", Query: queryStr}).All(&huddles); err != nil {
 		return nil, err
@@ -367,6 +381,27 @@ func (hs *HuddleScheduler) addMembersBasedOnRecentEncounters(huddle *Huddle, tot
 		}
 	}
 	return nil
+}
+
+func (hs *HuddleScheduler) addMembersBasedOnRollOvers(huddle *Huddle) {
+	if hs.Config.RollOverDelayInDays <= 0 {
+		return
+	}
+
+	// Find the patients that need to roll over (i.e., the ones not reviewed in the huddle x days ago)
+	expiredHuddleDay := today().AddDate(0, 0, -1*hs.Config.RollOverDelayInDays)
+	expiredHuddle, err := hs.findExistingHuddle(expiredHuddleDay)
+	if err != nil {
+		fmt.Printf("Error searching on previous huddle (%s) to detect rollover patients\n", expiredHuddleDay.Format("Jan 2"))
+	} else if expiredHuddle != nil {
+		// Check for unreviewed patients
+		eh := Huddle(*expiredHuddle)
+		for _, member := range eh.HuddleMembers() {
+			if member.Reviewed() == nil {
+				huddle.AddHuddleMemberDueToRollOver(member.ID(), expiredHuddleDay, member.Reason())
+			}
+		}
+	}
 }
 
 func (hs *HuddleScheduler) rebalanceHuddles() error {

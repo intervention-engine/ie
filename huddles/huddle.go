@@ -1,6 +1,7 @@
 package huddles
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/intervention-engine/fhir/models"
@@ -114,6 +115,25 @@ func (h *Huddle) AddHuddleMemberDueToRecentEvent(patientID string, code EventCod
 			{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "RECENT_ENCOUNTER"},
 		},
 		Text: code.Name,
+	})
+}
+
+// AddHuddleMemberDueToRollOver adds the patient to the huddle using the ROLLOVER and previous reason.
+// If the patient is already in the huddle, nothing will be updated.
+func (h *Huddle) AddHuddleMemberDueToRollOver(patientID string, from time.Time, previousReason *models.CodeableConcept) {
+	var reason string
+	if previousReason.MatchesCode("http://interventionengine.org/fhir/cs/huddle-member-reason", "ROLLOVER") {
+		reason = previousReason.Text
+	} else if previousReason.MatchesCode("http://interventionengine.org/fhir/cs/huddle-member-reason", "MANUAL_ADDITION") {
+		reason = fmt.Sprintf("Rolled Over from %s (Manually Added - %s)", from.Format("Jan 2"), previousReason.Text)
+	} else {
+		reason = fmt.Sprintf("Rolled Over from %s (%s)", from.Format("Jan 2"), previousReason.Text)
+	}
+	h.addHuddleMember(patientID, &models.CodeableConcept{
+		Coding: []models.Coding{
+			{System: "http://interventionengine.org/fhir/cs/huddle-member-reason", Code: "ROLLOVER"},
+		},
+		Text: reason,
 	})
 }
 
