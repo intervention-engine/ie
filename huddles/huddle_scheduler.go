@@ -3,6 +3,8 @@ package huddles
 import (
 	"fmt"
 	"hash/fnv"
+	"math"
+	"sort"
 	"strings"
 	"time"
 
@@ -148,7 +150,7 @@ func (hs *HuddleScheduler) populatePatientInfosWithRiskScore() error {
 func (hs *HuddleScheduler) populatePatientInfosWithPastHuddles() error {
 	// Find all of the huddles by the leader id and dates today or before
 	searcher := search.NewMongoSearcher(server.Database)
-	queryStr := fmt.Sprintf("leader=Practitioner/%s&activedatetime=le%s&_sort=activedatetime", hs.Config.LeaderID, time.Now().Format("2006-01-02T-07:00"))
+	queryStr := fmt.Sprintf("leader=Practitioner/%s&activedatetime=lt%s&_sort=activedatetime", hs.Config.LeaderID, today().Format("2006-01-02T-07:00"))
 	selector := bson.M{
 		"_id": 0,
 		"member.entity.referenceid": 1,
@@ -187,6 +189,17 @@ func (hs *HuddleScheduler) createInitialHuddles() error {
 			return err
 		}
 
+		// If this is today's huddle and any patients are marked reviewed already, then do NOT reschedule this huddle!
+		if huddle != nil && huddle.ActiveDateTime() != nil && huddle.ActiveDateTime().Time == today() {
+			var inProgress bool
+			for _, member := range huddle.HuddleMembers() {
+				inProgress = inProgress || member.Reviewed() != nil
+			}
+			if inProgress {
+				continue
+			}
+		}
+
 		var originalMembers []HuddleMember
 		if huddle == nil {
 			// Create a new huddle
@@ -208,12 +221,23 @@ func (hs *HuddleScheduler) createInitialHuddles() error {
 		}
 
 		// Add members to huddle who had a recent encounter that triggers huddle discussion
-		hs.addMembersBasedOnRecentEncounters(huddle, totalHuddleIdx)
+		if hs.Config.EventConfig != nil && len(hs.Config.EventConfig.EncounterConfigs) > 0 {
+			hs.addMembersBasedOnRecentEncounters(huddle, totalHuddleIdx)
+		}
 
 		// Iterate through all the patientInfos, looking for patients whose next ideal huddle is this one
-		for pID, pInfo := range hs.patientInfos {
-			if hs.isIdealHuddle(totalHuddleIdx, pID) && huddle.FindHuddleMember(pID) == nil {
+		// First collect the IDs and then sort them.  This makes ordering more predictable.
+		if hs.Config.RiskConfig != nil && len(hs.Config.RiskConfig.FrequencyConfigs) > 0 {
+			var idealIDs []string
+			for pID := range hs.patientInfos {
+				if hs.isIdealHuddle(totalHuddleIdx, pID) && huddle.FindHuddleMember(pID) == nil {
+					idealIDs = append(idealIDs, pID)
+				}
+			}
+			sort.Strings(idealIDs)
+			for _, pID := range idealIDs {
 				huddle.AddHuddleMemberDueToRiskScore(pID)
+				pInfo := hs.patientInfos[pID]
 				pInfo.Huddles = append(pInfo.Huddles, totalHuddleIdx)
 			}
 		}
@@ -358,17 +382,21 @@ func (hs *HuddleScheduler) addMembersBasedOnRecentEncounters(huddle *Huddle, tot
 			for _, code := range eventConfig.TypeCodes {
 				if codeMatches(result.Type, &code) {
 					if d, matches := dateMatches(result.Period, &code, lowInclDate, highExclDate); matches {
-						// If the patient has been discussed since the date, then don't schedule again
-						alreadyDiscussed := false
+						// Collect the PAST huddles, already in the database
+						var huddles []*Huddle
 						for i := range result.Huddles {
 							h := Huddle(result.Huddles[i])
-							if h.ActiveDateTime() != nil && !h.ActiveDateTime().Time.Equal(date) && h.ActiveDateTime().Time.After(d) {
-								m := h.FindHuddleMember(result.PatientID)
-								// Only consider it already discussed if the patient was discussed for this same reason
-								alreadyDiscussed = m != nil && m.ReasonIsRecentEncounter()
-								break
+							if h.ActiveDateTime() != nil && h.ActiveDateTime().Time.Before(huddle.ActiveDateTime().Time) {
+								huddles = append(huddles, &h)
 							}
 						}
+						// If the patient has been discussed in a huddle since the date, then don't schedule again
+						alreadyDiscussed := isPatientScheduledForSpecificEncounterReason(huddles, result.PatientID, d)
+						if !alreadyDiscussed {
+							// Then check the huddles we've already scheduled in this session
+							alreadyDiscussed = isPatientScheduledForSpecificEncounterReason(hs.FutureHuddles, result.PatientID, d)
+						}
+
 						if !alreadyDiscussed {
 							huddle.AddHuddleMemberDueToRecentEvent(result.PatientID, code)
 							pInfo := hs.patientInfos.SafeGet(result.PatientID)
@@ -381,6 +409,21 @@ func (hs *HuddleScheduler) addMembersBasedOnRecentEncounters(huddle *Huddle, tot
 		}
 	}
 	return nil
+}
+
+func isPatientScheduledForSpecificEncounterReason(huddles []*Huddle, patientID string, encounterDate time.Time) bool {
+	// Go through the huddles backwards since it's more likely a discussed date is recent (although we can't guarantee the huddles are sorted)
+	for i := len(huddles) - 1; i >= 0; i-- {
+		h := huddles[i]
+		if h.ActiveDateTime() != nil && !h.ActiveDateTime().Time.Equal(encounterDate) && h.ActiveDateTime().Time.After(encounterDate) {
+			m := h.FindHuddleMember(patientID)
+			// Only consider it already discussed if the patient was discussed for this same reason
+			if m != nil && m.ReasonIsRecentEncounter() {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (hs *HuddleScheduler) addMembersBasedOnRollOvers(huddle *Huddle) {
@@ -427,10 +470,14 @@ func (hs *HuddleScheduler) getTargetHuddleSize() int {
 	for i := range hs.FutureHuddles {
 		totalSlots += len(hs.FutureHuddles[i].Member)
 	}
-	return totalSlots / hs.Config.LookAhead
+	return int(math.Ceil(float64(totalSlots) / float64(hs.Config.LookAhead)))
 }
 
 func (hs *HuddleScheduler) getMaxPullAndPush() (maxPull int, maxPush int) {
+	if hs.Config.RiskConfig == nil {
+		return 0, 0
+	}
+
 	for _, fc := range hs.Config.RiskConfig.FrequencyConfigs {
 		pull := fc.IdealFrequency - fc.MinFrequency
 		if pull > maxPull {
@@ -595,9 +642,17 @@ func (hs *HuddleScheduler) printInfo() {
 	}
 }
 
+var _nowValueForTestingOnly *time.Time
+
+func now() time.Time {
+	if _nowValueForTestingOnly != nil {
+		return *_nowValueForTestingOnly
+	}
+	return time.Now()
+}
 func today() time.Time {
-	now := time.Now()
-	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+	now := now()
+	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 }
 
 func hash(s string) uint32 {
