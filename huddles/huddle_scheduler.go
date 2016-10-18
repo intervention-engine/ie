@@ -3,6 +3,7 @@ package huddles
 import (
 	"fmt"
 	"hash/fnv"
+	"log"
 	"math"
 	"sort"
 	"strings"
@@ -13,7 +14,6 @@ import (
 	"github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/search"
 	"github.com/intervention-engine/fhir/server"
-	"github.com/labstack/gommon/log"
 )
 
 // HuddleScheduler schedules huddles based on the passed in config.
@@ -90,20 +90,17 @@ func (p *patientInfo) UpdateHuddleTargets(config *HuddleConfig) {
 func (hs *HuddleScheduler) ScheduleHuddles() ([]*Huddle, error) {
 	// First populate the structures we need to do the scheduling
 	if err := hs.populatePatientInfosWithRiskScores(); err != nil {
-		log.Error(err)
 		return nil, err
 	}
 
 	err := hs.populatePatientInfosWithHuddleInfo()
 	if err != nil {
-		log.Error(err)
 		return nil, err
 	}
 
 	// Then create the populated huddles
 	err = hs.createHuddles()
 	if err != nil {
-		log.Error(err)
 		return nil, err
 	}
 
@@ -112,7 +109,7 @@ func (hs *HuddleScheduler) ScheduleHuddles() ([]*Huddle, error) {
 	for i := range hs.Huddles {
 		if _, err := server.Database.C("groups").UpsertId(hs.Huddles[i].Id, hs.Huddles[i]); err != nil {
 			lastErr = err
-			log.Warn("Error storing huddle: %t", err)
+			log.Printf("Error storing huddle: %s\n", err)
 		}
 	}
 
