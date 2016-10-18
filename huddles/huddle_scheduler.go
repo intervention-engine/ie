@@ -16,12 +16,11 @@ import (
 	"github.com/labstack/gommon/log"
 )
 
-// HuddleScheduler schedules future huddles based on the passed in config.
+// HuddleScheduler schedules huddles based on the passed in config.
 type HuddleScheduler struct {
-	Config          *HuddleConfig
-	FutureHuddles   []*Huddle
-	patientInfos    patientInfoMap
-	pastHuddleCount int
+	Config       *HuddleConfig
+	Huddles      []*Huddle
+	patientInfos patientInfoMap
 }
 
 // NewHuddleScheduler initializes a new huddle scheduler based on the passed in config.
@@ -37,38 +36,72 @@ type patientInfoMap map[string]*patientInfo
 func (p patientInfoMap) SafeGet(key string) *patientInfo {
 	pInfo := p[key]
 	if pInfo == nil {
-		pInfo = &patientInfo{}
+		pInfo = &patientInfo{ID: key}
 		p[key] = pInfo
 	}
 	return pInfo
 }
 
 type patientInfo struct {
-	Huddles []int
-	Score   *float64
+	ID                    string
+	Score                 *float64
+	LastHuddle            *int
+	NextIdealHuddle       *int
+	NearestAllowedHuddle  *int
+	FurthestAllowedHuddle *int
 }
 
-// ScheduleHuddles schedules future huddles based on the passed in config.  It will schedule out the number
-// of future huddles as specified in the config.LookAhead.
+func (p *patientInfo) FindFrequencyConfig(config *HuddleConfig) *RiskScoreFrequencyConfig {
+	if p.Score != nil {
+		return config.FindRiskScoreFrequencyConfigByScore(*p.Score)
+	}
+	return nil
+}
+
+// SetLastHuddle should always be used to set the last huddle, because it also sets other important properties
+func (p *patientInfo) SetLastHuddle(lastHuddle int, config *HuddleConfig) {
+	p.LastHuddle = &lastHuddle
+	p.UpdateHuddleTargets(config)
+}
+
+func (p *patientInfo) UpdateHuddleTargets(config *HuddleConfig) {
+	cfg := p.FindFrequencyConfig(config)
+	if cfg != nil {
+		if p.LastHuddle != nil {
+			ideal := *p.LastHuddle + cfg.IdealFrequency
+			p.NextIdealHuddle = &ideal
+			nearest := *p.LastHuddle + cfg.MinFrequency
+			p.NearestAllowedHuddle = &nearest
+			furthest := *p.LastHuddle + cfg.MaxFrequency
+			p.FurthestAllowedHuddle = &furthest
+		} else {
+			// Patient has never had a huddle.  The next huddle is really ideal (if possible).
+			nearest := 0
+			p.NextIdealHuddle = &nearest
+			p.NearestAllowedHuddle = &nearest
+			furthest := cfg.MaxFrequency - 1
+			p.FurthestAllowedHuddle = &furthest
+		}
+	}
+}
+
+// ScheduleHuddles schedules huddles based on the passed in config.  It will schedule out the number
+// of huddles as specified in the config.LookAhead.
 func (hs *HuddleScheduler) ScheduleHuddles() ([]*Huddle, error) {
-	if err := hs.populatePatientInfosWithRiskScore(); err != nil {
+	// First populate the structures we need to do the scheduling
+	if err := hs.populatePatientInfosWithRiskScores(); err != nil {
 		log.Error(err)
 		return nil, err
 	}
 
-	err := hs.populatePatientInfosWithPastHuddles()
+	err := hs.populatePatientInfosWithHuddleInfo()
 	if err != nil {
 		log.Error(err)
 		return nil, err
 	}
 
-	err = hs.createInitialHuddles()
-	if err != nil {
-		log.Error(err)
-		return nil, err
-	}
-
-	err = hs.rebalanceHuddles()
+	// Then create the populated huddles
+	err = hs.createHuddles()
 	if err != nil {
 		log.Error(err)
 		return nil, err
@@ -76,8 +109,8 @@ func (hs *HuddleScheduler) ScheduleHuddles() ([]*Huddle, error) {
 
 	// Store the huddles in the database
 	var lastErr error
-	for i := range hs.FutureHuddles {
-		if _, err := server.Database.C("groups").UpsertId(hs.FutureHuddles[i].Id, hs.FutureHuddles[i]); err != nil {
+	for i := range hs.Huddles {
+		if _, err := server.Database.C("groups").UpsertId(hs.Huddles[i].Id, hs.Huddles[i]); err != nil {
 			lastErr = err
 			log.Warn("Error storing huddle: %t", err)
 		}
@@ -85,10 +118,10 @@ func (hs *HuddleScheduler) ScheduleHuddles() ([]*Huddle, error) {
 
 	hs.printInfo()
 
-	return hs.FutureHuddles, lastErr
+	return hs.Huddles, lastErr
 }
 
-func (hs *HuddleScheduler) populatePatientInfosWithRiskScore() error {
+func (hs *HuddleScheduler) populatePatientInfosWithRiskScores() error {
 	if hs.Config.RiskConfig == nil || len(hs.Config.RiskConfig.FrequencyConfigs) == 0 {
 		return nil
 	}
@@ -147,55 +180,79 @@ func (hs *HuddleScheduler) populatePatientInfosWithRiskScore() error {
 	return iter.Close()
 }
 
-func (hs *HuddleScheduler) populatePatientInfosWithPastHuddles() error {
-	// Find all of the huddles by the leader id and dates today or before
+func (hs *HuddleScheduler) populatePatientInfosWithHuddleInfo() error {
+	// Find all of the huddles by the leader id and dates before today
 	searcher := search.NewMongoSearcher(server.Database)
-	queryStr := fmt.Sprintf("leader=Practitioner/%s&activedatetime=lt%s&_sort=activedatetime", hs.Config.LeaderID, today().Format("2006-01-02T-07:00"))
+	queryStr := fmt.Sprintf("leader=Practitioner/%s&activedatetime=lt%s", hs.Config.LeaderID, today().Format("2006-01-02T-07:00"))
+	mgoQuery := searcher.CreateQueryWithoutOptions(search.Query{Resource: "Group", Query: queryStr})
 	selector := bson.M{
 		"_id": 0,
 		"member.entity.referenceid": 1,
 	}
-	iter := searcher.CreateQueryWithoutOptions(search.Query{Resource: "Group", Query: queryStr}).Select(selector).Iter()
-	i := 0
+	iter := mgoQuery.Sort("-extension.activeDateTime.time").Select(selector).Iter()
+
+	// Iterate through them, setting the last huddle as appropriate
+	i := -1 // Start with -1 because we will record last huddle relative to now (so -1 is one huddle ago)
 	result := models.Group{}
 	for iter.Next(&result) {
-		// Add the huddle to each member's patientInfo
 		for _, member := range result.Member {
-			info := hs.patientInfos.SafeGet(member.Entity.ReferencedID)
-			info.Huddles = append(info.Huddles, i)
+			pInfo := hs.patientInfos.SafeGet(member.Entity.ReferencedID)
+			if pInfo.LastHuddle == nil || i > *pInfo.LastHuddle {
+				pInfo.SetLastHuddle(i, hs.Config)
+			}
 		}
-		i++
+		i--
 	}
 
-	// Set the pastHuddleCount so we can use it elsewhere
-	hs.pastHuddleCount = i
+	if err := iter.Close(); err != nil {
+		return err
+	}
 
-	return iter.Close()
+	// Some of the patients won't have a last huddle, but we should still set their nearest/furthest huddle if possible
+	for _, pInfo := range hs.patientInfos {
+		if pInfo.Score != nil && pInfo.LastHuddle == nil {
+			pInfo.UpdateHuddleTargets(hs.Config)
+		}
+	}
+
+	return nil
 }
 
-func (hs *HuddleScheduler) createInitialHuddles() error {
+func (hs *HuddleScheduler) createHuddles() error {
+	targetHuddleSize := hs.getTargetHuddleSize()
+
 	// TODO: Clear future huddles scheduled on the wrong days (unless they have manual additions)?
 	// Step through one day at a time, starting today, until we have created the requested number of huddles
-	hs.FutureHuddles = make([]*Huddle, 0, hs.Config.LookAhead)
-	for t := today(); len(hs.FutureHuddles) < hs.Config.LookAhead; t = t.AddDate(0, 0, 1) {
+	hs.Huddles = make([]*Huddle, 0, hs.Config.LookAhead)
+	checkRollOversAndEvents := true
+	for t := today(); len(hs.Huddles) < hs.Config.LookAhead; t = t.AddDate(0, 0, 1) {
 		if !hs.Config.IsHuddleDay(t) {
 			continue
 		}
-
-		totalHuddleIdx := hs.pastHuddleCount + len(hs.FutureHuddles)
 
 		huddle, err := hs.findExistingHuddle(t)
 		if err != nil {
 			return err
 		}
 
+		huddleIdx := len(hs.Huddles)
+
 		// If this is today's huddle and any patients are marked reviewed already, then do NOT reschedule this huddle!
 		if huddle != nil && huddle.ActiveDateTime() != nil && huddle.ActiveDateTime().Time == today() {
-			var inProgress bool
+			huddleInProgress := false
 			for _, member := range huddle.HuddleMembers() {
-				inProgress = inProgress || member.Reviewed() != nil
+				if member.Reviewed() != nil {
+					huddleInProgress = true
+					break
+				}
 			}
-			if inProgress {
+			if huddleInProgress {
+				// Need to update the patientInfo last huddles and add the huddle to our slice of huddles
+				for _, member := range huddle.HuddleMembers() {
+					hs.patientInfos.SafeGet(member.ID()).SetLastHuddle(huddleIdx, hs.Config)
+				}
+				hs.Huddles = append(hs.Huddles, huddle)
+				// Go to the next huddle
 				continue
 			}
 		}
@@ -211,54 +268,56 @@ func (hs *HuddleScheduler) createInitialHuddles() error {
 			huddle.Member = nil
 		}
 
-		// Add back the manually added patients
+		// Add back the manually added and rolled over patients
 		for _, member := range originalMembers {
-			if member.ReasonIsManuallyAdded() {
+			if member.ReasonIsManuallyAdded() || member.ReasonIsRollOver() {
 				huddle.addHuddleMember(member.ID(), member.Reason())
-				pInfo := hs.patientInfos.SafeGet(member.ID())
-				pInfo.Huddles = append(pInfo.Huddles, totalHuddleIdx)
 			}
 		}
 
-		// Add members to huddle who had a recent encounter that triggers huddle discussion
-		if hs.Config.EventConfig != nil && len(hs.Config.EventConfig.EncounterConfigs) > 0 {
-			hs.addMembersBasedOnRecentEncounters(huddle, totalHuddleIdx)
+		if checkRollOversAndEvents {
+			// Add new rollovers if applicable
+			if hs.Config.RollOverDelayInDays > 0 {
+				hs.addMembersBasedOnRollOvers(huddle)
+			}
+
+			// Add members to the huddle who had a recent encounter that triggers huddle discussion
+			if hs.Config.EventConfig != nil && len(hs.Config.EventConfig.EncounterConfigs) > 0 {
+				hs.addMembersBasedOnRecentEncounters(huddle, huddleIdx)
+			}
+
+			checkRollOversAndEvents = false
 		}
 
-		// Iterate through all the patientInfos, looking for patients whose next ideal huddle is this one
-		// First collect the IDs and then sort them.  This makes ordering more predictable.
+		// Finally fill out the rest with members based on their risk scores (which determine huddle frequency)
 		if hs.Config.RiskConfig != nil && len(hs.Config.RiskConfig.FrequencyConfigs) > 0 {
-			var idealIDs []string
-			for pID := range hs.patientInfos {
-				if hs.isIdealHuddle(totalHuddleIdx, pID) && huddle.FindHuddleMember(pID) == nil {
-					idealIDs = append(idealIDs, pID)
-				}
-			}
-			sort.Strings(idealIDs)
-			for _, pID := range idealIDs {
-				huddle.AddHuddleMemberDueToRiskScore(pID)
-				pInfo := hs.patientInfos[pID]
-				pInfo.Huddles = append(pInfo.Huddles, totalHuddleIdx)
-			}
+			hs.addMembersBasedOnRiskScores(huddle, huddleIdx, targetHuddleSize)
 		}
 
-		// Add back any previously rolled over patients
-		for _, member := range originalMembers {
-			if member.ReasonIsRollOver() {
-				huddle.addHuddleMember(member.ID(), member.Reason())
-				pInfo := hs.patientInfos.SafeGet(member.ID())
-				pInfo.Huddles = append(pInfo.Huddles, totalHuddleIdx)
-			}
+		// Now go through all of the assigned huddle members and update that infos
+		for _, member := range huddle.HuddleMembers() {
+			pInfo := hs.patientInfos.SafeGet(member.ID())
+			pInfo.SetLastHuddle(huddleIdx, hs.Config)
 		}
 
-		// Now add the newly rolled over patients (only to the first huddle we schedule)
-		if len(hs.FutureHuddles) == 0 {
-			hs.addMembersBasedOnRollOvers(huddle)
-		}
-
-		hs.FutureHuddles = append(hs.FutureHuddles, huddle)
+		hs.Huddles = append(hs.Huddles, huddle)
 	}
 	return nil
+}
+
+func (hs *HuddleScheduler) getTargetHuddleSize() int {
+	frequencyCountMap := make(map[int]int)
+	for _, patientInfo := range hs.patientInfos {
+		frqCfg := patientInfo.FindFrequencyConfig(hs.Config)
+		if frqCfg != nil {
+			frequencyCountMap[frqCfg.IdealFrequency] = frequencyCountMap[frqCfg.IdealFrequency] + 1
+		}
+	}
+	var patientsPerHuddle float64
+	for frequency, count := range frequencyCountMap {
+		patientsPerHuddle += (float64(count) / float64(frequency))
+	}
+	return int(math.Ceil(patientsPerHuddle))
 }
 
 func (hs *HuddleScheduler) findExistingHuddle(date time.Time) (*Huddle, error) {
@@ -274,35 +333,119 @@ func (hs *HuddleScheduler) findExistingHuddle(date time.Time) (*Huddle, error) {
 	return nil, nil
 }
 
-// NOTE: This function is designed to be called in incrementing order over huddles.  In other words, you SHOULD NOT
-// call this function for huddle 43 if you haven't yet scheduled huddle 42 OR if you already scheduled huddle 44!
-func (hs *HuddleScheduler) isIdealHuddle(hIdx int, pID string) bool {
-	pInfo := hs.patientInfos.SafeGet(pID)
-	if pInfo.Score == nil {
-		return false
+func (hs *HuddleScheduler) addMembersBasedOnRiskScores(huddle *Huddle, huddleIdx, targetSize int) {
+	for _, p := range hs.getPrioritizedPatientList(huddleIdx) {
+		// If we hit (or exceeded) our target, only stop if the patient *can* be put into a further huddle
+		if len(huddle.Member) >= targetSize && (p.FurthestAllowedHuddle == nil || huddleIdx < *p.FurthestAllowedHuddle) {
+			break
+		}
+		// If this huddle is before the nearest allowed, then we should not add this patient
+		if p.NearestAllowedHuddle != nil && huddleIdx < *p.NearestAllowedHuddle {
+			continue
+		}
+		// Otherwise, add the patient to the huddle
+		huddle.AddHuddleMemberDueToRiskScore(p.ID)
 	}
-
-	frqCfg := hs.Config.FindRiskScoreFrequencyConfigByScore(*pInfo.Score)
-	if frqCfg == nil {
-		return false
-	}
-	idealFrequency := frqCfg.IdealFrequency
-
-	if len(pInfo.Huddles) == 0 {
-		// This patient never had a huddle.  In this case, try to evenly distribute patients over n huddles
-		// (where n = ideal frequency).  This isn't an exact science, but we'll use a hash and mod to do our best!
-		// Example: https://play.golang.org/p/7kKKdub2OS
-		modP := hash(pID) % uint32(idealFrequency)
-		modH := hIdx % idealFrequency
-		return modP == uint32(modH)
-	}
-
-	// Normal case in which patient does have previous huddles
-	// Use >= to catch "overdue" huddles, since they are ideally ASAP
-	return hIdx >= pInfo.Huddles[len(pInfo.Huddles)-1]+idealFrequency
 }
 
-func (hs *HuddleScheduler) addMembersBasedOnRecentEncounters(huddle *Huddle, totalHuddleIdx int) error {
+func (hs *HuddleScheduler) getPrioritizedPatientList(huddleIdx int) []*patientInfo {
+	patients := make([]*patientInfo, 0, len(hs.patientInfos))
+	for _, pInfo := range hs.patientInfos {
+		if pInfo.FurthestAllowedHuddle != nil {
+			patients = append(patients, pInfo)
+		}
+	}
+	byHP := byHuddlePriority{patients: patients, huddleIdx: huddleIdx}
+	sort.Sort(byHP)
+	return byHP.patients
+}
+
+// Support sorting by huddle priority by using the following sort rules:
+// - First check for dueness.  Patients who are due or overdue go first (more overdue before less overdue).
+// - If neither is overdue, or they are overdue the same, sort from earliest ideal huddle to latest ideal huddle.
+// - If they have the same ideal huddle, sub-sort by risk score (highest goes first).
+// - If they have same risk score too, sub-sort by furthest allowed huddle (implies urgency).
+// - If they have the same furthest allowed huddle too, sort by the last huddle (oldest first).
+// - If they have same last huddle too, just sort by the patients id.
+type byHuddlePriority struct {
+	patients  []*patientInfo
+	huddleIdx int
+}
+
+func (hp byHuddlePriority) Len() int {
+	return len(hp.patients)
+}
+func (hp byHuddlePriority) Swap(i, j int) {
+	hp.patients[i], hp.patients[j] = hp.patients[j], hp.patients[i]
+}
+func (hp byHuddlePriority) Less(i, j int) bool {
+	// First look at "dueness" by seeing if the furthest allowed huddle is this one or before.
+	// If either or both are due, and have different furthest allowed huddles, the more overdue one goes first.
+	if hp.patients[i].FurthestAllowedHuddle != hp.patients[j].FurthestAllowedHuddle {
+		iDue := hp.patients[i].FurthestAllowedHuddle != nil && *hp.patients[i].FurthestAllowedHuddle <= hp.huddleIdx
+		jDue := hp.patients[j].FurthestAllowedHuddle != nil && *hp.patients[j].FurthestAllowedHuddle <= hp.huddleIdx
+		if iDue && jDue && *hp.patients[i].FurthestAllowedHuddle != *hp.patients[j].FurthestAllowedHuddle {
+			return *hp.patients[i].FurthestAllowedHuddle < *hp.patients[j].FurthestAllowedHuddle
+		} else if iDue && !jDue {
+			return true
+		} else if !iDue && jDue {
+			return false
+		}
+	}
+
+	// If neither is due, or they are overdue the same, compare by the next ideal huddle.
+	// If one is nil (which shouldn't happen) assume they should go last.
+	if hp.patients[i].NextIdealHuddle != hp.patients[j].NextIdealHuddle {
+		if hp.patients[i].NextIdealHuddle == nil {
+			return false
+		} else if hp.patients[j].NextIdealHuddle == nil {
+			return true
+		} else if *hp.patients[i].NextIdealHuddle != *hp.patients[j].NextIdealHuddle {
+			return *hp.patients[i].NextIdealHuddle < *hp.patients[j].NextIdealHuddle
+		}
+	}
+
+	// If they have the same next ideal huddle, compare by the score (higher goes first).
+	// If one is nil assume they should go last.
+	if hp.patients[i].Score != hp.patients[j].Score {
+		if hp.patients[i].Score == nil {
+			return false
+		} else if hp.patients[j].Score == nil {
+			return true
+		} else if *hp.patients[i].Score != *hp.patients[j].Score {
+			return *hp.patients[i].Score > *hp.patients[j].Score
+		}
+	}
+
+	// If they have the same risk score too, compare by the furthest allowed huddle.
+	// If one is nil (which shouldn't happen) assume they should go last.
+	if hp.patients[i].FurthestAllowedHuddle != hp.patients[j].FurthestAllowedHuddle {
+		if hp.patients[i].FurthestAllowedHuddle == nil {
+			return false
+		} else if hp.patients[j].FurthestAllowedHuddle == nil {
+			return true
+		} else if *hp.patients[i].FurthestAllowedHuddle != *hp.patients[j].FurthestAllowedHuddle {
+			return *hp.patients[i].FurthestAllowedHuddle < *hp.patients[j].FurthestAllowedHuddle
+		}
+	}
+
+	// If they have the same furthest allowed huddle, try comparing by the last huddle.
+	// If one is nil, they've never had a huddle, so they should be prefered first over someone who has.
+	if hp.patients[i].LastHuddle != hp.patients[j].LastHuddle {
+		if hp.patients[i].LastHuddle == nil {
+			return true
+		} else if hp.patients[j].LastHuddle == nil {
+			return false
+		} else if *hp.patients[i].LastHuddle != *hp.patients[j].LastHuddle {
+			return *hp.patients[i].LastHuddle < *hp.patients[j].LastHuddle
+		}
+	}
+
+	// OK, they're equal for all intents and purposes, but compare by ID so we have consistent order
+	return hp.patients[i].ID < hp.patients[j].ID
+}
+
+func (hs *HuddleScheduler) addMembersBasedOnRecentEncounters(huddle *Huddle, huddleIdx int) error {
 	if hs.Config.EventConfig == nil {
 		return nil
 	}
@@ -337,9 +480,7 @@ func (hs *HuddleScheduler) addMembersBasedOnRecentEncounters(huddle *Huddle, tot
 		encQuery := searcher.CreateQueryObject(search.Query{Resource: "Encounter", Query: queryStr})
 
 		// FOR NOW: We essentially copy/paste the encounter code we used in the previous version of the scheduler,
-		// but I'd like to potentially revisit at some point since we can probably streamline this WITHOUT a pipeline.
-		// We'd likely need the PatientInfos to keep track not only of huddles, but reasons.  We'd also need a way to
-		// find out dates of past huddles.
+		// but we should revisit at some point since we may be able to streamline this WITHOUT a pipeline.
 
 		// This pipeline starts with the encounter date/code query, sorts them by date, left-joins the huddles and then
 		// returns only the info we care about.
@@ -394,13 +535,11 @@ func (hs *HuddleScheduler) addMembersBasedOnRecentEncounters(huddle *Huddle, tot
 						alreadyDiscussed := isPatientScheduledForSpecificEncounterReason(huddles, result.PatientID, d)
 						if !alreadyDiscussed {
 							// Then check the huddles we've already scheduled in this session
-							alreadyDiscussed = isPatientScheduledForSpecificEncounterReason(hs.FutureHuddles, result.PatientID, d)
+							alreadyDiscussed = isPatientScheduledForSpecificEncounterReason(hs.Huddles, result.PatientID, d)
 						}
 
 						if !alreadyDiscussed {
 							huddle.AddHuddleMemberDueToRecentEvent(result.PatientID, code)
-							pInfo := hs.patientInfos.SafeGet(result.PatientID)
-							pInfo.Huddles = append(pInfo.Huddles, totalHuddleIdx)
 							break
 						}
 					}
@@ -447,198 +586,10 @@ func (hs *HuddleScheduler) addMembersBasedOnRollOvers(huddle *Huddle) {
 	}
 }
 
-func (hs *HuddleScheduler) rebalanceHuddles() error {
-	targetSize := hs.getTargetHuddleSize()
-	log.Info("TARGET SIZE: %d", targetSize)
-
-	maxPull, maxPush := hs.getMaxPullAndPush()
-
-	for i := range hs.FutureHuddles {
-		h := hs.FutureHuddles[i]
-		if len(h.Member) < targetSize {
-			hs.growHuddle(i, targetSize, maxPull)
-		} else if len(h.Member) > targetSize {
-			hs.shrinkHuddle(i, targetSize, maxPush)
-		}
-	}
-	return nil
-}
-
-func (hs *HuddleScheduler) getTargetHuddleSize() int {
-	// Get the target huddle size
-	totalSlots := 0
-	for i := range hs.FutureHuddles {
-		totalSlots += len(hs.FutureHuddles[i].Member)
-	}
-	return int(math.Ceil(float64(totalSlots) / float64(hs.Config.LookAhead)))
-}
-
-func (hs *HuddleScheduler) getMaxPullAndPush() (maxPull int, maxPush int) {
-	if hs.Config.RiskConfig == nil {
-		return 0, 0
-	}
-
-	for _, fc := range hs.Config.RiskConfig.FrequencyConfigs {
-		pull := fc.IdealFrequency - fc.MinFrequency
-		if pull > maxPull {
-			maxPull = pull
-		}
-		push := fc.MaxFrequency - fc.IdealFrequency
-		if push > maxPush {
-			maxPush = push
-		}
-	}
-	return
-}
-
-// growHuddle will attempt to make the huddle larger by "pulling" patients from future huddles
-func (hs *HuddleScheduler) growHuddle(huddleIdx, targetSize, maxPull int) {
-	h := hs.FutureHuddles[huddleIdx]
-
-	// Determine the furthest huddle out that we can pull patients from
-	maxHuddleIdx := huddleIdx + maxPull
-	if maxHuddleIdx >= len(hs.FutureHuddles) {
-		maxHuddleIdx = len(hs.FutureHuddles) - 1
-	}
-
-	// Iterate the next huddles to find patients to pull (until we reach maxHuddleIdx or have enough members)
-	for fromHuddleIdx := huddleIdx + 1; fromHuddleIdx < maxHuddleIdx && len(h.Member) < targetSize; fromHuddleIdx++ {
-		h2 := hs.FutureHuddles[fromHuddleIdx]
-		// Iterate patients in this huddle to see who we can pull
-		for _, mem := range h2.HuddleMembers() {
-			// Only patients scheduled by risk can be pulled
-			if mem.ReasonIsRiskScore() {
-				pInfo := hs.patientInfos.SafeGet(mem.ID())
-				if pInfo.Score != nil {
-					rCfg := hs.Config.FindRiskScoreFrequencyConfigByScore(*pInfo.Score)
-					// Compare spread between huddles to spread allowed by frequency config
-					if (fromHuddleIdx - huddleIdx) <= (rCfg.IdealFrequency - rCfg.MinFrequency) {
-						// We can pull this patient to the current huddle!
-						hs.shiftMember(mem.ID(), fromHuddleIdx, huddleIdx)
-						if len(h.Member) >= targetSize {
-							break
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-// shrinkHuddle will attempt to make the huddle smaller by "pushing" patients to future huddles
-func (hs *HuddleScheduler) shrinkHuddle(huddleIdx, targetSize, maxPush int) {
-	h := hs.FutureHuddles[huddleIdx]
-
-	// Iterate patients in this huddle, finding ones we can push ahead to next huddle
-	// We want to prefer patients who can be pushed furthest, so start looking with maxPush
-	for push := maxPush; push > 0 && len(h.Member) > targetSize; push-- {
-		// Iterate patients in this huddle to see who we can push
-		for _, mem := range h.HuddleMembers() {
-			// Only patients scheduled by risk can be pushed
-			if mem.ReasonIsRiskScore() {
-				pInfo := hs.patientInfos.SafeGet(mem.ID())
-				if pInfo.Score != nil {
-					// TODO: Fix bug -- it doesn't check if the patient really can be pushed further.
-					// If this patient was already pushed once, it no longer is accurate
-					pushPotential := hs.getPushPotential(pInfo, huddleIdx)
-					// Compare the push potential to the currently desired push
-					if pushPotential >= push {
-						hs.shiftMember(mem.ID(), huddleIdx, huddleIdx+1)
-						if len(h.Member) <= targetSize {
-							break
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-func (hs *HuddleScheduler) getPushPotential(pInfo *patientInfo, huddleIdx int) int {
-	// If the patient doesn't have a risk score, they can't be shifted
-	if pInfo.Score == nil {
-		return 0
-	}
-	// If the patient's risk score doesn't map to a config, they can't be shifted
-	frqCfg := hs.Config.FindRiskScoreFrequencyConfigByScore(*pInfo.Score)
-	if frqCfg == nil {
-		return 0
-	}
-
-	// Find out the last huddle index so we know if we've already reached our max distance
-	lastHuddleIdx := -1
-	totalHuddleIdx := hs.pastHuddleCount + huddleIdx
-	for _, prvHuddleIdx := range pInfo.Huddles {
-		if prvHuddleIdx >= totalHuddleIdx {
-			break
-		}
-		lastHuddleIdx = prvHuddleIdx
-	}
-	if lastHuddleIdx < 0 {
-		// They never had a huddle before.  We then effectively consider their last huddle
-		// to have been the last huddle performed.  It's not TRUE, but it's how we handle
-		// new patients or patients who received risk scores for the first time.
-		lastHuddleIdx = hs.pastHuddleCount - 1
-	}
-
-	offset := huddleIdx - lastHuddleIdx
-	if offset >= frqCfg.MaxFrequency {
-		return 0
-	}
-	return frqCfg.MaxFrequency - offset
-}
-
-func (hs *HuddleScheduler) shiftMember(patientID string, fromFutureHuddleIdx, toFutureHuddleIdx int) {
-	// Don't add them if they're already there!
-	if toFutureHuddleIdx < len(hs.FutureHuddles) && hs.FutureHuddles[toFutureHuddleIdx].FindHuddleMember(patientID) != nil {
-		return
-	}
-
-	pInfo := hs.patientInfos.SafeGet(patientID)
-
-	// First we must find the place in the patients huddle index containing the from huddleIdx
-	// (This is a little confusing, since it's an index of a slice containing an index referencing another slice)
-	var fromLocationInPatientHuddleSlice int
-	// BTW, totalFromHuddleIdx represents the index the huddle would be if we started from the very first huddle ever
-	totalFromHuddleIdx := hs.pastHuddleCount + fromFutureHuddleIdx
-	for i := range pInfo.Huddles {
-		if pInfo.Huddles[i] == totalFromHuddleIdx {
-			fromLocationInPatientHuddleSlice = i
-		}
-	}
-
-	// Now start from there and move forward, shifting the huddles appropriately
-	for i := fromLocationInPatientHuddleSlice; i < len(pInfo.Huddles); i++ {
-		oldFutureHuddleIdx := pInfo.Huddles[i] - hs.pastHuddleCount
-		// Only shift if the patient is in the huddle for risk score reason
-		member := hs.FutureHuddles[oldFutureHuddleIdx].FindHuddleMember(patientID)
-		if member != nil && member.ReasonIsRiskScore() {
-			var newFutureHuddleIdx int
-			if i > 0 && i != fromLocationInPatientHuddleSlice {
-				// This isn't the initial shift, so base new huddle on ideal frequency and last huddle
-				frqCfg := hs.Config.FindRiskScoreFrequencyConfigByScore(*pInfo.Score)
-				newFutureHuddleIdx = pInfo.Huddles[i-1] + frqCfg.IdealFrequency
-			} else {
-				// This is the initial shift, or the patient has no prior huddles
-				newFutureHuddleIdx = oldFutureHuddleIdx + (toFutureHuddleIdx - fromFutureHuddleIdx)
-			}
-			pInfo.Huddles[i] = newFutureHuddleIdx + hs.pastHuddleCount
-			hs.FutureHuddles[oldFutureHuddleIdx].RemoveHuddleMember(patientID)
-			// Check bounds to ensure this is a huddle we are tracking before adding the patient
-			if newFutureHuddleIdx >= 0 && newFutureHuddleIdx < len(hs.FutureHuddles) {
-				hs.FutureHuddles[newFutureHuddleIdx].AddHuddleMemberDueToRiskScore(patientID)
-			} else {
-				// It was out of range, better remove it from pInfo
-				pInfo.Huddles = append(pInfo.Huddles[:i], pInfo.Huddles[i+1:]...)
-			}
-		}
-	}
-}
-
 func (hs *HuddleScheduler) printInfo() {
-	fmt.Printf("Scheduled %d huddles with name %s\n", len(hs.FutureHuddles), hs.Config.Name)
-	for i := range hs.FutureHuddles {
-		fmt.Printf("\t%s: %d patients\n", getStringDate(hs.FutureHuddles[i]), len(hs.FutureHuddles[i].Member))
+	fmt.Printf("Scheduled %d huddles with name %s\n", len(hs.Huddles), hs.Config.Name)
+	for i := range hs.Huddles {
+		fmt.Printf("\t%s: %d patients\n", getStringDate(hs.Huddles[i]), len(hs.Huddles[i].Member))
 	}
 }
 

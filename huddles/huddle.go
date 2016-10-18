@@ -138,9 +138,16 @@ func (h *Huddle) AddHuddleMemberDueToRollOver(patientID string, from time.Time, 
 }
 
 func (h *Huddle) addHuddleMember(patientID string, reason *models.CodeableConcept) {
-	// First look to see if the patient is already in the group, and if so, return
-	if h.FindHuddleMember(patientID) != nil {
-		return
+	// First look to see if the patient is already in the group and act accordingly.
+	existing := h.FindHuddleMember(patientID)
+	if existing != nil {
+		if existing.ReasonIsRollOver() {
+			// We allow overwrites of rollovers, so remove the existing entry and continue
+			h.RemoveHuddleMember(patientID)
+		} else {
+			// We don't allow overwrites of other reasons, so just ignore this request
+			return
+		}
 	}
 
 	// The patient is not yet in the group, so add him/her
