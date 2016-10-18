@@ -2,7 +2,7 @@
   "name": "Interdisciplinary Huddle",
   "leaderID": "1",
   "days": [1],
-  "lookAhead": 40,
+  "lookAhead": 16,
   "riskConfig": {
     "riskMethod": {"system": "http://interventionengine.org/risk-assessments", "code": "MultiFactor"},
     "frequencyConfigs": [
