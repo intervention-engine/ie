@@ -637,3 +637,31 @@ func getStringDate(huddle *Huddle) string {
 	}
 	return ""
 }
+
+/* FOR DEBUGGING
+func (hs *HuddleScheduler) printPatientInfos() {
+	pIDs := make([]string, 0, len(hs.patientInfos))
+	for _, pInfo := range hs.patientInfos {
+		pIDs = append(pIDs, pInfo.ID)
+	}
+	sort.Strings(pIDs)
+	for _, id := range pIDs {
+		pInfo := hs.patientInfos[id]
+		fmt.Printf("%s [Score: %s, Last: %s, Ideal: %s, Near: %s, Far: %s]\n", pInfo.ID, strF(pInfo.Score), strI(pInfo.LastHuddle), strI(pInfo.NextIdealHuddle), strI(pInfo.NearestAllowedHuddle), strI(pInfo.FurthestAllowedHuddle))
+	}
+}
+
+func strF(f *float64) string {
+	if f == nil {
+		return "?"
+	}
+	return fmt.Sprint(*f)
+}
+
+func strI(i *int) string {
+	if i == nil {
+		return "?"
+	}
+	return fmt.Sprint(*i)
+}
+*/

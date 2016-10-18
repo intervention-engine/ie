@@ -2,6 +2,7 @@ package huddles
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"testing"
 	"time"
@@ -981,6 +982,212 @@ func (suite *HuddleSchedulerSuite) TestInProgressHuddleIsntOverwritten() {
 			assert.False(hm.ReasonIsRollOver())
 		}
 	}
+}
+
+// This test ensures the huddle balancing algorithms work correctly when there are no previous huddles.
+// This needs to test a few things:
+// - A "strict" huddle adheres to the rules exactly (ideal==min==max)
+// - A "flexible" huddle still adheres to the rules (min <= ideal <= max)
+// - The "flexible" huddle is well-balanced compared to the "strict" huddle
+func (suite *HuddleSchedulerSuite) TestHuddleBalancingWithNoPreviousHuddles() {
+	assert := assert.New(suite.T())
+	require := require.New(suite.T())
+
+	// First create a bunch of patients to be scheduled into the huddles.
+	// Generate 10 w/score 10, 20 w/score 9, 30 w/score 8, etc., for total of 550 patients.
+	// Also keep track of patients' scores so we know if the huddle scheduling follows the rules
+	scoreMap := make(map[string]int)
+	id := 1
+	num := 10
+	for score := 10; score > 0; score-- {
+		for i := 0; i < num; i++ {
+			suite.storePatientAndScores(bsonID(id), score)
+			scoreMap[bsonID(id)] = score
+			id++
+		}
+		num += 10
+	}
+
+	// Schedule the huddles using strict configuration.
+	// Since there are no past huddles, and new patients have built-in flexible scheduling, this isn't so bad.
+	cfg := createHuddleConfigForBalanceTests(true)
+	groups, err := ScheduleHuddles(cfg)
+	require.NoError(err)
+	suite.checkHuddleRules(groups, scoreMap, cfg)
+	strictStdDev := suite.getStdDevForHuddles(groups)
+
+	// Schedule the huddles using a flexible configuration.  Slightly better than the strict one.
+	cfg = createHuddleConfigForBalanceTests(false)
+	groups, err = ScheduleHuddles(cfg)
+	require.NoError(err)
+	suite.checkHuddleRules(groups, scoreMap, cfg)
+	flexibleStdDev := suite.getStdDevForHuddles(groups)
+
+	assert.True(flexibleStdDev < strictStdDev, "The flexible standard deviation should be smaller than the strict one")
+}
+
+// This test ensures the huddle balancing algorithms work correctly with a previous huddle representing a worst-case
+// scenario: it contains every patient.  This needs to test a few things:
+// - A "strict" huddle adheres to the rules exactly (ideal==min==max)
+// - A "flexible" huddle still adheres to the rules (min <= ideal <= max)
+// - The "flexible" huddle is well-balanced compared to the "strict" huddle
+func (suite *HuddleSchedulerSuite) TestHuddleBalancingWithWorstCasePreviousHuddle() {
+	assert := assert.New(suite.T())
+	require := require.New(suite.T())
+
+	// First create a bunch of patients to be scheduled into the huddles.
+	// Generate 10 w/score 10, 20 w/score 9, 30 w/score 8, etc., for total of 550 patients.
+	// Also keep track of patients' scores so we know if the huddle scheduling follows the rules
+	var patientIDs []string
+	scoreMap := make(map[string]int)
+	id := 1
+	num := 10
+	for score := 10; score > 0; score-- {
+		for i := 0; i < num; i++ {
+			suite.storePatientAndScores(bsonID(id), score)
+			patientIDs = append(patientIDs, bsonID(id))
+			scoreMap[bsonID(id)] = score
+			id++
+		}
+		num += 10
+	}
+
+	cfg := createHuddleConfigForBalanceTests(true)
+
+	// Create a massive PAST huddle, just to throw off the numbers.  This basically represents the worst case scenario.
+	suite.storeHuddle(today().AddDate(0, 0, -2), cfg.LeaderID, riskScoreReason(), patientIDs...)
+
+	// Schedule the huddles using strict configuration.
+	// Since there was just a massive huddle with everyone, this will be BAD for strict mode.
+	// We will still follow the rules but it will be at expense of huddle distribution.
+	groups, err := ScheduleHuddles(cfg)
+	require.NoError(err)
+	suite.checkHuddleRules(groups, scoreMap, cfg)
+	strictStdDev := suite.getStdDevForHuddles(groups)
+
+	// Schedule the huddles using a flexible configuration.  This should be much more evenly distributed.
+	cfg = createHuddleConfigForBalanceTests(false)
+	groups, err = ScheduleHuddles(cfg)
+	require.NoError(err)
+	suite.checkHuddleRules(groups, scoreMap, cfg)
+	flexibleStdDev := suite.getStdDevForHuddles(groups)
+
+	assert.True(flexibleStdDev < strictStdDev, "The flexible standard deviation should be smaller than the strict one")
+}
+
+func createHuddleConfigForBalanceTests(strict bool) *HuddleConfig {
+	cfg := &HuddleConfig{
+		Name:      "Test Huddle Config",
+		LeaderID:  "123",
+		Days:      []time.Weekday{time.Monday, time.Wednesday, time.Friday},
+		LookAhead: 20,
+		RiskConfig: &ScheduleByRiskConfig{
+			RiskMethod: models.Coding{System: "http://interventionengine.org/risk-assessments", Code: "Test"},
+			FrequencyConfigs: []RiskScoreFrequencyConfig{
+				{
+					MinScore:       10,
+					MaxScore:       10,
+					IdealFrequency: 1,
+					MinFrequency:   1,
+					MaxFrequency:   1,
+				},
+				{
+					MinScore:       8,
+					MaxScore:       9,
+					IdealFrequency: 3,
+					MinFrequency:   1,
+					MaxFrequency:   4,
+				},
+				{
+					MinScore:       6,
+					MaxScore:       7,
+					IdealFrequency: 6,
+					MinFrequency:   3,
+					MaxFrequency:   8,
+				},
+				{
+					MinScore:       3,
+					MaxScore:       5,
+					IdealFrequency: 12,
+					MinFrequency:   8,
+					MaxFrequency:   15,
+				},
+			},
+		},
+	}
+
+	if strict {
+		for i := range cfg.RiskConfig.FrequencyConfigs {
+			cfg.RiskConfig.FrequencyConfigs[i].MinFrequency = cfg.RiskConfig.FrequencyConfigs[i].IdealFrequency
+			cfg.RiskConfig.FrequencyConfigs[i].MaxFrequency = cfg.RiskConfig.FrequencyConfigs[i].IdealFrequency
+		}
+	}
+
+	return cfg
+}
+
+func (suite *HuddleSchedulerSuite) checkHuddleRules(groups []*models.Group, scoreMap map[string]int, cfg *HuddleConfig) {
+	assert := assert.New(suite.T())
+	require := require.New(suite.T())
+
+	// Need to keep track of patients' last huddles so we know if the huddle scheduling follows the rules
+	lastHuddleMap := make(map[string]*int)
+
+	// Check each huddle to ensure it follows the rules
+	require.Len(groups, 20)
+	for i := range groups {
+		ha := NewHuddleAssertions(groups[i], assert)
+		ha.AssertValidHuddleProfile()
+		ha.AssertLeaderIDEqual("123")
+		assert.True(strings.HasPrefix(ha.Name, "Test Huddle"))
+		for _, mem := range ha.HuddleMembers() {
+			lastHuddle := lastHuddleMap[mem.ID()]
+			frqCfg := cfg.FindRiskScoreFrequencyConfigByScore(float64(scoreMap[mem.ID()]))
+			require.NotNil(frqCfg, "Patients with no configured frequency config should NOT be scheduled!")
+			if lastHuddle == nil {
+				// Special case, always allows for *some* flexibility
+				assert.True(i < frqCfg.MaxFrequency, "Detected first huddle more than max frequency")
+			} else {
+				delta := i - *lastHuddle
+				assert.True(delta >= frqCfg.MinFrequency, "Detected frequency less than min frequency")
+				assert.True(delta <= frqCfg.MaxFrequency, "Detected frequency more than max frequency")
+			}
+			// Update the lastHuddle map
+			// need to copy over the value of i before we store it, since i memory is re-used
+			iPrime := i
+			lastHuddleMap[mem.ID()] = &iPrime
+		}
+	}
+
+	// Now check each patient that should be scheduled to ensure they were
+	for id, score := range scoreMap {
+		if score >= 3 && score <= 10 {
+			assert.NotNil(lastHuddleMap[id])
+		} else {
+			assert.Nil(lastHuddleMap[id])
+		}
+	}
+}
+
+func (suite *HuddleSchedulerSuite) getStdDevForHuddles(groups []*models.Group) float64 {
+	// Make a slice of the group sizes
+	total := 0.0
+	sizes := make([]int, len(groups))
+	for i := range groups {
+		sizes[i] = len(groups[i].Member)
+		total += float64(sizes[i])
+	}
+
+	// Calculate the mean group size
+	mean := total / float64(len(groups))
+
+	// Now calculate the stddev
+	total = 0.0
+	for _, size := range sizes {
+		total += math.Pow(float64(size)-mean, 2)
+	}
+	variance := total / float64(len(groups)-1)
+	return math.Sqrt(variance)
 }
 
 func createHuddleConfig(inclRisk bool, inclEvents bool, rollOverDelay int, days ...time.Weekday) *HuddleConfig {
