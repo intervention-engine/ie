@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/server"
@@ -48,7 +49,7 @@ func main() {
 	if lfpath != "" {
 		err := os.Mkdir(lfpath, 0755)
 		if err != nil && !os.IsExist(err) {
-			fmt.Println("Error creating log directory:" + err.Error())
+			log.Println("Error creating log directory:" + err.Error())
 		}
 
 		lf, err := os.OpenFile(lfpath+"/ie.log", os.O_RDWR|os.O_APPEND, 0755)
@@ -56,7 +57,7 @@ func main() {
 			lf, err = os.Create(lfpath + "/ie.log")
 		}
 		if err != nil {
-			fmt.Println("Unable to create ie log file:" + err.Error())
+			log.Println("Unable to create ie log file:" + err.Error())
 		} else {
 			log.SetOutput(lf)
 		}
@@ -90,7 +91,7 @@ func main() {
 	}
 	addrs, err := net.LookupIP(host)
 	if err != nil {
-		fmt.Println("Unable to lookup IP based on hostname, defaulting to localhost.")
+		log.Println("Unable to lookup IP based on hostname, defaulting to localhost.")
 		selfURL = "http://localhost:3001"
 	}
 	for _, addr := range addrs {
@@ -120,31 +121,31 @@ func main() {
 			panic(err)
 		}
 		huddleController.AddConfig(config)
-		/*
-			// Wait 1 minute before doing initial runs or setting up cron jobs.  This allows the server to get
-			// started (since it needs to initiate the db connection, etc).
-			time.AfterFunc(1*time.Minute, func() {
-				// Do an initial run
-				fmt.Println("Initial scheduling for huddle with name ", config.Name)
-				huddles.ScheduleHuddles(config)
+		scheduleIt := func() {
+			_, err := huddles.NewHuddleScheduler(config).ScheduleHuddles()
+			if err != nil {
+				log.Printf("ERROR: Could not schedule huddles for huddle with name %s: %v", config.Name, err)
+			}
+		}
 
-				// Set up the cron job for future runs
-				if config.SchedulerCronSpec != "" {
-					err := c.AddFunc(config.SchedulerCronSpec, func() {
-						_, err := huddles.ScheduleHuddles(config)
-						if err != nil {
-							fmt.Printf("ERROR: Could not schedule huddles for huddle with name %s: %v", config.Name, err)
-						}
-					})
-					if err != nil {
-						panic(err)
-					}
-					fmt.Printf("Huddle with name %s scheduled with cron spec: %s\n", config.Name, config.SchedulerCronSpec)
-				} else {
-					fmt.Printf("Warning: Huddle with name %s is not configured with a scheduler cron job.\n", config.Name)
+		// Wait 1 minute before doing initial runs or setting up cron jobs.  This allows the server to get
+		// started (since it needs to initiate the db connection, etc).
+		time.AfterFunc(1*time.Minute, func() {
+			// Do an initial run
+			log.Println("Initial scheduling for huddle with name ", config.Name)
+			scheduleIt()
+
+			// Set up the cron job for future runs
+			if config.SchedulerCronSpec != "" {
+				err := c.AddFunc(config.SchedulerCronSpec, scheduleIt)
+				if err != nil {
+					panic(err)
 				}
-			})
-		*/
+				log.Printf("Huddle with name %s scheduled with cron spec: %s\n", config.Name, config.SchedulerCronSpec)
+			} else {
+				log.Printf("Warning: Huddle with name %s is not configured with a scheduler cron job.\n", config.Name)
+			}
+		})
 	}
 	s.Engine.GET("/ScheduleHuddles", huddleController.ScheduleHandler)
 
@@ -154,7 +155,7 @@ func main() {
 			glf, err = os.Create(lfpath + "/gin.log")
 		}
 		if err != nil {
-			fmt.Println("Unable to create ie log file:" + err.Error())
+			log.Println("Unable to create ie log file:" + err.Error())
 		} else {
 			s.Engine.Use(gin.LoggerWithWriter(glf))
 		}
