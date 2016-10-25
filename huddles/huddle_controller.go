@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/intervention-engine/fhir/models"
 )
 
 type HuddleSchedulerController struct {
@@ -16,9 +15,10 @@ func (h *HuddleSchedulerController) AddConfig(config *HuddleConfig) {
 }
 
 func (h *HuddleSchedulerController) ScheduleHandler(c *gin.Context) {
-	var scheduledHuddles []*models.Group
+	var scheduledHuddles []*Huddle
 	for i := range h.configs {
-		huddles, err := ScheduleHuddles(&h.configs[i])
+		hs := NewHuddleScheduler(&h.configs[i])
+		huddles, err := hs.ScheduleHuddles()
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return

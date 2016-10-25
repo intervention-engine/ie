@@ -46,10 +46,27 @@ type ScheduleByRiskConfig struct {
 
 // RiskScoreFrequencyConfig represents the relationship between risk scores and frequency of huddle discussion
 type RiskScoreFrequencyConfig struct {
-	MinScore              float64
-	MaxScore              float64
-	MinDaysBetweenHuddles int
-	MaxDaysBetweenHuddles int
+	MinScore       float64
+	MaxScore       float64
+	IdealFrequency int
+	MinFrequency   int
+	MaxFrequency   int
+}
+
+// FindRiskScoreFrequencyConfigByScore finds the proper risk config for a given score
+func (hc *HuddleConfig) FindRiskScoreFrequencyConfigByScore(score float64) *RiskScoreFrequencyConfig {
+	if hc.RiskConfig == nil {
+		return nil
+	}
+
+	for i := range hc.RiskConfig.FrequencyConfigs {
+		fc := hc.RiskConfig.FrequencyConfigs[i]
+		if score >= fc.MinScore && score <= fc.MaxScore {
+			return &fc
+		}
+	}
+
+	return nil
 }
 
 // ScheduleByEventConfig represents how recent events should influence huddle population
