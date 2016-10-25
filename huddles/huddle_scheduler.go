@@ -18,31 +18,31 @@ import (
 
 // HuddleScheduler schedules huddles based on the passed in config.
 type HuddleScheduler struct {
-	Config       *HuddleConfig
-	Huddles      []*Huddle
-	patientInfos patientInfoMap
+	Config            *HuddleConfig
+	Huddles           []*Huddle
+	patientScheduling patientSchedulingInfoMap
 }
 
 // NewHuddleScheduler initializes a new huddle scheduler based on the passed in config.
 func NewHuddleScheduler(config *HuddleConfig) *HuddleScheduler {
 	return &HuddleScheduler{
-		Config:       config,
-		patientInfos: make(patientInfoMap),
+		Config:            config,
+		patientScheduling: make(patientSchedulingInfoMap),
 	}
 }
 
-type patientInfoMap map[string]*patientInfo
+type patientSchedulingInfoMap map[string]*patientSchedulingInfo
 
-func (p patientInfoMap) SafeGet(key string) *patientInfo {
-	pInfo := p[key]
-	if pInfo == nil {
-		pInfo = &patientInfo{ID: key}
-		p[key] = pInfo
+func (p patientSchedulingInfoMap) SafeGet(key string) *patientSchedulingInfo {
+	psInfo := p[key]
+	if psInfo == nil {
+		psInfo = &patientSchedulingInfo{ID: key}
+		p[key] = psInfo
 	}
-	return pInfo
+	return psInfo
 }
 
-type patientInfo struct {
+type patientSchedulingInfo struct {
 	ID                    string
 	Score                 *float64
 	LastHuddle            *int
@@ -51,7 +51,7 @@ type patientInfo struct {
 	FurthestAllowedHuddle *int
 }
 
-func (p *patientInfo) FindFrequencyConfig(config *HuddleConfig) *RiskScoreFrequencyConfig {
+func (p *patientSchedulingInfo) FindFrequencyConfig(config *HuddleConfig) *RiskScoreFrequencyConfig {
 	if p.Score != nil {
 		return config.FindRiskScoreFrequencyConfigByScore(*p.Score)
 	}
@@ -59,12 +59,12 @@ func (p *patientInfo) FindFrequencyConfig(config *HuddleConfig) *RiskScoreFreque
 }
 
 // SetLastHuddle should always be used to set the last huddle, because it also sets other important properties
-func (p *patientInfo) SetLastHuddle(lastHuddle int, config *HuddleConfig) {
+func (p *patientSchedulingInfo) SetLastHuddle(lastHuddle int, config *HuddleConfig) {
 	p.LastHuddle = &lastHuddle
 	p.UpdateHuddleTargets(config)
 }
 
-func (p *patientInfo) UpdateHuddleTargets(config *HuddleConfig) {
+func (p *patientSchedulingInfo) UpdateHuddleTargets(config *HuddleConfig) {
 	cfg := p.FindFrequencyConfig(config)
 	if cfg != nil {
 		if p.LastHuddle != nil {
@@ -170,8 +170,8 @@ func (hs *HuddleScheduler) populatePatientInfosWithRiskScores() error {
 	iter := server.Database.C("riskassessments").Find(riskQuery).Select(selector).Iter()
 	result := models.RiskAssessment{}
 	for iter.Next(&result) {
-		info := hs.patientInfos.SafeGet(result.Subject.ReferencedID)
-		info.Score = result.Prediction[0].ProbabilityDecimal
+		psInfo := hs.patientScheduling.SafeGet(result.Subject.ReferencedID)
+		psInfo.Score = result.Prediction[0].ProbabilityDecimal
 	}
 
 	return iter.Close()
@@ -193,9 +193,9 @@ func (hs *HuddleScheduler) populatePatientInfosWithHuddleInfo() error {
 	result := models.Group{}
 	for iter.Next(&result) {
 		for _, member := range result.Member {
-			pInfo := hs.patientInfos.SafeGet(member.Entity.ReferencedID)
-			if pInfo.LastHuddle == nil || i > *pInfo.LastHuddle {
-				pInfo.SetLastHuddle(i, hs.Config)
+			psInfo := hs.patientScheduling.SafeGet(member.Entity.ReferencedID)
+			if psInfo.LastHuddle == nil || i > *psInfo.LastHuddle {
+				psInfo.SetLastHuddle(i, hs.Config)
 			}
 		}
 		i--
@@ -206,9 +206,9 @@ func (hs *HuddleScheduler) populatePatientInfosWithHuddleInfo() error {
 	}
 
 	// Some of the patients won't have a last huddle, but we should still set their nearest/furthest huddle if possible
-	for _, pInfo := range hs.patientInfos {
-		if pInfo.Score != nil && pInfo.LastHuddle == nil {
-			pInfo.UpdateHuddleTargets(hs.Config)
+	for _, psInfo := range hs.patientScheduling {
+		if psInfo.Score != nil && psInfo.LastHuddle == nil {
+			psInfo.UpdateHuddleTargets(hs.Config)
 		}
 	}
 
@@ -246,7 +246,7 @@ func (hs *HuddleScheduler) createHuddles() error {
 			if huddleInProgress {
 				// Need to update the patientInfo last huddles and add the huddle to our slice of huddles
 				for _, member := range huddle.HuddleMembers() {
-					hs.patientInfos.SafeGet(member.ID()).SetLastHuddle(huddleIdx, hs.Config)
+					hs.patientScheduling.SafeGet(member.ID()).SetLastHuddle(huddleIdx, hs.Config)
 				}
 				hs.Huddles = append(hs.Huddles, huddle)
 				// Go to the next huddle
@@ -293,8 +293,8 @@ func (hs *HuddleScheduler) createHuddles() error {
 
 		// Now go through all of the assigned huddle members and update that infos
 		for _, member := range huddle.HuddleMembers() {
-			pInfo := hs.patientInfos.SafeGet(member.ID())
-			pInfo.SetLastHuddle(huddleIdx, hs.Config)
+			psInfo := hs.patientScheduling.SafeGet(member.ID())
+			psInfo.SetLastHuddle(huddleIdx, hs.Config)
 		}
 
 		hs.Huddles = append(hs.Huddles, huddle)
@@ -304,8 +304,8 @@ func (hs *HuddleScheduler) createHuddles() error {
 
 func (hs *HuddleScheduler) getTargetHuddleSize() int {
 	frequencyCountMap := make(map[int]int)
-	for _, patientInfo := range hs.patientInfos {
-		frqCfg := patientInfo.FindFrequencyConfig(hs.Config)
+	for _, psInfo := range hs.patientScheduling {
+		frqCfg := psInfo.FindFrequencyConfig(hs.Config)
 		if frqCfg != nil {
 			frequencyCountMap[frqCfg.IdealFrequency] = frequencyCountMap[frqCfg.IdealFrequency] + 1
 		}
@@ -345,11 +345,11 @@ func (hs *HuddleScheduler) addMembersBasedOnRiskScores(huddle *Huddle, huddleIdx
 	}
 }
 
-func (hs *HuddleScheduler) getPrioritizedPatientList(huddleIdx int) []*patientInfo {
-	patients := make([]*patientInfo, 0, len(hs.patientInfos))
-	for _, pInfo := range hs.patientInfos {
-		if pInfo.FurthestAllowedHuddle != nil {
-			patients = append(patients, pInfo)
+func (hs *HuddleScheduler) getPrioritizedPatientList(huddleIdx int) []*patientSchedulingInfo {
+	patients := make([]*patientSchedulingInfo, 0, len(hs.patientScheduling))
+	for _, psInfo := range hs.patientScheduling {
+		if psInfo.FurthestAllowedHuddle != nil {
+			patients = append(patients, psInfo)
 		}
 	}
 	byHP := byHuddlePriority{patients: patients, huddleIdx: huddleIdx}
@@ -365,7 +365,7 @@ func (hs *HuddleScheduler) getPrioritizedPatientList(huddleIdx int) []*patientIn
 // - If they have the same furthest allowed huddle too, sort by the last huddle (oldest first).
 // - If they have same last huddle too, just sort by the patients id.
 type byHuddlePriority struct {
-	patients  []*patientInfo
+	patients  []*patientSchedulingInfo
 	huddleIdx int
 }
 
@@ -571,7 +571,7 @@ func (hs *HuddleScheduler) addMembersBasedOnRollOvers(huddle *Huddle) {
 	expiredHuddleDay := today().AddDate(0, 0, -1*hs.Config.RollOverDelayInDays)
 	expiredHuddle, err := hs.findExistingHuddle(expiredHuddleDay)
 	if err != nil {
-		fmt.Printf("Error searching on previous huddle (%s) to detect rollover patients\n", expiredHuddleDay.Format("Jan 2"))
+		log.Printf("Error searching on previous huddle (%s) to detect rollover patients\n", expiredHuddleDay.Format("Jan 2"))
 	} else if expiredHuddle != nil {
 		// Check for unreviewed patients
 		eh := Huddle(*expiredHuddle)
@@ -584,9 +584,9 @@ func (hs *HuddleScheduler) addMembersBasedOnRollOvers(huddle *Huddle) {
 }
 
 func (hs *HuddleScheduler) printInfo() {
-	fmt.Printf("Scheduled %d huddles with name %s\n", len(hs.Huddles), hs.Config.Name)
+	log.Printf("Scheduled %d huddles with name %s\n", len(hs.Huddles), hs.Config.Name)
 	for i := range hs.Huddles {
-		fmt.Printf("\t%s: %d patients\n", getStringDate(hs.Huddles[i]), len(hs.Huddles[i].Member))
+		log.Printf("\t%s: %d patients\n", getStringDate(hs.Huddles[i]), len(hs.Huddles[i].Member))
 	}
 }
 
@@ -637,14 +637,14 @@ func getStringDate(huddle *Huddle) string {
 
 /* FOR DEBUGGING
 func (hs *HuddleScheduler) printPatientInfos() {
-	pIDs := make([]string, 0, len(hs.patientInfos))
-	for _, pInfo := range hs.patientInfos {
-		pIDs = append(pIDs, pInfo.ID)
+	pIDs := make([]string, 0, len(hs.patientScheduling))
+	for _, psInfo := range hs.patientScheduling {
+		pIDs = append(pIDs, psInfo.ID)
 	}
 	sort.Strings(pIDs)
 	for _, id := range pIDs {
-		pInfo := hs.patientInfos[id]
-		fmt.Printf("%s [Score: %s, Last: %s, Ideal: %s, Near: %s, Far: %s]\n", pInfo.ID, strF(pInfo.Score), strI(pInfo.LastHuddle), strI(pInfo.NextIdealHuddle), strI(pInfo.NearestAllowedHuddle), strI(pInfo.FurthestAllowedHuddle))
+		psInfo := hs.patientScheduling[id]
+		log.Printf("%s [Score: %s, Last: %s, Ideal: %s, Near: %s, Far: %s]\n", psInfo.ID, strF(psInfo.Score), strI(psInfo.LastHuddle), strI(psInfo.NextIdealHuddle), strI(psInfo.NearestAllowedHuddle), strI(psInfo.FurthestAllowedHuddle))
 	}
 }
 
