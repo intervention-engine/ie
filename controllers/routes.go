@@ -10,6 +10,7 @@ import (
 	"github.com/intervention-engine/ie/subscription"
 )
 
+// RegisterRoutes Create IE routes in Gin
 func RegisterRoutes(s *server.FHIRServer, selfURL, riskServiceEndpoint string, enableSubscriptions bool) func() {
 	returnFunc := func() {}
 	if enableSubscriptions {
@@ -38,6 +39,8 @@ func RegisterRoutes(s *server.FHIRServer, selfURL, riskServiceEndpoint string, e
 	s.Engine.GET("/NotificationCount", NotificationCountHandler)
 	s.Engine.GET("/Pie/:id", GeneratePieHandler(riskServiceEndpoint))
 	s.Engine.POST("/CodeLookup", CodeLookup)
+	api := s.Engine.Group("/api")
+	RegisterController("patients", api, new(Patients))
 
 	return returnFunc
 }
