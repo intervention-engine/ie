@@ -14,7 +14,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/server"
 	"github.com/intervention-engine/ie/controllers"
+	"github.com/intervention-engine/ie/db"
 	"github.com/intervention-engine/ie/huddles"
+	"github.com/intervention-engine/ie/models"
 	"github.com/intervention-engine/ie/utilities"
 	"github.com/robfig/cron"
 )
@@ -102,6 +104,14 @@ func main() {
 	}
 
 	s := server.NewServer(mongoURL)
+
+	api := s.Engine.Group("/api")
+
+	sess, dbase := db.SetupDBConnection("fhir")
+	defer sess.Close()
+
+	controllers.RegisterController(dbase, "patients", api, models.Patient{})
+	controllers.RegisterController(dbase, "care_teams", api, models.CareTeam{})
 
 	if *reqLog {
 		s.Engine.Use(server.RequestLoggerHandler)

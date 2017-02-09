@@ -1,6 +1,9 @@
 package controllers
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	mgo "gopkg.in/mgo.v2"
+)
 
 // Controller interface for all controllers in IE use for Routing
 type Controller interface {
@@ -12,7 +15,9 @@ type Controller interface {
 }
 
 // RegisterController a controller with a router
-func RegisterController(route string, e *gin.RouterGroup, c Controller) {
+func RegisterController(db *mgo.Database, route string, e *gin.RouterGroup, i interface{}) {
+	var c = IEController{collectionName: route, db: db, item: i}
+
 	e.GET(route, c.All)
 	e.POST(route, c.Create)
 

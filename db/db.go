@@ -8,22 +8,27 @@ import (
 
 var db *mgo.Database
 
-func init() {
+// SetupDBConnection gets a Mongo session and a database reference
+// Session needs to be closed by caller
+func SetupDBConnection(db string) (*mgo.Session, *mgo.Database) {
 	mongoURL := os.Getenv("MONGO_URL")
 	if mongoURL == "" {
 		mongoURL = "mongodb://localhost:27017"
 	}
 
-	session, err := mgo.Dial(mongoURL)
+	s, err := mgo.Dial(mongoURL)
 
 	if err != nil {
 		panic(err)
 	}
 
-	db = session.DB("fhir")
+	return s, connectDB(s, db)
 }
 
-// GetDB db reference
-func GetDB() *mgo.Database {
+func connectDB(s *mgo.Session, dbName string) *mgo.Database {
+	if db == nil {
+		db = s.DB(dbName)
+	}
+
 	return db
 }

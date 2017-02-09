@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/intervention-engine/fhir/server"
+
 	"github.com/intervention-engine/ie/groups"
 	"github.com/intervention-engine/ie/middleware"
 	"github.com/intervention-engine/ie/notifications"
@@ -39,8 +40,6 @@ func RegisterRoutes(s *server.FHIRServer, selfURL, riskServiceEndpoint string, e
 	s.Engine.GET("/NotificationCount", NotificationCountHandler)
 	s.Engine.GET("/Pie/:id", GeneratePieHandler(riskServiceEndpoint))
 	s.Engine.POST("/CodeLookup", CodeLookup)
-	api := s.Engine.Group("/api")
-	RegisterController("patients", api, new(Patients))
 
 	return returnFunc
 }

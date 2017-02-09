@@ -29,7 +29,7 @@ func LoadICDFromCMS(mongoHost, lookupURL, codeSystem string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	defer mongoSession.Close()
 	database := mongoSession.DB("fhir")
 	codeCollection := database.C("codelookup")
 
