@@ -2,6 +2,7 @@ package db
 
 import (
 	"os"
+	"sync"
 
 	mgo "gopkg.in/mgo.v2"
 )
@@ -26,6 +27,9 @@ func SetupDBConnection(db string) (*mgo.Session, *mgo.Database) {
 }
 
 func connectDB(s *mgo.Session, dbName string) *mgo.Database {
+	mux := sync.Mutex{}
+	mux.Lock()
+	defer mux.Unlock()
 	if db == nil {
 		db = s.DB(dbName)
 	}

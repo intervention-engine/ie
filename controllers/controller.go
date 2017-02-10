@@ -16,7 +16,7 @@ type Controller interface {
 
 // RegisterController a controller with a router
 func RegisterController(db *mgo.Database, route string, e *gin.RouterGroup, i interface{}) {
-	var c = IEController{collectionName: route, db: db, item: i}
+	var c = IEController{DB: db, CollectionName: route, Item: i}
 
 	e.GET(route, c.All)
 	e.POST(route, c.Create)

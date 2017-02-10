@@ -11,10 +11,10 @@ import (
 
 // IEController Wrapped for Patient Collection
 type IEController struct {
-	idScope        string
-	db             *mgo.Database
-	collectionName string
-	item           interface{}
+	DB             *mgo.Database
+	CollectionName string
+	Item           interface{}
+	IDScope        string
 }
 
 // All List All Items
@@ -33,8 +33,8 @@ func (ie *IEController) Create(c *gin.Context) {
 
 // Read Find a Patient
 func (ie *IEController) Read(c *gin.Context) {
-	ie.getCollection().FindId(c.Param("id")).One(&ie.item)
-	c.JSON(http.StatusOK, &ie.item)
+	ie.getCollection().FindId(c.Param("id")).One(&ie.Item)
+	c.JSON(http.StatusOK, &ie.Item)
 }
 
 // Update Update a Patient
@@ -50,11 +50,14 @@ func (ie *IEController) Delete(c *gin.Context) {
 }
 
 func (ie *IEController) getCollection() *mgo.Collection {
-	return ie.db.C(ie.collectionName)
+	return ie.DB.C(ie.CollectionName)
 }
 
 func (ie *IEController) itemSlice() interface{} {
-	it := reflect.TypeOf(ie.item)
+	if ie.Item == nil {
+		panic("No Item Supplied")
+	}
+	it := reflect.TypeOf(ie.Item)
 	rSlice := reflect.MakeSlice(reflect.SliceOf(it), 0, 0).Interface()
 	rSlicePtr := reflect.New(reflect.TypeOf(rSlice))
 	rSlicePtr.Elem().Set(reflect.ValueOf(rSlice))
