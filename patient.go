@@ -1,4 +1,4 @@
-package models
+package ie
 
 import "github.com/intervention-engine/fhir/models"
 
@@ -9,7 +9,7 @@ type Patient struct {
 	NextHuddleID    string           `bson:"next_huddle_id,omitempty" json:"next_huddle_id,omitempty"`
 }
 
-// // NextHuddle Get the Next Huddle this patient is in
-// func (p *Patient) NextHuddle() *Huddle {
-//
-// }
+type PatientService interface {
+	Patient(id string) (*Patient, error)
+	Patients() ([]Patient, error)
+}
