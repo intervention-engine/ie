@@ -3,6 +3,7 @@ package controllers
 import (
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -21,8 +22,19 @@ var collection = db.GetDB().C("patients")
 // All List All Patients
 func (pc *Patients) All(c *gin.Context) {
 	// var patients []models.Patient
-	collection.Find(nil).All(&pc.patients)
-	c.JSON(http.StatusOK, gin.H{"patients": &pc.patients})
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	perPage := 10
+
+	if page < 1 {
+		page = 1
+	}
+
+	q := collection.Find(nil)
+	meta := PaginationMeta(q, page, perPage)
+
+	q.Skip(*meta.Offset).Limit(perPage).All(&pc.patients)
+
+	c.JSON(http.StatusOK, gin.H{"patients": &pc.patients, "meta": &meta})
 }
 
 // Create a Patient resource
