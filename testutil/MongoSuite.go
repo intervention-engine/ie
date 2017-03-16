@@ -32,37 +32,37 @@ type MongoSuite struct {
 // will return the same DBServer until TearDownDBServer is called.  In most cases, calls to DBServer() are completely
 // unnecessary, as calls to DB() will automatically instantiate the DBServer if needed.  If a test suite calls
 // DBServer(), then TearDownDBServer() MUST be called in the TearDownSuite function (or TearDownTest, if appropriate).
-func (suite *MongoSuite) DBServer() *dbtest.DBServer {
-	suite.dbServerMutex.Lock()
-	defer suite.dbServerMutex.Unlock()
+func (m *MongoSuite) DBServer() *dbtest.DBServer {
+	m.dbServerMutex.Lock()
+	defer m.dbServerMutex.Unlock()
 
-	if suite.dbServer == nil {
+	if m.dbServer == nil {
 		var err error
-		suite.dbServer = &dbtest.DBServer{}
-		suite.dbServerPath, err = ioutil.TempDir("", "mongotestdb")
-		suite.Require().NoError(err)
-		suite.dbServer.SetPath(suite.dbServerPath)
+		m.dbServer = &dbtest.DBServer{}
+		m.dbServerPath, err = ioutil.TempDir("", "mongotestdb")
+		m.Require().NoError(err)
+		m.dbServer.SetPath(m.dbServerPath)
 	}
-	return suite.dbServer
+	return m.dbServer
 }
 
 // TearDownDBServer cleans up the suite's test Mongo DBServer, including closing any open sessions, wiping the data,
 // stopping the test DBServer, and deleting the temporary directory where the DBServer stored files.  This function
 // would typically be called in the test suite's TearDownSuite function.
-func (suite *MongoSuite) TearDownDBServer() {
-	suite.TearDownDB()
+func (m *MongoSuite) TearDownDBServer() {
+	m.TearDownDB()
 
-	suite.dbServerMutex.Lock()
-	defer suite.dbServerMutex.Unlock()
+	m.dbServerMutex.Lock()
+	defer m.dbServerMutex.Unlock()
 
-	if suite.dbServer != nil {
-		suite.dbServer.Wipe()
-		suite.dbServer.Stop()
-		suite.dbServer = nil
+	if m.dbServer != nil {
+		m.dbServer.Wipe()
+		m.dbServer.Stop()
+		m.dbServer = nil
 	}
 
-	if suite.dbServerPath != "" {
-		if err := os.RemoveAll(suite.dbServerPath); err != nil {
+	if m.dbServerPath != "" {
+		if err := os.RemoveAll(m.dbServerPath); err != nil {
 			fmt.Fprintf(os.Stderr, "WARNING: Error cleaning up temp directory: %s", err.Error())
 		}
 	}
@@ -71,38 +71,38 @@ func (suite *MongoSuite) TearDownDBServer() {
 // DB returns a pointer to the suite's test Database, named "ie-test", initializing a new Database, Session, and/or
 // DBServer if necessary.  Subsequent calls will return the same Database until TearDownDB() is called.  If a test suite
 // calls DB(), then TearDownDBServer() MUST be called in the TearDownSuite function (or TearDownTest, if appropriate).
-func (suite *MongoSuite) DB() *mgo.Database {
-	suite.dbMutex.Lock()
-	defer suite.dbMutex.Unlock()
+func (m *MongoSuite) DB() *mgo.Database {
+	m.dbMutex.Lock()
+	defer m.dbMutex.Unlock()
 
-	if suite.db == nil {
-		suite.db = suite.DBServer().Session().DB("ie-test")
+	if m.db == nil {
+		m.db = m.DBServer().Session().DB("ie-test")
 	}
-	return suite.db
+	return m.db
 }
 
 // TearDownDB closes the suite's test Session and wipes the DBServer (thereby removing the Database).  This function
 // would typically be called in the test suite's TearDownTest function.
-func (suite *MongoSuite) TearDownDB() {
-	suite.dbMutex.Lock()
-	defer suite.dbMutex.Unlock()
+func (m *MongoSuite) TearDownDB() {
+	m.dbMutex.Lock()
+	defer m.dbMutex.Unlock()
 
-	if suite.db != nil {
-		suite.db.Session.Close()
-		suite.db = nil
+	if m.db != nil {
+		m.db.Session.Close()
+		m.db = nil
 		// suite.dbServer should never be nil at this point, but better safe than sorry
-		suite.dbServerMutex.Lock()
-		if suite.dbServer != nil {
-			suite.dbServer.Wipe()
+		m.dbServerMutex.Lock()
+		if m.dbServer != nil {
+			m.dbServer.Wipe()
 		}
-		suite.dbServerMutex.Unlock()
+		m.dbServerMutex.Unlock()
 	}
 }
 
 // InsertFixture inserts a test fixture into the Mongo database.  If the fixture does not have an _id set, InsertFixture
 // will attempt to find the _id field using reflection and will set it to a new BSON ID before inserting.
-func (suite *MongoSuite) InsertFixture(collection string, pathToFixture string, doc interface{}) {
-	require := suite.Require()
+func (m *MongoSuite) InsertFixture(collection string, pathToFixture string, doc interface{}) {
+	require := m.Require()
 
 	// Read the fixture file and unmarshal it to the doc
 	data, err := ioutil.ReadFile(pathToFixture)
@@ -114,30 +114,30 @@ func (suite *MongoSuite) InsertFixture(collection string, pathToFixture string, 
 	value := reflect.ValueOf(doc).Elem()
 	if value.Kind() == reflect.Slice {
 		for i := 0; i < value.Len(); i++ {
-			suite.insertValue(collection, value.Index(i))
+			m.insertValue(collection, value.Index(i))
 		}
 	} else {
-		suite.insertValue(collection, value)
+		m.insertValue(collection, value)
 	}
 }
 
 // PrintDBServerInfo logs out the connection info for the current test database.
-func (suite *MongoSuite) PrintDBServerInfo() {
-	suite.dbServerMutex.Lock()
-	defer suite.dbServerMutex.Unlock()
+func (m *MongoSuite) PrintDBServerInfo() {
+	m.dbServerMutex.Lock()
+	defer m.dbServerMutex.Unlock()
 
-	dbs := suite.dbServer
+	dbs := m.dbServer
 	if dbs == nil {
 		log.Println("Test database server is not running.")
 		return
 	}
 
-	suite.dbMutex.Lock()
-	defer suite.dbMutex.Unlock()
+	m.dbMutex.Lock()
+	defer m.dbMutex.Unlock()
 
 	var session *mgo.Session
-	if suite.db != nil {
-		session = suite.db.Session
+	if m.db != nil {
+		session = m.db.Session
 	} else {
 		session = dbs.Session()
 		defer session.Close()
@@ -162,15 +162,15 @@ func (suite *MongoSuite) PrintDBServerInfo() {
 
 }
 
-func (suite *MongoSuite) insertValue(collection string, value reflect.Value) {
+func (m *MongoSuite) insertValue(collection string, value reflect.Value) {
 	// Find the ID field and set it, if necessary
 	if field, err := findBSONIDField(value); err == nil && field.CanSet() && field.String() == "" {
 		field.SetString(bson.NewObjectId().Hex())
 	}
 
 	// Store it
-	err := suite.DB().C(collection).Insert(value.Interface())
-	suite.Require().NoError(err)
+	err := m.DB().C(collection).Insert(value.Interface())
+	m.Require().NoError(err)
 }
 
 func findBSONIDField(value reflect.Value) (reflect.Value, error) {
