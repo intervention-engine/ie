@@ -11,5 +11,16 @@ type Patient struct {
 
 type PatientService interface {
 	Patient(id string) (*Patient, error)
-	Patients() ([]Patient, error)
+	Patients() ([]RestructedPatient, error)
+}
+
+type RestructedPatient struct {
+	ID      string            `json:"id"`
+	Address RestructedAddress `json:"address"`
+}
+
+func (p *RestructedPatient) FromFHIR(patient *models.Patient) *RestructedPatient {
+	p.ID = patient.Id
+	p.Address = *(&RestructedAddress{}).FromFHIR(&patient.Address[0])
+	return p
 }

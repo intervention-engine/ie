@@ -24,11 +24,17 @@ func (s *PatientService) Patient(id string) (*ie.Patient, error) {
 	return &p, nil
 }
 
-func (s *PatientService) Patients() ([]ie.Patient, error) {
+func (s *PatientService) Patients() ([]ie.RestructedPatient, error) {
 	var pp []ie.Patient
-	err := s.C.FindId(nil).All(&pp)
+	err := s.C.Find(nil).All(&pp)
 	if err != nil {
 		return nil, err
 	}
-	return pp, nil
+
+	repp := make([]ie.RestructedPatient, len(pp))
+	for i, patient := range pp {
+		repp[i] = *(&ie.RestructedPatient{}).FromFHIR(&patient.Patient)
+	}
+
+	return repp, nil
 }
