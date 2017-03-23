@@ -15,7 +15,7 @@ type Patient struct {
 }
 
 type PatientService interface {
-	Patient(id string) (*Patient, error)
+	Patient(id string) (*RestructedPatient, error)
 	Patients() ([]RestructedPatient, error)
 }
 

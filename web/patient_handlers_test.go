@@ -204,7 +204,7 @@ func (suite *patientSuite) TestGetPatientWithBadId() {
 // If a patient with that id exists, should return the patient and 200 OK
 func (suite *patientSuite) TestGetPatientFound() {
 	w := suite.AssertGetRequest("/api/patients/58938873bd90ef501e29c919", http.StatusOK)
-	var body = make(map[string]ie.Patient)
+	var body = make(map[string]ie.RestructedPatient)
 	json.NewDecoder(w.Body).Decode(&body)
 	result, ok := body["patient"]
 
@@ -215,16 +215,16 @@ func (suite *patientSuite) TestGetPatientFound() {
 
 	patient := patients[0]
 	expName := patient.Name[0]
-	name := result.Name[0]
+	name := result.Name
 
 	suite.Assert().NotNil(result, "body did not contain patient: %s with ID: %s\n", patient.Name[0].Family[0], patient.Id)
-	suite.Assert().Equal(expName.Family[0], name.Family[0])
-	suite.Assert().Equal(expName.Given[0], name.Given[0])
+	suite.Assert().Equal(expName.Family[0], name.Family)
+	suite.Assert().Equal(expName.Given[0], name.Given)
 }
 
 // Mock Services
 
-func (suite *patientSuite) Patient(id string) (*ie.Patient, error) {
+func (suite *patientSuite) Patient(id string) (*ie.RestructedPatient, error) {
 	if !bson.IsObjectIdHex(id) {
 		return nil, errors.New("bad id")
 	}
@@ -232,7 +232,10 @@ func (suite *patientSuite) Patient(id string) (*ie.Patient, error) {
 	if !ok {
 		return nil, errors.New("not found")
 	}
-	return &c, nil
+
+	rep := (&ie.RestructedPatient{}).FromFHIR(&c.Patient)
+
+	return rep, nil
 }
 
 func (suite *patientSuite) Patients() ([]ie.RestructedPatient, error) {

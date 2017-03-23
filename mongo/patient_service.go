@@ -12,7 +12,7 @@ type PatientService struct {
 	C *mgo.Collection
 }
 
-func (s *PatientService) Patient(id string) (*ie.Patient, error) {
+func (s *PatientService) Patient(id string) (*ie.RestructedPatient, error) {
 	if !bson.IsObjectIdHex(id) {
 		return nil, errors.New("bad id")
 	}
@@ -21,7 +21,10 @@ func (s *PatientService) Patient(id string) (*ie.Patient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &p, nil
+
+	rp := (&ie.RestructedPatient{}).FromFHIR(&p.Patient)
+
+	return rp, nil
 }
 
 func (s *PatientService) Patients() ([]ie.RestructedPatient, error) {
