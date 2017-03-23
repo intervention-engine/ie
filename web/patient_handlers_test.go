@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/models"
@@ -37,6 +38,14 @@ func (suite *patientSuite) SetupSuite() {
 	api.GET("/patients/:id", web.Adapt(web.GetPatient, suite.withTestService()))
 }
 
+func generateBirthdate(birthdate string) *models.FHIRDateTime {
+	date, err := time.ParseInLocation("2006-01-02", birthdate, time.Local)
+	if err != nil {
+		panic(err)
+	}
+	return &models.FHIRDateTime{date, models.Precision("date")}
+}
+
 var patients = []ie.Patient{
 	{
 		Patient: models.Patient{
@@ -65,7 +74,8 @@ var patients = []ie.Patient{
 					PostalCode: "42586",
 				},
 			},
-			Gender: "female",
+			Gender:    "female",
+			BirthDate: generateBirthdate("1962-01-01"),
 		},
 		NextHuddleID: "576c9bbf8bd4a4bdc2ac2038",
 		RiskAssessments: []ie.RiskAssessment{
@@ -103,7 +113,8 @@ var patients = []ie.Patient{
 					PostalCode: "xxxxx",
 				},
 			},
-			Gender: "female",
+			Gender:    "female",
+			BirthDate: generateBirthdate("1954-09-21"),
 		},
 		NextHuddleID: "576c9bbf8bd4a4bdc2ac2038",
 		RiskAssessments: []ie.RiskAssessment{
@@ -141,7 +152,8 @@ var patients = []ie.Patient{
 					PostalCode: "01409",
 				},
 			},
-			Gender: "female",
+			Gender:    "female",
+			BirthDate: generateBirthdate("1962-01-01"),
 		},
 		NextHuddleID: "576c9bbf8bd4a4bdc2ac2038",
 		RiskAssessments: []ie.RiskAssessment{
@@ -158,7 +170,7 @@ var patients = []ie.Patient{
 // When there are patients, should return a slice of patients with 200 OK
 func (suite *patientSuite) TestAllPatientsFound() {
 	w := suite.AssertGetRequest("/api/patients", http.StatusOK)
-	var body = make(map[string][]ie.Patient)
+	var body = make(map[string][]ie.RestructedPatient)
 	json.NewDecoder(w.Body).Decode(&body)
 	results, ok := body["patients"]
 	if !ok {
@@ -167,11 +179,12 @@ func (suite *patientSuite) TestAllPatientsFound() {
 	}
 	for _, patient := range patients {
 		result := suite.findPatient(patient.Id, results)
+
 		expName := patient.Name[0]
-		name := result.Name[0]
+		name := result.Name
 		suite.Assert().NotNil(result, "body did not contain patient: %s with ID: %s\n", patient.Name[0].Family[0], patient.Id)
-		suite.Assert().Equal(expName.Family[0], name.Family[0])
-		suite.Assert().Equal(expName.Given[0], name.Given[0])
+		suite.Assert().Equal(expName.Family[0], name.Family)
+		suite.Assert().Equal(expName.Given[0], name.Given)
 	}
 }
 
@@ -222,12 +235,18 @@ func (suite *patientSuite) Patient(id string) (*ie.Patient, error) {
 	return &c, nil
 }
 
-func (suite *patientSuite) Patients() ([]ie.Patient, error) {
+func (suite *patientSuite) Patients() ([]ie.RestructedPatient, error) {
 	var cc []ie.Patient
 	for _, patient := range suite.DB {
 		cc = append(cc, patient)
 	}
-	return cc, nil
+
+	repp := make([]ie.RestructedPatient, len(cc))
+	for i, patient := range cc {
+		repp[i] = *(&ie.RestructedPatient{}).FromFHIR(&patient.Patient)
+	}
+
+	return repp, nil
 }
 
 // Utility Methods
@@ -241,9 +260,9 @@ func (suite *patientSuite) withTestService() web.Adapter {
 	}
 }
 
-func (suite *patientSuite) findPatient(ID string, patients []ie.Patient) *ie.Patient {
+func (suite *patientSuite) findPatient(ID string, patients []ie.RestructedPatient) *ie.RestructedPatient {
 	for _, p := range patients {
-		if ID == p.Id {
+		if ID == p.ID {
 			return &p
 		}
 	}
