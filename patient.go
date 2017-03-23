@@ -26,17 +26,27 @@ type RestructedPatient struct {
 	Gender                string                     `json:"gender"`
 	BirthDate             *models.FHIRDateTime       `json:"birthDate"`
 	Name                  RestructedPatientName      `json:"name"`
-	NextHuddleID          *string                    `json:"nextHuddleId"`
+	NextHuddleID          string                     `json:"nextHuddleId"`
 	RecentRiskAssessments []RestructedRiskAssessment `json:"recentRiskAssessments"`
 }
 
-func (p *RestructedPatient) FromFHIR(patient *models.Patient) *RestructedPatient {
+func (p *RestructedPatient) FromFHIR(iePatient *Patient) *RestructedPatient {
+	patient := iePatient.Patient
+
 	p.ID = patient.Id
 	p.Address = *(&RestructedAddress{}).FromFHIR(&patient.Address[0])
 	p.Age = age(patient.BirthDate)
 	p.Gender = patient.Gender
 	p.BirthDate = patient.BirthDate
 	p.Name = *(&RestructedPatientName{}).FromFHIR(&patient.Name[0])
+
+	p.NextHuddleID = iePatient.NextHuddleID
+
+	p.RecentRiskAssessments = make([]RestructedRiskAssessment, len(iePatient.RiskAssessments))
+	for i, riskAssessment := range iePatient.RiskAssessments {
+		p.RecentRiskAssessments[i] = *(&RestructedRiskAssessment{}).FromFHIR(&riskAssessment)
+	}
+
 	return p
 }
 

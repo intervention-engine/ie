@@ -233,7 +233,7 @@ func (suite *patientSuite) Patient(id string) (*ie.RestructedPatient, error) {
 		return nil, errors.New("not found")
 	}
 
-	rep := (&ie.RestructedPatient{}).FromFHIR(&c.Patient)
+	rep := (&ie.RestructedPatient{}).FromFHIR(&c)
 
 	return rep, nil
 }
@@ -246,7 +246,7 @@ func (suite *patientSuite) Patients() ([]ie.RestructedPatient, error) {
 
 	repp := make([]ie.RestructedPatient, len(cc))
 	for i, patient := range cc {
-		repp[i] = *(&ie.RestructedPatient{}).FromFHIR(&patient.Patient)
+		repp[i] = *(&ie.RestructedPatient{}).FromFHIR(&patient)
 	}
 
 	return repp, nil

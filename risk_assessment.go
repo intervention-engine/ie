@@ -11,8 +11,17 @@ type RiskAssessment struct {
 }
 
 type RestructedRiskAssessment struct {
-	ID                    string `json:"id"`
-	RiskAssessmentGroupId string `json:"riskAssessmentGroupId"`
-	Date                  string `json:"date"`
-	Value                 int    `json:"value"`
+	ID                    string    `json:"id"`
+	RiskAssessmentGroupId string    `json:"riskAssessmentGroupId"`
+	Date                  time.Time `json:"date"`
+	Value                 int       `json:"value"`
+}
+
+func (r *RestructedRiskAssessment) FromFHIR(riskAssessment *RiskAssessment) *RestructedRiskAssessment {
+	r.ID = riskAssessment.ID
+	r.RiskAssessmentGroupId = riskAssessment.GroupID
+	r.Date = riskAssessment.Date
+	r.Value = riskAssessment.Value
+
+	return r
 }

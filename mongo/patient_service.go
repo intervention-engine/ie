@@ -22,7 +22,7 @@ func (s *PatientService) Patient(id string) (*ie.RestructedPatient, error) {
 		return nil, err
 	}
 
-	rp := (&ie.RestructedPatient{}).FromFHIR(&p.Patient)
+	rp := (&ie.RestructedPatient{}).FromFHIR(&p)
 
 	return rp, nil
 }
@@ -36,7 +36,7 @@ func (s *PatientService) Patients() ([]ie.RestructedPatient, error) {
 
 	repp := make([]ie.RestructedPatient, len(pp))
 	for i, patient := range pp {
-		repp[i] = *(&ie.RestructedPatient{}).FromFHIR(&patient.Patient)
+		repp[i] = *(&ie.RestructedPatient{}).FromFHIR(&patient)
 	}
 
 	return repp, nil
