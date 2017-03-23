@@ -9,3 +9,10 @@ type RiskAssessment struct {
 	Date    time.Time `json:"date,omitempty"`
 	Value   int       `json:"value,omitempty"`
 }
+
+type RestructedRiskAssessment struct {
+	ID                    string `json:"id"`
+	RiskAssessmentGroupId string `json:"riskAssessmentGroupId"`
+	Date                  string `json:"date"`
+	Value                 int    `json:"value"`
+}
