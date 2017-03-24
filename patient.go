@@ -1,76 +1,44 @@
 package ie
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/intervention-engine/fhir/models"
 )
 
-// Patient embeds FHIR model and adds Risk/Huddle information
-type Patient struct {
-	models.Patient  `bson:",inline"`
-	RiskAssessments []RiskAssessment `bson:"risk_assessment,omitempty" json:"risk_assessment,omitempty"`
-	NextHuddleID    string           `bson:"next_huddle_id,omitempty" json:"next_huddle_id,omitempty"`
-}
-
 type PatientService interface {
-	Patient(id string) (*RestructedPatient, error)
-	Patients() ([]RestructedPatient, error)
+	Patient(id string) (*Patient, error)
+	Patients() ([]Patient, error)
 }
 
-type RestructedPatient struct {
-	ID                    string                     `json:"id"`
-	Address               RestructedAddress          `json:"address"`
-	Age                   int                        `json:"age"`
-	Gender                string                     `json:"gender"`
-	BirthDate             *models.FHIRDateTime       `json:"birthDate"`
-	Name                  RestructedPatientName      `json:"name"`
-	NextHuddleID          string                     `json:"nextHuddleId"`
-	RecentRiskAssessments []RestructedRiskAssessment `json:"recentRiskAssessments"`
+type Patient struct {
+	ID                    string               `json:"id"`
+	Address               Address              `json:"address"`
+	Age                   int                  `json:"age"`
+	Gender                string               `json:"gender"`
+	BirthDate             *models.FHIRDateTime `json:"birthDate"`
+	Name                  Name                 `json:"name"`
+	NextHuddleID          string               `json:"nextHuddleId"`
+	RecentRiskAssessments []RiskAssessment     `json:"recentRiskAssessments"`
 }
 
-func (p *RestructedPatient) FromFHIR(iePatient *Patient) *RestructedPatient {
-	patient := iePatient.Patient
-
-	p.ID = patient.Id
-	p.Address = *(&RestructedAddress{}).FromFHIR(&patient.Address[0])
-	p.Age = age(patient.BirthDate)
-	p.Gender = patient.Gender
-	p.BirthDate = patient.BirthDate
-	p.Name = *(&RestructedPatientName{}).FromFHIR(&patient.Name[0])
-
-	p.NextHuddleID = iePatient.NextHuddleID
-
-	p.RecentRiskAssessments = make([]RestructedRiskAssessment, len(iePatient.RiskAssessments))
-	for i, riskAssessment := range iePatient.RiskAssessments {
-		p.RecentRiskAssessments[i] = *(&RestructedRiskAssessment{}).FromFHIR(&riskAssessment)
-	}
-
-	return p
+type Address struct {
+	Street     []string `json:"street"`
+	City       string   `json:"city"`
+	State      string   `json:"state"`
+	PostalCode string   `json:"postalCode"`
 }
 
-type RestructedPatientName struct {
+type Name struct {
 	Family        string `json:"family"`
 	Given         string `json:"given"`
 	MiddleInitial string `json:"middleInitial"`
 	Full          string `json:"full"`
 }
 
-func (p *RestructedPatientName) FromFHIR(name *models.HumanName) *RestructedPatientName {
-	p.Family = name.Family[0]
-	p.Given = name.Given[0]
-	p.Full = fmt.Sprintf("%s %s", p.Given, p.Family)
-	return p
-}
-
-func age(birthday *models.FHIRDateTime) int {
-	now := time.Now()
-	years := now.Year() - birthday.Time.Year()
-
-	if now.YearDay() < birthday.Time.YearDay() {
-		years--
-	}
-
-	return years
+type RiskAssessment struct {
+	ID      string    `json:"id"`
+	GroupID string    `json:"riskAssessmentGroupId"`
+	Date    time.Time `json:"date"`
+	Value   int       `json:"value"`
 }
