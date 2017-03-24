@@ -3,8 +3,10 @@ package web_test
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/models"
@@ -27,7 +29,7 @@ func TestPatientHandlersSuite(t *testing.T) {
 
 func (suite *patientSuite) SetupTest() {
 	for _, patient := range patients {
-		suite.DB[patient.Id] = patient
+		suite.DB[patient.ID] = patient
 	}
 }
 
@@ -37,38 +39,33 @@ func (suite *patientSuite) SetupSuite() {
 	api.GET("/patients/:id", web.Adapt(web.GetPatient, suite.withTestService()))
 }
 
+func generateBirthdate(birthdate string) *models.FHIRDateTime {
+	date, err := time.ParseInLocation("2006-01-02", birthdate, time.Local)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return &models.FHIRDateTime{Time: date, Precision: models.Precision("date")}
+}
+
 var patients = []ie.Patient{
 	{
-		Patient: models.Patient{
-			DomainResource: models.DomainResource{
-				Resource: models.Resource{
-					Id: "58938873bd90ef501e29c919",
-				},
-			},
-			Name: []models.HumanName{
-				{
-					Family: []string{
-						"Morgan1765",
-					},
-					Given: []string{
-						"Amy",
-					},
-				},
-			},
-			Address: []models.Address{
-				{
-					Line: []string{
-						"30377 Petterle Place",
-					},
-					City:       "Los Gatos",
-					State:      "GA",
-					PostalCode: "42586",
-				},
-			},
-			Gender: "female",
+		ID: "58938873bd90ef501e29c919",
+		Name: ie.Name{
+			Family: "Morgan1765",
+			Given:  "Amy",
 		},
+		Address: ie.Address{
+			Street: []string{
+				"30377 Petterle Place",
+			},
+			City:       "Los Gatos",
+			State:      "GA",
+			PostalCode: "42586",
+		},
+		Gender:       "female",
+		BirthDate:    generateBirthdate("1962-01-01"),
 		NextHuddleID: "576c9bbf8bd4a4bdc2ac2038",
-		RiskAssessments: []ie.RiskAssessment{
+		RecentRiskAssessments: []ie.RiskAssessment{
 			{
 				ID:      "576c9bcf8bd4d4bdc2ac481c",
 				GroupID: "576c9bcc8bd4d4bdc2ac429d",
@@ -77,36 +74,23 @@ var patients = []ie.Patient{
 		},
 	},
 	{
-		Patient: models.Patient{
-			DomainResource: models.DomainResource{
-				Resource: models.Resource{
-					Id: "58c314acb367c1ff54d19e9e",
-				},
-			},
-			Name: []models.HumanName{
-				{
-					Family: []string{
-						"Taylor Swift",
-					},
-					Given: []string{
-						"TayTay a.k.a Sway Sway",
-					},
-				},
-			},
-			Address: []models.Address{
-				{
-					Line: []string{
-						"42 Wallaby Way",
-					},
-					City:       "Sydney",
-					State:      "AUS",
-					PostalCode: "xxxxx",
-				},
-			},
-			Gender: "female",
+		ID: "58c314acb367c1ff54d19e9e",
+		Name: ie.Name{
+			Family: "Taylor Swift",
+			Given:  "TayTay a.k.a Sway Sway",
 		},
+		Address: ie.Address{
+			Street: []string{
+				"42 Wallaby Way",
+			},
+			City:       "Sydney",
+			State:      "AUS",
+			PostalCode: "xxxxx",
+		},
+		Gender:       "female",
+		BirthDate:    generateBirthdate("1954-09-21"),
 		NextHuddleID: "576c9bbf8bd4a4bdc2ac2038",
-		RiskAssessments: []ie.RiskAssessment{
+		RecentRiskAssessments: []ie.RiskAssessment{
 			{
 				ID:      "576c9bcf8bd4d4bdc2ac481c",
 				GroupID: "576c9bcc8bd4d4bdc2ac429d",
@@ -115,36 +99,23 @@ var patients = []ie.Patient{
 		},
 	},
 	{
-		Patient: models.Patient{
-			DomainResource: models.DomainResource{
-				Resource: models.Resource{
-					Id: "576c9bcc8bd4d4bdc2ac42b5",
-				},
-			},
-			Name: []models.HumanName{
-				{
-					Family: []string{
-						"Banks9849",
-					},
-					Given: []string{
-						"Jacqueline",
-					},
-				},
-			},
-			Address: []models.Address{
-				{
-					Line: []string{
-						"4691 7th Way",
-					},
-					City:       "Loyalton",
-					State:      "WY",
-					PostalCode: "01409",
-				},
-			},
-			Gender: "female",
+		ID: "576c9bcc8bd4d4bdc2ac42b5",
+		Name: ie.Name{
+			Family: "Banks9849",
+			Given:  "Jacqueline",
 		},
+		Address: ie.Address{
+			Street: []string{
+				"4691 7th Way",
+			},
+			City:       "Loyalton",
+			State:      "WY",
+			PostalCode: "01409",
+		},
+		Gender:       "female",
+		BirthDate:    generateBirthdate("1962-01-01"),
 		NextHuddleID: "576c9bbf8bd4a4bdc2ac2038",
-		RiskAssessments: []ie.RiskAssessment{
+		RecentRiskAssessments: []ie.RiskAssessment{
 			{
 				ID:      "576c9bcf8bd4d4bdc2ac481c",
 				GroupID: "576c9bcc8bd4d4bdc2ac429d",
@@ -166,19 +137,20 @@ func (suite *patientSuite) TestAllPatientsFound() {
 		return
 	}
 	for _, patient := range patients {
-		result := suite.findPatient(patient.Id, results)
-		expName := patient.Name[0]
-		name := result.Name[0]
-		suite.Assert().NotNil(result, "body did not contain patient: %s with ID: %s\n", patient.Name[0].Family[0], patient.Id)
-		suite.Assert().Equal(expName.Family[0], name.Family[0])
-		suite.Assert().Equal(expName.Given[0], name.Given[0])
+		result := suite.findPatient(patient.ID, results)
+
+		expName := patient.Name
+		name := result.Name
+		suite.Assert().NotNil(result, "body did not contain patient: %s with ID: %s\n", patient.Name.Family, patient.ID)
+		suite.Assert().Equal(expName.Family, name.Family)
+		suite.Assert().Equal(expName.Given, name.Given)
 	}
 }
 
 // If a patient with that (correct) id does not exist in the database, should
 // return 404 Not Found
 func (suite *patientSuite) TestGetPatientNotFound() {
-	id := patients[0].Id
+	id := patients[0].ID
 	delete(suite.DB, id)
 	suite.AssertGetRequest("/api/patients/"+id, http.StatusNotFound)
 }
@@ -201,12 +173,12 @@ func (suite *patientSuite) TestGetPatientFound() {
 	}
 
 	patient := patients[0]
-	expName := patient.Name[0]
-	name := result.Name[0]
+	expName := patient.Name
+	name := result.Name
 
-	suite.Assert().NotNil(result, "body did not contain patient: %s with ID: %s\n", patient.Name[0].Family[0], patient.Id)
-	suite.Assert().Equal(expName.Family[0], name.Family[0])
-	suite.Assert().Equal(expName.Given[0], name.Given[0])
+	suite.Assert().NotNil(result, "body did not contain patient: %s with ID: %s\n", patient.Name.Family, patient.ID)
+	suite.Assert().Equal(expName.Family, name.Family)
+	suite.Assert().Equal(expName.Given, name.Given)
 }
 
 // Mock Services
@@ -215,19 +187,21 @@ func (suite *patientSuite) Patient(id string) (*ie.Patient, error) {
 	if !bson.IsObjectIdHex(id) {
 		return nil, errors.New("bad id")
 	}
-	c, ok := suite.DB[id]
+	p, ok := suite.DB[id]
 	if !ok {
 		return nil, errors.New("not found")
 	}
-	return &c, nil
+
+	return &p, nil
 }
 
 func (suite *patientSuite) Patients() ([]ie.Patient, error) {
-	var cc []ie.Patient
+	var pp []ie.Patient
 	for _, patient := range suite.DB {
-		cc = append(cc, patient)
+		pp = append(pp, patient)
 	}
-	return cc, nil
+
+	return pp, nil
 }
 
 // Utility Methods
@@ -243,7 +217,7 @@ func (suite *patientSuite) withTestService() web.Adapter {
 
 func (suite *patientSuite) findPatient(ID string, patients []ie.Patient) *ie.Patient {
 	for _, p := range patients {
-		if ID == p.Id {
+		if ID == p.ID {
 			return &p
 		}
 	}
