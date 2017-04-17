@@ -67,7 +67,7 @@ func DeleteCareTeam(ctx *gin.Context) {
 }
 
 func getCareTeamService(ctx *gin.Context) ie.CareTeamService {
-	svc := ctx.MustGet("service")
+	svc := ctx.MustGet("careTeamService")
 	return svc.(ie.CareTeamService)
 }
 

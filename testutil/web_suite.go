@@ -32,8 +32,13 @@ func (suite *WebSuite) AssertPostRequest(path string, body io.Reader, httpCode i
 	return suite.assertRequest(http.MethodPost, path, body, httpCode)
 }
 
+// AssertPuttRequest Create a PUT request and returns a reponse recorder for testing
+func (suite *WebSuite) AssertPutRequest(path string, body io.Reader, httpCode int) *httptest.ResponseRecorder {
+	return suite.assertRequest(http.MethodPut, path, body, httpCode)
+}
+
 func (suite *WebSuite) assertRequest(method string, path string, body io.Reader, httpCode int) *httptest.ResponseRecorder {
-	req, err := http.NewRequest(http.MethodGet, path, body)
+	req, err := http.NewRequest(method, path, body)
 	if err != nil {
 		suite.T().Errorf("failed to make request: %#+v\n", err)
 	}

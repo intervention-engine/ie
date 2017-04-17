@@ -38,8 +38,17 @@ func (s *PatientService) Patient(id string) (*ie.Patient, error) {
 }
 
 func (s *PatientService) Patients() ([]ie.Patient, error) {
+	return s.findPatients(nil)
+}
+
+func (s *PatientService) PatientsByID(ids []string) ([]ie.Patient, error) {
+	query := bson.M{"id": bson.M{"$in": ids}}
+	return s.findPatients(query)
+}
+
+func (s *PatientService) findPatients(query map[string]interface{}) ([]ie.Patient, error) {
 	var data []Patient
-	err := s.C.Find(nil).All(&data)
+	err := s.C.Find(query).All(&data)
 	if err != nil {
 		return nil, err
 	}
