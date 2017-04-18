@@ -1,6 +1,8 @@
 package mongo
 
 import (
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/ie"
 	mgo "gopkg.in/mgo.v2"
@@ -12,7 +14,19 @@ type Services struct {
 	S *mgo.Session
 }
 
-// withMongo puts a mgo.Collection named "care_teams" into the context for the actual handler to use.
+// NewMongoService creates new Mongo service from MongodB URL and returns
+// service and func used to clean up connection
+func NewMongoService(url string) (Services, func()) {
+	s, err := mgo.Dial(url)
+	srv := Services{S: s}
+	if err != nil {
+		log.Fatalln("dialing mongo failed for ie session at url: %s", url)
+	}
+
+	return srv, srv.S.Close
+}
+
+// CareTeamService puts a mgo.Collection named "care_teams" into the context for the actual handler to use.
 func (s *Services) CareTeamService() ie.Adapter {
 	return func(h gin.HandlerFunc) gin.HandlerFunc {
 		return func(ctx *gin.Context) {
