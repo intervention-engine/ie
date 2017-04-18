@@ -46,7 +46,7 @@ func getMembershipService(ctx *gin.Context) ie.MembershipService {
 	return svc.(ie.MembershipService)
 }
 
-// PatientsForCareTeam Utility Function to get Patients that belong to a care team
+// patientsForCareTeam Utility Function to get Patients that belong to a care team
 func patientsForCareTeam(ctx *gin.Context, id string) ([]ie.Patient, error) {
 
 	mems, err := getMembershipService(ctx).PatientMemberships(id)
