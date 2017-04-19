@@ -6,6 +6,7 @@ import (
 
 	"github.com/goadesign/goa"
 	"github.com/intervention-engine/ie/mongo"
+	"github.com/intervention-engine/ie/storage"
 	mgo "gopkg.in/mgo.v2"
 )
 
@@ -18,7 +19,7 @@ func WithMongoService(session *mgo.Session) goa.Middleware {
 	}
 }
 
-func GetStorageService(ctx context.Context) StorageService {
+func GetStorageService(ctx context.Context) storage.Service {
 	svc := ctx.Value("service")
-	return svc.(StorageService)
+	return svc.(storage.Service)
 }

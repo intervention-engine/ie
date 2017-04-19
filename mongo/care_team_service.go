@@ -27,7 +27,7 @@ func (s *CareTeamService) CareTeam(id string) (*app.Careteam, error) {
 	return &c, nil
 }
 
-func (s *CareTeamService) CareTeams() (app.CareteamCollection, error) {
+func (s *CareTeamService) CareTeams() ([]*app.Careteam, error) {
 	defer s.S.Close()
 	var cc []*app.Careteam
 	err := s.C.Find(nil).All(&cc)

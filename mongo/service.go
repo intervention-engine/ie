@@ -3,6 +3,8 @@ package mongo
 import (
 	"strings"
 
+	"github.com/intervention-engine/ie/storage"
+
 	mgo "gopkg.in/mgo.v2"
 )
 
@@ -14,13 +16,13 @@ func NewMongoService(session *mgo.Session) *MongoService {
 	return &MongoService{S: session}
 }
 
-func (m *MongoService) NewCareTeamService() *CareTeamService {
+func (m *MongoService) NewCareTeamService() storage.CareTeamService {
 	s := m.S.Copy()
 	c := s.DB("fhir").C("care_teams")
 	return &CareTeamService{S: s, C: c}
 }
 
-func (m *MongoService) NewPatientService() *PatientService {
+func (m *MongoService) NewPatientService() storage.PatientService {
 	s := m.S.Copy()
 	c := s.DB("fhir").C("patients")
 	return &PatientService{S: s, C: c}

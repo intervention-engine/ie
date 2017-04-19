@@ -1,8 +1,13 @@
-package ie
+package storage
 
 import "github.com/intervention-engine/ie/app"
 
-type StorageService interface {
+// Interface implementation assertions
+//var _ StorageService = (*mongo.MongoService)(nil)
+//var _ CareTeamService = (*mongo.CareTeamService)(nil)
+//var _ PatientService = (*mongo.PatientService)(nil)
+
+type Service interface {
 	NewCareTeamService() CareTeamService
 	NewPatientService() PatientService
 }
