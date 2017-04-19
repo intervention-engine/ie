@@ -3,8 +3,10 @@ package web_test
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"testing"
 	"time"
 
@@ -19,35 +21,168 @@ import (
 
 type patientSuite struct {
 	testutil.WebSuite
-	DB map[string]ie.Patient
+	DB        map[string]ie.Patient
+	MembersDB map[string]ie.Membership
 }
 
 func TestPatientHandlersSuite(t *testing.T) {
-	m := make(map[string]ie.Patient)
-	suite.Run(t, &patientSuite{DB: m})
+	p := make(map[string]ie.Patient)
+	m := make(map[string]ie.Membership)
+	suite.Run(t, &patientSuite{DB: p, MembersDB: m})
 }
 
 func (suite *patientSuite) SetupTest() {
-	for _, patient := range patients {
+	for _, patient := range PatientsDB {
 		suite.DB[patient.ID] = patient
+	}
+
+	for _, mem := range MembershipsDB {
+		suite.MembersDB[mem.CareTeamID] = mem
 	}
 }
 
 func (suite *patientSuite) SetupSuite() {
 	api := suite.LoadGin()
-	api.GET("/patients", web.Adapt(web.ListAllPatients, suite.withTestService()))
-	api.GET("/patients/:id", web.Adapt(web.GetPatient, suite.withTestService()))
+	web.RegisterPatientRoutes(api, suite.withTestServices())
 }
 
-func generateBirthdate(birthdate string) *models.FHIRDateTime {
-	date, err := time.ParseInLocation("2006-01-02", birthdate, time.Local)
-	if err != nil {
-		log.Fatalln(err)
+// TODO: Should make some permanent times so we can test that, too
+// When there are patients, should return a slice of patients with 200 OK
+func (suite *patientSuite) TestAllPatientsFound() {
+	w := suite.AssertGetRequest("/api/patients", http.StatusOK)
+	var body = make(map[string][]ie.Patient)
+	json.NewDecoder(w.Body).Decode(&body)
+	results, ok := body["patients"]
+	if !ok {
+		suite.T().Errorf("body did not contain an element named patients | body: %#+v\n", w.Body.String())
+		return
 	}
-	return &models.FHIRDateTime{Time: date, Precision: models.Precision("date")}
+	for _, patient := range PatientsDB {
+		result := suite.findPatient(patient.ID, results)
+
+		expName := patient.Name
+		name := result.Name
+		suite.Assert().NotNil(result, "body did not contain patient: %s with ID: %s\n", patient.Name.Family, patient.ID)
+		suite.Assert().Equal(expName.Family, name.Family)
+		suite.Assert().Equal(expName.Given, name.Given)
+	}
 }
 
-var patients = []ie.Patient{
+// If a patient with that (correct) id does not exist in the database, should
+// return 404 Not Found
+func (suite *patientSuite) TestGetPatientNotFound() {
+	id := PatientsDB[0].ID
+	delete(suite.DB, id)
+	suite.AssertGetRequest("/api/patients/"+id, http.StatusNotFound)
+}
+
+func (suite *patientSuite) TestListPatientsInCareTeam() {
+	suite.AssertGetRequest("/api/care_teams/58c314acb367c1ff54d19e9e/patients", http.StatusOK)
+}
+
+// When given an incorrectly formatted id, should return 400 Bad Request
+func (suite *patientSuite) TestGetPatientWithBadId() {
+	suite.AssertGetRequest("/api/patients/sdf", http.StatusBadRequest)
+}
+
+func (suite *patientSuite) TestAddPatientToCareTeam() {
+	suite.AssertPutRequest("/api/care_teams/58c314acb367c1ff54d19e9f/patients/58938873bd90ef501e29c919", nil, http.StatusOK)
+}
+
+// If a patient with that id exists, should return the patient and 200 OK
+func (suite *patientSuite) TestGetPatientFound() {
+	w := suite.AssertGetRequest("/api/patients/58938873bd90ef501e29c919", http.StatusOK)
+	var body = make(map[string]ie.Patient)
+	json.NewDecoder(w.Body).Decode(&body)
+	result, ok := body["patient"]
+
+	if !ok {
+		suite.T().Errorf("body did not contain an element named patient | body: %#+v\n", w.Body.String())
+		return
+	}
+
+	patient := PatientsDB[0]
+	expName := patient.Name
+	name := result.Name
+
+	suite.Assert().NotNil(result, "body did not contain patient: %s with ID: %s\n", patient.Name.Family, patient.ID)
+	suite.Assert().Equal(expName.Family, name.Family)
+	suite.Assert().Equal(expName.Given, name.Given)
+}
+
+// Mock Services
+
+func (suite *patientSuite) Patient(id string) (*ie.Patient, error) {
+	if !bson.IsObjectIdHex(id) {
+		return nil, errors.New("bad id")
+	}
+	p, ok := suite.DB[id]
+	if !ok {
+		return nil, errors.New("not found")
+	}
+
+	return &p, nil
+}
+
+func (suite *patientSuite) Patients() ([]ie.Patient, error) {
+	var pp []ie.Patient
+	for _, patient := range suite.DB {
+		pp = append(pp, patient)
+	}
+
+	return pp, nil
+}
+
+func (suite *patientSuite) PatientsByID(ids []string) ([]ie.Patient, error) {
+	pp := make([]ie.Patient, len(ids))
+	fmt.Println(ids)
+	for _, id := range ids {
+		pp = append(pp, suite.DB[id])
+	}
+	return pp, nil
+}
+
+func (suite *patientSuite) PatientMemberships(id string) ([]ie.Membership, error) {
+	mems := make([]ie.Membership, len(suite.MembersDB))
+	for _, mem := range suite.MembersDB {
+		if mem.CareTeamID == id {
+			mems = append(mems, mem)
+		}
+	}
+	return mems, nil
+}
+
+func (suite *patientSuite) CreateMembership(mem ie.Membership) error {
+	size := int64(len(suite.MembersDB))
+	id := strconv.FormatInt(size, 10)
+	suite.MembersDB[id] = mem
+	return nil
+}
+
+// Fixtures
+
+var MembershipsDB = []ie.Membership{
+	ie.Membership{
+		ID:         "",
+		CareTeamID: "58c314acb367c1ff54d19e9e",
+		PatientID:  "58938873bd90ef501e29c919",
+		CreatedAt:  time.Now(),
+	},
+	ie.Membership{
+		ID:         "",
+		CareTeamID: "58c314acb367c1ff54d19e9f",
+		PatientID:  "58c314acb367c1ff54d19e9e",
+		CreatedAt:  time.Now(),
+	},
+	ie.Membership{
+		ID:         "",
+		CareTeamID: "58c314acb367c1ff54d19e9e",
+		PatientID:  "576c9bcc8bd4d4bdc2ac42b5",
+		CreatedAt:  time.Now(),
+	},
+}
+
+var PatientsDB = []ie.Patient{
 	{
 		ID: "58938873bd90ef501e29c919",
 		Name: ie.Name{
@@ -125,91 +260,21 @@ var patients = []ie.Patient{
 	},
 }
 
-// TODO: Should make some permanent times so we can test that, too
-// When there are patients, should return a slice of patients with 200 OK
-func (suite *patientSuite) TestAllPatientsFound() {
-	w := suite.AssertGetRequest("/api/patients", http.StatusOK)
-	var body = make(map[string][]ie.Patient)
-	json.NewDecoder(w.Body).Decode(&body)
-	results, ok := body["patients"]
-	if !ok {
-		suite.T().Errorf("body did not contain an element named patients | body: %#+v\n", w.Body.String())
-		return
-	}
-	for _, patient := range patients {
-		result := suite.findPatient(patient.ID, results)
-
-		expName := patient.Name
-		name := result.Name
-		suite.Assert().NotNil(result, "body did not contain patient: %s with ID: %s\n", patient.Name.Family, patient.ID)
-		suite.Assert().Equal(expName.Family, name.Family)
-		suite.Assert().Equal(expName.Given, name.Given)
-	}
-}
-
-// If a patient with that (correct) id does not exist in the database, should
-// return 404 Not Found
-func (suite *patientSuite) TestGetPatientNotFound() {
-	id := patients[0].ID
-	delete(suite.DB, id)
-	suite.AssertGetRequest("/api/patients/"+id, http.StatusNotFound)
-}
-
-// When given an incorrectly formatted id, should return 400 Bad Request
-func (suite *patientSuite) TestGetPatientWithBadId() {
-	suite.AssertGetRequest("/api/patients/sdf", http.StatusBadRequest)
-}
-
-// If a patient with that id exists, should return the patient and 200 OK
-func (suite *patientSuite) TestGetPatientFound() {
-	w := suite.AssertGetRequest("/api/patients/58938873bd90ef501e29c919", http.StatusOK)
-	var body = make(map[string]ie.Patient)
-	json.NewDecoder(w.Body).Decode(&body)
-	result, ok := body["patient"]
-
-	if !ok {
-		suite.T().Errorf("body did not contain an element named patient | body: %#+v\n", w.Body.String())
-		return
-	}
-
-	patient := patients[0]
-	expName := patient.Name
-	name := result.Name
-
-	suite.Assert().NotNil(result, "body did not contain patient: %s with ID: %s\n", patient.Name.Family, patient.ID)
-	suite.Assert().Equal(expName.Family, name.Family)
-	suite.Assert().Equal(expName.Given, name.Given)
-}
-
-// Mock Services
-
-func (suite *patientSuite) Patient(id string) (*ie.Patient, error) {
-	if !bson.IsObjectIdHex(id) {
-		return nil, errors.New("bad id")
-	}
-	p, ok := suite.DB[id]
-	if !ok {
-		return nil, errors.New("not found")
-	}
-
-	return &p, nil
-}
-
-func (suite *patientSuite) Patients() ([]ie.Patient, error) {
-	var pp []ie.Patient
-	for _, patient := range suite.DB {
-		pp = append(pp, patient)
-	}
-
-	return pp, nil
-}
-
 // Utility Methods
 
-func (suite *patientSuite) withTestService() web.Adapter {
+func generateBirthdate(birthdate string) *models.FHIRDateTime {
+	date, err := time.ParseInLocation("2006-01-02", birthdate, time.Local)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return &models.FHIRDateTime{Time: date, Precision: models.Precision("date")}
+}
+
+func (suite *patientSuite) withTestServices() ie.Adapter {
 	return func(h gin.HandlerFunc) gin.HandlerFunc {
 		return func(ctx *gin.Context) {
-			ctx.Set("service", suite)
+			ctx.Set("patientService", suite)
+			ctx.Set("membershipService", suite)
 			h(ctx)
 		}
 	}

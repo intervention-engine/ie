@@ -9,6 +9,7 @@ import (
 type PatientService interface {
 	Patient(id string) (*Patient, error)
 	Patients() ([]Patient, error)
+	PatientsByID(ids []string) ([]Patient, error)
 }
 
 type Patient struct {

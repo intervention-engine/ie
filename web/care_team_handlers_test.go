@@ -28,32 +28,13 @@ func TestCareTeamHandlersSuite(t *testing.T) {
 
 func (suite *careTeamSuite) SetupSuite() {
 	api := suite.LoadGin()
-	api.GET("/care_teams", web.Adapt(web.ListAllCareTeams, suite.withTestService()))
-	api.POST("/care_teams", web.Adapt(web.CreateCareTeam, suite.withTestService()))
-	api.GET("/care_teams/:id", web.Adapt(web.GetCareTeam, suite.withTestService()))
-	api.PUT("/care_teams/:id", web.Adapt(web.UpdateCareTeam, suite.withTestService()))
-	api.DELETE("/care_teams/:id", web.Adapt(web.DeleteCareTeam, suite.withTestService()))
+	web.RegisterCareTeamRoutes(api, suite.withTestService())
 }
 
 func (suite *careTeamSuite) SetupTest() {
-	for _, team := range careTeams {
+	for _, team := range CareTeamsDB {
 		suite.DB[team.ID] = team
 	}
-}
-
-var careTeams = []ie.CareTeam{
-	ie.CareTeam{
-		ID:        "58c314acb367c1ff54d19e9e",
-		Name:      "The AutoDocs",
-		Leader:    "Optometrist Prime",
-		CreatedAt: time.Now(),
-	},
-	ie.CareTeam{
-		ID:        "58c314acb367c1ff54d19e9f",
-		Name:      "RoboDocs",
-		Leader:    "",
-		CreatedAt: time.Now(),
-	},
 }
 
 // TODO: Should make some permanent times so we can test that, too
@@ -68,7 +49,7 @@ func (suite *careTeamSuite) TestAllCareTeamsFound() {
 		suite.T().Errorf("body did not contain an element named care_teams | body: %#+v\n", w.Body.String())
 		return
 	}
-	for _, team := range careTeams {
+	for _, team := range CareTeamsDB {
 		result := findCareTeam(team.ID, results)
 
 		suite.Assert().NotNil(result, "body did not contain team: %s with ID: %s\n", team.Name, team.ID)
@@ -80,7 +61,7 @@ func (suite *careTeamSuite) TestAllCareTeamsFound() {
 // If a care team with that (correct) id does not exist in the database, should
 // return 404 Not Found
 func (suite *careTeamSuite) TestGetCareTeamNotFound() {
-	id := careTeams[0].ID
+	id := CareTeamsDB[0].ID
 	delete(suite.DB, id)
 	suite.AssertGetRequest("/api/care_teams/"+id, http.StatusNotFound)
 }
@@ -92,7 +73,7 @@ func (suite *careTeamSuite) TestGetCareTeamWithBadId() {
 
 // If a care team with that id exists, should return the care team and 200 OK
 func (suite *careTeamSuite) TestGetCareTeamFound() {
-	team := careTeams[0]
+	team := CareTeamsDB[0]
 	w := suite.AssertGetRequest("/api/care_teams/58c314acb367c1ff54d19e9e", http.StatusOK)
 	var body = make(map[string]ie.CareTeam)
 	json.NewDecoder(w.Body).Decode(&body)
@@ -160,12 +141,29 @@ func (suite *careTeamSuite) DeleteCareTeam(id string) error {
 	return nil
 }
 
+// Fixtures
+
+var CareTeamsDB = []ie.CareTeam{
+	ie.CareTeam{
+		ID:        "58c314acb367c1ff54d19e9e",
+		Name:      "The AutoDocs",
+		Leader:    "Optometrist Prime",
+		CreatedAt: time.Now(),
+	},
+	ie.CareTeam{
+		ID:        "58c314acb367c1ff54d19e9f",
+		Name:      "RoboDocs",
+		Leader:    "",
+		CreatedAt: time.Now(),
+	},
+}
+
 // Utility Methods
 
-func (suite *careTeamSuite) withTestService() web.Adapter {
+func (suite *careTeamSuite) withTestService() ie.Adapter {
 	return func(h gin.HandlerFunc) gin.HandlerFunc {
 		return func(ctx *gin.Context) {
-			ctx.Set("service", suite)
+			ctx.Set("careTeamService", suite)
 			h(ctx)
 		}
 	}

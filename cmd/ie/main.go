@@ -8,6 +8,7 @@ import (
 	"gopkg.in/mgo.v2"
 
 	"github.com/intervention-engine/fhir/server"
+	"github.com/intervention-engine/ie/mongo"
 	"github.com/intervention-engine/ie/utilities"
 	"github.com/intervention-engine/ie/web"
 )
@@ -47,7 +48,9 @@ func main() {
 	}
 	defer ieSession.Close()
 
-	web.RegisterAPIRoutes(s.Engine, ieSession)
+	services := &mongo.Services{S: ieSession}
+
+	web.RegisterAPIRoutes(s.Engine, services)
 
 	if *args.ReqLog {
 		s.Engine.Use(server.RequestLoggerHandler)

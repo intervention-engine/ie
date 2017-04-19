@@ -5,15 +5,13 @@ import (
 	"net/http"
 	"sync"
 
-	mgo "gopkg.in/mgo.v2"
-
 	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/server"
+	"github.com/intervention-engine/ie"
 
 	"github.com/intervention-engine/ie/controllers"
 	"github.com/intervention-engine/ie/groups"
 	"github.com/intervention-engine/ie/middleware"
-	"github.com/intervention-engine/ie/mongo"
 	"github.com/intervention-engine/ie/notifications"
 	"github.com/intervention-engine/ie/subscription"
 )
@@ -57,52 +55,33 @@ func stopNotifier(wc chan subscription.ResourceUpdateMessage, wg *sync.WaitGroup
 }
 
 // RegisterAPIRoutes Register new API endpoints
-func RegisterAPIRoutes(e *gin.Engine, s *mgo.Session) {
+func RegisterAPIRoutes(e *gin.Engine, s ie.Services) {
 	api := e.Group("/api")
-	api.GET("/patients", Adapt(ListAllPatients, withMongoPatientService(s)))
-	api.GET("/patients/:id", Adapt(GetPatient, withMongoPatientService(s)))
-
-	api.GET("/care_teams", Adapt(ListAllCareTeams, withMongoCareTeamService(s)))
-	api.POST("/care_teams", Adapt(CreateCareTeam, withMongoCareTeamService(s)))
-	api.GET("/care_teams/:id", Adapt(GetCareTeam, withMongoCareTeamService(s)))
-	api.PUT("/care_teams/:id", Adapt(UpdateCareTeam, withMongoCareTeamService(s)))
-	api.DELETE("/care_teams/:id", Adapt(DeleteCareTeam, withMongoCareTeamService(s)))
+	RegisterPatientRoutes(api, s.PatientService(), s.MembershipService())
+	RegisterCareTeamRoutes(api, s.CareTeamService())
 }
 
-type Adapter func(gin.HandlerFunc) gin.HandlerFunc
-
-func Adapt(h gin.HandlerFunc, adapters ...Adapter) gin.HandlerFunc {
-	for _, wrapper := range adapters {
-		h = wrapper(h)
-	}
-	return h
+func RegisterPatientRoutes(api *gin.RouterGroup, adapters ...ie.Adapter) {
+	p := api.Group("/patients")
+	p.GET("", ie.Adapt(ListAllPatients, adapters...))
+	p.GET("/:id", ie.Adapt(GetPatient, adapters...))
+	api.GET("/care_teams/:care_team_id/patients", ie.Adapt(ListAllCareTeamPatients, adapters...))
+	api.PUT("/care_teams/:care_team_id/patients/:id", ie.Adapt(AddPatientToCareTeam, adapters...))
 }
 
-// withMongo puts a mgo.Collection named "care_teams" into the context for the actual handler to use.
-func withMongoCareTeamService(s *mgo.Session) Adapter {
-	return func(h gin.HandlerFunc) gin.HandlerFunc {
-		return func(ctx *gin.Context) {
-			session := s.Copy()
-			defer session.Close()
-			col := session.DB("fhir").C("care_teams")
-			service := &mongo.CareTeamService{C: col}
-			ctx.Set("service", service)
-			h(ctx)
-		}
-	}
-}
+// func RegisterPatientRoutes(api *gin.RouterGroup, patients ie.Adapter, memberships ie.Adapter) {
+// 	p := api.Group("/patients")
+// 	p.GET("", ie.Adapt(ListAllPatients, patients))
+// 	p.GET("/:id", ie.Adapt(GetPatient, patients, memberships))
+// }
 
-func withMongoPatientService(s *mgo.Session) Adapter {
-	return func(h gin.HandlerFunc) gin.HandlerFunc {
-		return func(ctx *gin.Context) {
-			session := s.Copy()
-			defer session.Close()
-			col := session.DB("fhir").C("patients")
-			service := &mongo.PatientService{C: col}
-			ctx.Set("service", service)
-			h(ctx)
-		}
-	}
+func RegisterCareTeamRoutes(api *gin.RouterGroup, careTeams ie.Adapter) {
+	ct := api.Group("/care_teams")
+	ct.GET("", ie.Adapt(ListAllCareTeams, careTeams))
+	ct.POST("", ie.Adapt(CreateCareTeam, careTeams))
+	ct.GET("/:id", ie.Adapt(GetCareTeam, careTeams))
+	ct.PUT("/:id", ie.Adapt(UpdateCareTeam, careTeams))
+	ct.DELETE("/:id", ie.Adapt(DeleteCareTeam, careTeams))
 }
 
 func abortNoService(ctx *gin.Context) {
