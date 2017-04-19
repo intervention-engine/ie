@@ -1,44 +1,34 @@
 package ie
 
 import (
-	"time"
-
-	"github.com/intervention-engine/fhir/models"
+	"github.com/goadesign/goa"
+	"github.com/intervention-engine/ie/app"
 )
 
-type PatientService interface {
-	Patient(id string) (*Patient, error)
-	Patients() ([]Patient, error)
+// PatientController implements the patient resource.
+type PatientController struct {
+	*goa.Controller
 }
 
-type Patient struct {
-	ID                    string               `json:"id"`
-	Address               Address              `json:"address"`
-	Age                   int                  `json:"age"`
-	Gender                string               `json:"gender"`
-	BirthDate             *models.FHIRDateTime `json:"birthDate"`
-	Name                  Name                 `json:"name"`
-	NextHuddleID          string               `json:"nextHuddleId"`
-	RecentRiskAssessments []RiskAssessment     `json:"recentRiskAssessments"`
+// NewPatientController creates a patient controller.
+func NewPatientController(service *goa.Service) *PatientController {
+	return &PatientController{Controller: service.NewController("PatientController")}
 }
 
-type Address struct {
-	Street     []string `json:"street"`
-	City       string   `json:"city"`
-	State      string   `json:"state"`
-	PostalCode string   `json:"postalCode"`
+// Get runs the get action.
+func (c *PatientController) Show(ctx *app.ShowPatientContext) error {
+	s := GetStorageService(ctx.Context)
+	ps := s.NewPatientService()
+	p, err := ps.Patient(ctx.ID)
+	if err != nil {
+		return ctx.NotFound()
+	}
+
+	return ctx.OK(p)
 }
 
-type Name struct {
-	Family        string `json:"family"`
-	Given         string `json:"given"`
-	MiddleInitial string `json:"middleInitial"`
-	Full          string `json:"full"`
-}
-
-type RiskAssessment struct {
-	ID      string    `json:"id"`
-	GroupID string    `json:"riskAssessmentGroupId"`
-	Date    time.Time `json:"date"`
-	Value   int       `json:"value"`
+// List runs the list action.
+func (c *PatientController) List(ctx *app.ListPatientContext) error {
+	res := app.PatientCollection{}
+	return ctx.OK(res)
 }

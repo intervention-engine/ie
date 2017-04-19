@@ -1,7 +1,0 @@
-{
-  "name": "Bare Huddle",
-  "leaderID": "1",
-  "days": [1],
-  "lookAhead": 4,
-  "schedulerCronSpec": "@midnight"
-}
