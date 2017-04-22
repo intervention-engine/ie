@@ -17,51 +17,47 @@ func NewCareTeamController(service *goa.Service) *CareTeamController {
 
 // Create runs the create action.
 func (c *CareTeamController) Create(ctx *app.CreateCareTeamContext) error {
-	// CareTeamController_Create: start_implement
+	s := GetStorageService(ctx.Context)
+	cs := s.NewCareTeamService()
 
-	// Put your logic here
-
-	// CareTeamController_Create: end_implement
-	res := &app.Careteam{}
 	return ctx.OK(res)
 }
 
 // Delete runs the delete action.
 func (c *CareTeamController) Delete(ctx *app.DeleteCareTeamContext) error {
-	// CareTeamController_Delete: start_implement
-
-	// Put your logic here
-
-	// CareTeamController_Delete: end_implement
 	res := &app.Careteam{}
 	return ctx.OK(res)
 }
 
 // List runs the list action.
 func (c *CareTeamController) List(ctx *app.ListCareTeamContext) error {
-	// CareTeamController_List: start_implement
+	s := GetStorageService(ctx.Context)
+	cs := s.NewCareTeamService()
+	cc, err := cs.CareTeams()
+	if err != nil {
+		return ctx.BadRequest(err)
+	}
 
-	// Put your logic here
-
-	// CareTeamController_List: end_implement
-	res := app.CareteamCollection{}
-	return ctx.OK(res)
+	return ctx.OK(cc)
 }
 
 // Show runs the show action.
 func (c *CareTeamController) Show(ctx *app.ShowCareTeamContext) error {
+	s := GetStorageService(ctx.Context)
+	cs := s.NewCareTeamService()
+	c, err := cs.CareTeam(ctx.ID)
+	if err != nil {
+		if err.Error() == "bad id" {
+			return ctx.BadRequest(err)
+		}
+		return ctx.NotFound()
+	}
 
-	res := &app.Careteam{}
-	return ctx.OK(res)
+	return ctx.OK(c)
 }
 
 // Update runs the update action.
 func (c *CareTeamController) Update(ctx *app.UpdateCareTeamContext) error {
-	// CareTeamController_Update: start_implement
-
-	// Put your logic here
-
-	// CareTeamController_Update: end_implement
 	res := &app.Careteam{}
 	return ctx.OK(res)
 }

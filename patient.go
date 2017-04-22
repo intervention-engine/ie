@@ -21,6 +21,9 @@ func (c *PatientController) Show(ctx *app.ShowPatientContext) error {
 	ps := s.NewPatientService()
 	p, err := ps.Patient(ctx.ID)
 	if err != nil {
+		if err.Error() == "bad id" {
+			return ctx.BadRequest(err)
+		}
 		return ctx.NotFound()
 	}
 
@@ -29,6 +32,11 @@ func (c *PatientController) Show(ctx *app.ShowPatientContext) error {
 
 // List runs the list action.
 func (c *PatientController) List(ctx *app.ListPatientContext) error {
-	res := app.PatientCollection{}
-	return ctx.OK(res)
+	s := GetStorageService(ctx.Context)
+	ps := s.NewPatientService()
+	pp, err := ps.Patients()
+	if err != nil {
+		return ctx.BadRequest(err)
+	}
+	return ctx.OK(pp)
 }
