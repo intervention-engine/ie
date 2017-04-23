@@ -14,6 +14,7 @@ import (
 	"context"
 	"github.com/goadesign/goa"
 	"net/http"
+	"strconv"
 )
 
 // CreateCareTeamContext provides the care_team create action context.
@@ -48,14 +49,24 @@ func (ctx *CreateCareTeamContext) OKLink(r *CareteamLink) error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *CreateCareTeamContext) BadRequest(r error) error {
+func (ctx *CreateCareTeamContext) BadRequest(resp []byte) error {
 	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
-	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+	ctx.ResponseData.WriteHeader(400)
+	_, err := ctx.ResponseData.Write(resp)
+	return err
 }
 
 // NotFound sends a HTTP response with status code 404.
-func (ctx *CreateCareTeamContext) NotFound() error {
+func (ctx *CreateCareTeamContext) NotFound(resp []byte) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
 	ctx.ResponseData.WriteHeader(404)
+	_, err := ctx.ResponseData.Write(resp)
+	return err
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *CreateCareTeamContext) InternalServerError() error {
+	ctx.ResponseData.WriteHeader(500)
 	return nil
 }
 
@@ -91,14 +102,24 @@ func (ctx *DeleteCareTeamContext) OKLink(r *CareteamLink) error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *DeleteCareTeamContext) BadRequest(r error) error {
+func (ctx *DeleteCareTeamContext) BadRequest(resp []byte) error {
 	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
-	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+	ctx.ResponseData.WriteHeader(400)
+	_, err := ctx.ResponseData.Write(resp)
+	return err
 }
 
 // NotFound sends a HTTP response with status code 404.
-func (ctx *DeleteCareTeamContext) NotFound() error {
+func (ctx *DeleteCareTeamContext) NotFound(resp []byte) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
 	ctx.ResponseData.WriteHeader(404)
+	_, err := ctx.ResponseData.Write(resp)
+	return err
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *DeleteCareTeamContext) InternalServerError() error {
+	ctx.ResponseData.WriteHeader(500)
 	return nil
 }
 
@@ -131,14 +152,24 @@ func (ctx *ListCareTeamContext) OK(r CareteamCollection) error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *ListCareTeamContext) BadRequest(r error) error {
+func (ctx *ListCareTeamContext) BadRequest(resp []byte) error {
 	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
-	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+	ctx.ResponseData.WriteHeader(400)
+	_, err := ctx.ResponseData.Write(resp)
+	return err
 }
 
 // NotFound sends a HTTP response with status code 404.
-func (ctx *ListCareTeamContext) NotFound() error {
+func (ctx *ListCareTeamContext) NotFound(resp []byte) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
 	ctx.ResponseData.WriteHeader(404)
+	_, err := ctx.ResponseData.Write(resp)
+	return err
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *ListCareTeamContext) InternalServerError() error {
+	ctx.ResponseData.WriteHeader(500)
 	return nil
 }
 
@@ -180,14 +211,24 @@ func (ctx *ShowCareTeamContext) OKLink(r *CareteamLink) error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *ShowCareTeamContext) BadRequest(r error) error {
+func (ctx *ShowCareTeamContext) BadRequest(resp []byte) error {
 	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
-	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+	ctx.ResponseData.WriteHeader(400)
+	_, err := ctx.ResponseData.Write(resp)
+	return err
 }
 
 // NotFound sends a HTTP response with status code 404.
-func (ctx *ShowCareTeamContext) NotFound() error {
+func (ctx *ShowCareTeamContext) NotFound(resp []byte) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
 	ctx.ResponseData.WriteHeader(404)
+	_, err := ctx.ResponseData.Write(resp)
+	return err
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *ShowCareTeamContext) InternalServerError() error {
+	ctx.ResponseData.WriteHeader(500)
 	return nil
 }
 
@@ -223,14 +264,24 @@ func (ctx *UpdateCareTeamContext) OKLink(r *CareteamLink) error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *UpdateCareTeamContext) BadRequest(r error) error {
+func (ctx *UpdateCareTeamContext) BadRequest(resp []byte) error {
 	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
-	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+	ctx.ResponseData.WriteHeader(400)
+	_, err := ctx.ResponseData.Write(resp)
+	return err
 }
 
 // NotFound sends a HTTP response with status code 404.
-func (ctx *UpdateCareTeamContext) NotFound() error {
+func (ctx *UpdateCareTeamContext) NotFound(resp []byte) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
 	ctx.ResponseData.WriteHeader(404)
+	_, err := ctx.ResponseData.Write(resp)
+	return err
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *UpdateCareTeamContext) InternalServerError() error {
+	ctx.ResponseData.WriteHeader(500)
 	return nil
 }
 
@@ -239,6 +290,9 @@ type ListPatientContext struct {
 	context.Context
 	*goa.ResponseData
 	*goa.RequestData
+	Page    *int
+	PerPage *int
+	SortBy  *string
 }
 
 // NewListPatientContext parses the incoming request URL and body, performs validations and creates the
@@ -250,6 +304,43 @@ func NewListPatientContext(ctx context.Context, r *http.Request, service *goa.Se
 	req := goa.ContextRequest(ctx)
 	req.Request = r
 	rctx := ListPatientContext{Context: ctx, ResponseData: resp, RequestData: req}
+	paramPage := req.Params["page"]
+	if len(paramPage) > 0 {
+		rawPage := paramPage[0]
+		if page, err2 := strconv.Atoi(rawPage); err2 == nil {
+			tmp2 := page
+			tmp1 := &tmp2
+			rctx.Page = tmp1
+		} else {
+			err = goa.MergeErrors(err, goa.InvalidParamTypeError("page", rawPage, "integer"))
+		}
+		if rctx.Page != nil {
+			if *rctx.Page < 1 {
+				err = goa.MergeErrors(err, goa.InvalidRangeError(`page`, *rctx.Page, 1, true))
+			}
+		}
+	}
+	paramPerPage := req.Params["per_page"]
+	if len(paramPerPage) > 0 {
+		rawPerPage := paramPerPage[0]
+		if perPage, err2 := strconv.Atoi(rawPerPage); err2 == nil {
+			tmp4 := perPage
+			tmp3 := &tmp4
+			rctx.PerPage = tmp3
+		} else {
+			err = goa.MergeErrors(err, goa.InvalidParamTypeError("per_page", rawPerPage, "integer"))
+		}
+		if rctx.PerPage != nil {
+			if *rctx.PerPage < 1 {
+				err = goa.MergeErrors(err, goa.InvalidRangeError(`per_page`, *rctx.PerPage, 1, true))
+			}
+		}
+	}
+	paramSortBy := req.Params["sort_by"]
+	if len(paramSortBy) > 0 {
+		rawSortBy := paramSortBy[0]
+		rctx.SortBy = &rawSortBy
+	}
 	return &rctx, err
 }
 
@@ -263,14 +354,24 @@ func (ctx *ListPatientContext) OK(r PatientCollection) error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *ListPatientContext) BadRequest(r error) error {
+func (ctx *ListPatientContext) BadRequest(resp []byte) error {
 	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
-	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+	ctx.ResponseData.WriteHeader(400)
+	_, err := ctx.ResponseData.Write(resp)
+	return err
 }
 
 // NotFound sends a HTTP response with status code 404.
-func (ctx *ListPatientContext) NotFound() error {
+func (ctx *ListPatientContext) NotFound(resp []byte) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
 	ctx.ResponseData.WriteHeader(404)
+	_, err := ctx.ResponseData.Write(resp)
+	return err
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *ListPatientContext) InternalServerError() error {
+	ctx.ResponseData.WriteHeader(500)
 	return nil
 }
 
@@ -312,13 +413,23 @@ func (ctx *ShowPatientContext) OKLink(r *PatientLink) error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *ShowPatientContext) BadRequest(r error) error {
+func (ctx *ShowPatientContext) BadRequest(resp []byte) error {
 	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
-	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+	ctx.ResponseData.WriteHeader(400)
+	_, err := ctx.ResponseData.Write(resp)
+	return err
 }
 
 // NotFound sends a HTTP response with status code 404.
-func (ctx *ShowPatientContext) NotFound() error {
+func (ctx *ShowPatientContext) NotFound(resp []byte) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
 	ctx.ResponseData.WriteHeader(404)
+	_, err := ctx.ResponseData.Write(resp)
+	return err
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *ShowPatientContext) InternalServerError() error {
+	ctx.ResponseData.WriteHeader(500)
 	return nil
 }

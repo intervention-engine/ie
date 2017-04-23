@@ -58,7 +58,7 @@ func MountCareTeamController(service *goa.Service, ctrl CareTeamController) {
 		}
 		return ctrl.Create(rctx)
 	}
-	service.Mux.Handle("POST", "/api/care_teams", ctrl.MuxHandler("Create", h, nil))
+	service.Mux.Handle("POST", "/api/care_teams", ctrl.MuxHandler("create", h, nil))
 	service.LogInfo("mount", "ctrl", "CareTeam", "action", "Create", "route", "POST /api/care_teams")
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
@@ -73,7 +73,7 @@ func MountCareTeamController(service *goa.Service, ctrl CareTeamController) {
 		}
 		return ctrl.Delete(rctx)
 	}
-	service.Mux.Handle("DELETE", "/api/care_teams", ctrl.MuxHandler("Delete", h, nil))
+	service.Mux.Handle("DELETE", "/api/care_teams", ctrl.MuxHandler("delete", h, nil))
 	service.LogInfo("mount", "ctrl", "CareTeam", "action", "Delete", "route", "DELETE /api/care_teams")
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
@@ -88,7 +88,7 @@ func MountCareTeamController(service *goa.Service, ctrl CareTeamController) {
 		}
 		return ctrl.List(rctx)
 	}
-	service.Mux.Handle("GET", "/api/care_teams", ctrl.MuxHandler("List", h, nil))
+	service.Mux.Handle("GET", "/api/care_teams", ctrl.MuxHandler("list", h, nil))
 	service.LogInfo("mount", "ctrl", "CareTeam", "action", "List", "route", "GET /api/care_teams")
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
@@ -103,7 +103,7 @@ func MountCareTeamController(service *goa.Service, ctrl CareTeamController) {
 		}
 		return ctrl.Show(rctx)
 	}
-	service.Mux.Handle("GET", "/api/care_teams/:id", ctrl.MuxHandler("Show", h, nil))
+	service.Mux.Handle("GET", "/api/care_teams/:id", ctrl.MuxHandler("show", h, nil))
 	service.LogInfo("mount", "ctrl", "CareTeam", "action", "Show", "route", "GET /api/care_teams/:id")
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
@@ -118,7 +118,7 @@ func MountCareTeamController(service *goa.Service, ctrl CareTeamController) {
 		}
 		return ctrl.Update(rctx)
 	}
-	service.Mux.Handle("PUT", "/api/care_teams", ctrl.MuxHandler("Update", h, nil))
+	service.Mux.Handle("PUT", "/api/care_teams", ctrl.MuxHandler("update", h, nil))
 	service.LogInfo("mount", "ctrl", "CareTeam", "action", "Update", "route", "PUT /api/care_teams")
 }
 
@@ -146,7 +146,7 @@ func MountPatientController(service *goa.Service, ctrl PatientController) {
 		}
 		return ctrl.List(rctx)
 	}
-	service.Mux.Handle("GET", "/api/patients", ctrl.MuxHandler("List", h, nil))
+	service.Mux.Handle("GET", "/api/patients", ctrl.MuxHandler("list", h, nil))
 	service.LogInfo("mount", "ctrl", "Patient", "action", "List", "route", "GET /api/patients")
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
@@ -161,7 +161,7 @@ func MountPatientController(service *goa.Service, ctrl PatientController) {
 		}
 		return ctrl.Show(rctx)
 	}
-	service.Mux.Handle("GET", "/api/patients/:id", ctrl.MuxHandler("Show", h, nil))
+	service.Mux.Handle("GET", "/api/patients/:id", ctrl.MuxHandler("show", h, nil))
 	service.LogInfo("mount", "ctrl", "Patient", "action", "Show", "route", "GET /api/patients/:id")
 }
 

@@ -11,6 +11,8 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+// PatientService provides a mongo implementation of a
+// Storage Service for patients.
 type PatientService struct {
 	S *mgo.Session
 	C *mgo.Collection
@@ -23,6 +25,7 @@ type Patient struct {
 	NextHuddleID    string               `bson:"next_huddle_id,omitempty" json:"next_huddle_id,omitempty"`
 }
 
+// Patient gets a patient with the given id.
 func (s *PatientService) Patient(id string) (*app.Patient, error) {
 	defer s.S.Close()
 	if !bson.IsObjectIdHex(id) {
@@ -39,10 +42,28 @@ func (s *PatientService) Patient(id string) (*app.Patient, error) {
 	return p, nil
 }
 
+// Patients gets all the patients in the db.
 func (s *PatientService) Patients() ([]*app.Patient, error) {
 	defer s.S.Close()
 	var data []Patient
 	err := s.C.Find(nil).All(&data)
+	if err != nil {
+		return nil, err
+	}
+
+	pp := make([]*app.Patient, len(data))
+	for i, patient := range data {
+		pp[i] = newPatient(patient)
+	}
+
+	return pp, nil
+}
+
+// SortBy gets patients sorted by the fields given.
+func (s *PatientService) SortBy(fields ...string) ([]*app.Patient, error) {
+	defer s.S.Close()
+	var data []Patient
+	err := s.C.Find(nil).Sort(fields...).All(&data)
 	if err != nil {
 		return nil, err
 	}

@@ -15,50 +15,68 @@ var _ = API("api", func() {
 	Scheme("http")
 	Host("localhost:8080")
 	BasePath("/api")
+	ResponseTemplate("RNotFound", func() {
+		Description("Resource not found")
+		Status(404)
+	})
+	// TODO: might not need this template
+	ResponseTemplate("RCreated", func() {
+		Description("Resource created")
+		Status(201)
+		Headers(func() {
+			Header("Link", func() {
+			})
+		})
+	})
 })
 
 var _ = Resource("patient", func() {
 	DefaultMedia(PatientMedia)
 	BasePath("/patients")
-
+	Response(OK)
+	Response(NotFound)
+	Response(BadRequest)
+	Response(InternalServerError)
 	Action("show", func() {
 		Description("Get patient by id.")
 		Routing(GET("/:id"))
 		Params(func() {
 			Param("id", String, "Patient ID")
 		})
-		Response(OK)
-		Response(NotFound)
-		Response(BadRequest, ErrorMedia)
 	})
 	Action("list", func() {
-		Routing(
-			GET(""),
-		)
+		Routing(GET(""))
+		Params(func() {
+			Param("sort_by", String)
+			Param("page", Integer, func() {
+				Minimum(1)
+			})
+			Param("per_page", Integer, func() {
+				Minimum(1)
+			})
+		})
 		Description("List all patients.")
 		Response(OK, func() {
 			Media(CollectionOf(PatientMedia, func() {
 				View("default")
 			}))
 		})
-		Response(NotFound)
-		Response(BadRequest, ErrorMedia)
 	})
 })
 
 var _ = Resource("care_team", func() {
 	DefaultMedia(CareTeamMedia)
 	BasePath("/care_teams")
-
+	Response(OK)
+	Response(NotFound, ErrorMedia)
+	Response(BadRequest, ErrorMedia)
+	Response(InternalServerError)
 	Action("show", func() {
 		Description("Get care team by id.")
 		Routing(GET("/:id"))
 		Params(func() {
 			Param("id", String, "Care team ID")
 		})
-		Response(OK)
-		Response(NotFound)
-		Response(BadRequest, ErrorMedia)
 	})
 	Action("list", func() {
 		Routing(
@@ -70,35 +88,24 @@ var _ = Resource("care_team", func() {
 				View("default")
 			}))
 		})
-		Response(NotFound)
-		Response(BadRequest, ErrorMedia)
 	})
 	Action("create", func() {
 		Routing(
 			POST(""),
 		)
 		Description("Create care team.")
-		Response(OK)
-		Response(NotFound)
-		Response(BadRequest, ErrorMedia)
 	})
 	Action("update", func() {
 		Routing(
 			PUT(""),
 		)
 		Description("Update care team.")
-		Response(OK)
-		Response(NotFound)
-		Response(BadRequest, ErrorMedia)
 	})
 	Action("delete", func() {
 		Routing(
 			DELETE(""),
 		)
 		Description("Delete care team.")
-		Response(OK)
-		Response(NotFound)
-		Response(BadRequest, ErrorMedia)
 	})
 })
 
