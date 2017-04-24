@@ -1,6 +1,7 @@
-package ie
+package main
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/goadesign/goa"
@@ -57,12 +58,24 @@ func (c *PatientController) List(ctx *app.ListPatientContext) error {
 		}
 		// grab the actual ones we need to send over the wire.
 		total := len(pp)
-		dot := page * perpage
-		if dot >= total {
-			return goa.ErrBadRequest("requested section is out of bounds of what is available")
+		last := (total / perpage) + 1
+		dot := (page * perpage) - perpage
+		if dot > total {
+			return goa.ErrBadRequest("requested page is out of bounds of what is available")
 		}
-		return ctx.OK(pp)
+		enddot := dot + perpage
+		if enddot > total {
+			// This is the last page, which will most likely go over the total patients.
+			enddot = total
+		}
 
+		// TODO: remove hard links
+		var linkTmpl string
+		linkTmpl = "<http://localhost:3001/patients?page=%d&per_page=%d>; rel=\"next\", <http://localhost:3001/patients?page=%d&per_page=%d>; rel=\"last\", <http://localhost:3001/patients?page=%d&per_page=%d>; rel=\"first\", <http://localhost:3001/patients?page=%d&per_page=%d>; rel=\"prev\", total=%d"
+		links := fmt.Sprintf(linkTmpl, page+1, perpage, last, perpage, 1, perpage, page-1, perpage, total)
+		ctx.ResponseWriter.Header().Set("Link", links)
+
+		return ctx.OK(pp[dot:enddot])
 	}
 	pp, err := ps.Patients()
 	if err != nil {

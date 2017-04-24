@@ -15,6 +15,7 @@ import (
 	"github.com/goadesign/goa"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 // CreateCareTeamContext provides the care_team create action context.
@@ -22,6 +23,7 @@ type CreateCareTeamContext struct {
 	context.Context
 	*goa.ResponseData
 	*goa.RequestData
+	Payload *CreateCareTeamPayload
 }
 
 // NewCreateCareTeamContext parses the incoming request URL and body, performs validations and creates the
@@ -34,6 +36,70 @@ func NewCreateCareTeamContext(ctx context.Context, r *http.Request, service *goa
 	req.Request = r
 	rctx := CreateCareTeamContext{Context: ctx, ResponseData: resp, RequestData: req}
 	return &rctx, err
+}
+
+// createCareTeamPayload is the care_team create action payload.
+type createCareTeamPayload struct {
+	// Timestamp for care team creation
+	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" xml:"createdAt,omitempty"`
+	// Unique care team ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Care team leader
+	Leader *string `form:"leader,omitempty" json:"leader,omitempty" xml:"leader,omitempty"`
+	// Care team name
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+}
+
+// Validate runs the validation rules defined in the design.
+func (payload *createCareTeamPayload) Validate() (err error) {
+	if payload.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "name"))
+	}
+	if payload.Leader == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "leader"))
+	}
+	return
+}
+
+// Publicize creates CreateCareTeamPayload from createCareTeamPayload
+func (payload *createCareTeamPayload) Publicize() *CreateCareTeamPayload {
+	var pub CreateCareTeamPayload
+	if payload.CreatedAt != nil {
+		pub.CreatedAt = payload.CreatedAt
+	}
+	if payload.ID != nil {
+		pub.ID = payload.ID
+	}
+	if payload.Leader != nil {
+		pub.Leader = *payload.Leader
+	}
+	if payload.Name != nil {
+		pub.Name = *payload.Name
+	}
+	return &pub
+}
+
+// CreateCareTeamPayload is the care_team create action payload.
+type CreateCareTeamPayload struct {
+	// Timestamp for care team creation
+	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" xml:"createdAt,omitempty"`
+	// Unique care team ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Care team leader
+	Leader string `form:"leader" json:"leader" xml:"leader"`
+	// Care team name
+	Name string `form:"name" json:"name" xml:"name"`
+}
+
+// Validate runs the validation rules defined in the design.
+func (payload *CreateCareTeamPayload) Validate() (err error) {
+	if payload.Name == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "name"))
+	}
+	if payload.Leader == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "leader"))
+	}
+	return
 }
 
 // OK sends a HTTP response with status code 200.
@@ -49,19 +115,15 @@ func (ctx *CreateCareTeamContext) OKLink(r *CareteamLink) error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *CreateCareTeamContext) BadRequest(resp []byte) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+func (ctx *CreateCareTeamContext) BadRequest() error {
 	ctx.ResponseData.WriteHeader(400)
-	_, err := ctx.ResponseData.Write(resp)
-	return err
+	return nil
 }
 
 // NotFound sends a HTTP response with status code 404.
-func (ctx *CreateCareTeamContext) NotFound(resp []byte) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+func (ctx *CreateCareTeamContext) NotFound() error {
 	ctx.ResponseData.WriteHeader(404)
-	_, err := ctx.ResponseData.Write(resp)
-	return err
+	return nil
 }
 
 // InternalServerError sends a HTTP response with status code 500.
@@ -75,6 +137,7 @@ type DeleteCareTeamContext struct {
 	context.Context
 	*goa.ResponseData
 	*goa.RequestData
+	ID string
 }
 
 // NewDeleteCareTeamContext parses the incoming request URL and body, performs validations and creates the
@@ -86,6 +149,11 @@ func NewDeleteCareTeamContext(ctx context.Context, r *http.Request, service *goa
 	req := goa.ContextRequest(ctx)
 	req.Request = r
 	rctx := DeleteCareTeamContext{Context: ctx, ResponseData: resp, RequestData: req}
+	paramID := req.Params["id"]
+	if len(paramID) > 0 {
+		rawID := paramID[0]
+		rctx.ID = rawID
+	}
 	return &rctx, err
 }
 
@@ -102,19 +170,15 @@ func (ctx *DeleteCareTeamContext) OKLink(r *CareteamLink) error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *DeleteCareTeamContext) BadRequest(resp []byte) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+func (ctx *DeleteCareTeamContext) BadRequest() error {
 	ctx.ResponseData.WriteHeader(400)
-	_, err := ctx.ResponseData.Write(resp)
-	return err
+	return nil
 }
 
 // NotFound sends a HTTP response with status code 404.
-func (ctx *DeleteCareTeamContext) NotFound(resp []byte) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+func (ctx *DeleteCareTeamContext) NotFound() error {
 	ctx.ResponseData.WriteHeader(404)
-	_, err := ctx.ResponseData.Write(resp)
-	return err
+	return nil
 }
 
 // InternalServerError sends a HTTP response with status code 500.
@@ -152,19 +216,15 @@ func (ctx *ListCareTeamContext) OK(r CareteamCollection) error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *ListCareTeamContext) BadRequest(resp []byte) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+func (ctx *ListCareTeamContext) BadRequest() error {
 	ctx.ResponseData.WriteHeader(400)
-	_, err := ctx.ResponseData.Write(resp)
-	return err
+	return nil
 }
 
 // NotFound sends a HTTP response with status code 404.
-func (ctx *ListCareTeamContext) NotFound(resp []byte) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+func (ctx *ListCareTeamContext) NotFound() error {
 	ctx.ResponseData.WriteHeader(404)
-	_, err := ctx.ResponseData.Write(resp)
-	return err
+	return nil
 }
 
 // InternalServerError sends a HTTP response with status code 500.
@@ -211,19 +271,15 @@ func (ctx *ShowCareTeamContext) OKLink(r *CareteamLink) error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *ShowCareTeamContext) BadRequest(resp []byte) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+func (ctx *ShowCareTeamContext) BadRequest() error {
 	ctx.ResponseData.WriteHeader(400)
-	_, err := ctx.ResponseData.Write(resp)
-	return err
+	return nil
 }
 
 // NotFound sends a HTTP response with status code 404.
-func (ctx *ShowCareTeamContext) NotFound(resp []byte) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+func (ctx *ShowCareTeamContext) NotFound() error {
 	ctx.ResponseData.WriteHeader(404)
-	_, err := ctx.ResponseData.Write(resp)
-	return err
+	return nil
 }
 
 // InternalServerError sends a HTTP response with status code 500.
@@ -237,6 +293,8 @@ type UpdateCareTeamContext struct {
 	context.Context
 	*goa.ResponseData
 	*goa.RequestData
+	ID      string
+	Payload *UpdateCareTeamPayload
 }
 
 // NewUpdateCareTeamContext parses the incoming request URL and body, performs validations and creates the
@@ -248,7 +306,76 @@ func NewUpdateCareTeamContext(ctx context.Context, r *http.Request, service *goa
 	req := goa.ContextRequest(ctx)
 	req.Request = r
 	rctx := UpdateCareTeamContext{Context: ctx, ResponseData: resp, RequestData: req}
+	paramID := req.Params["id"]
+	if len(paramID) > 0 {
+		rawID := paramID[0]
+		rctx.ID = rawID
+	}
 	return &rctx, err
+}
+
+// updateCareTeamPayload is the care_team update action payload.
+type updateCareTeamPayload struct {
+	// Timestamp for care team creation
+	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" xml:"createdAt,omitempty"`
+	// Unique care team ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Care team leader
+	Leader *string `form:"leader,omitempty" json:"leader,omitempty" xml:"leader,omitempty"`
+	// Care team name
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+}
+
+// Validate runs the validation rules defined in the design.
+func (payload *updateCareTeamPayload) Validate() (err error) {
+	if payload.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "name"))
+	}
+	if payload.Leader == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "leader"))
+	}
+	return
+}
+
+// Publicize creates UpdateCareTeamPayload from updateCareTeamPayload
+func (payload *updateCareTeamPayload) Publicize() *UpdateCareTeamPayload {
+	var pub UpdateCareTeamPayload
+	if payload.CreatedAt != nil {
+		pub.CreatedAt = payload.CreatedAt
+	}
+	if payload.ID != nil {
+		pub.ID = payload.ID
+	}
+	if payload.Leader != nil {
+		pub.Leader = *payload.Leader
+	}
+	if payload.Name != nil {
+		pub.Name = *payload.Name
+	}
+	return &pub
+}
+
+// UpdateCareTeamPayload is the care_team update action payload.
+type UpdateCareTeamPayload struct {
+	// Timestamp for care team creation
+	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" xml:"createdAt,omitempty"`
+	// Unique care team ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Care team leader
+	Leader string `form:"leader" json:"leader" xml:"leader"`
+	// Care team name
+	Name string `form:"name" json:"name" xml:"name"`
+}
+
+// Validate runs the validation rules defined in the design.
+func (payload *UpdateCareTeamPayload) Validate() (err error) {
+	if payload.Name == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "name"))
+	}
+	if payload.Leader == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "leader"))
+	}
+	return
 }
 
 // OK sends a HTTP response with status code 200.
@@ -264,19 +391,15 @@ func (ctx *UpdateCareTeamContext) OKLink(r *CareteamLink) error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *UpdateCareTeamContext) BadRequest(resp []byte) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+func (ctx *UpdateCareTeamContext) BadRequest() error {
 	ctx.ResponseData.WriteHeader(400)
-	_, err := ctx.ResponseData.Write(resp)
-	return err
+	return nil
 }
 
 // NotFound sends a HTTP response with status code 404.
-func (ctx *UpdateCareTeamContext) NotFound(resp []byte) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+func (ctx *UpdateCareTeamContext) NotFound() error {
 	ctx.ResponseData.WriteHeader(404)
-	_, err := ctx.ResponseData.Write(resp)
-	return err
+	return nil
 }
 
 // InternalServerError sends a HTTP response with status code 500.
@@ -354,19 +477,15 @@ func (ctx *ListPatientContext) OK(r PatientCollection) error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *ListPatientContext) BadRequest(resp []byte) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+func (ctx *ListPatientContext) BadRequest() error {
 	ctx.ResponseData.WriteHeader(400)
-	_, err := ctx.ResponseData.Write(resp)
-	return err
+	return nil
 }
 
 // NotFound sends a HTTP response with status code 404.
-func (ctx *ListPatientContext) NotFound(resp []byte) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+func (ctx *ListPatientContext) NotFound() error {
 	ctx.ResponseData.WriteHeader(404)
-	_, err := ctx.ResponseData.Write(resp)
-	return err
+	return nil
 }
 
 // InternalServerError sends a HTTP response with status code 500.
@@ -413,19 +532,15 @@ func (ctx *ShowPatientContext) OKLink(r *PatientLink) error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *ShowPatientContext) BadRequest(resp []byte) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+func (ctx *ShowPatientContext) BadRequest() error {
 	ctx.ResponseData.WriteHeader(400)
-	_, err := ctx.ResponseData.Write(resp)
-	return err
+	return nil
 }
 
 // NotFound sends a HTTP response with status code 404.
-func (ctx *ShowPatientContext) NotFound(resp []byte) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+func (ctx *ShowPatientContext) NotFound() error {
 	ctx.ResponseData.WriteHeader(404)
-	_, err := ctx.ResponseData.Write(resp)
-	return err
+	return nil
 }
 
 // InternalServerError sends a HTTP response with status code 500.

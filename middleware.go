@@ -1,4 +1,4 @@
-package ie
+package main
 
 import (
 	"context"

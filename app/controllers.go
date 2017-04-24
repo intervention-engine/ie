@@ -56,9 +56,15 @@ func MountCareTeamController(service *goa.Service, ctrl CareTeamController) {
 		if err != nil {
 			return err
 		}
+		// Build the payload
+		if rawPayload := goa.ContextRequest(ctx).Payload; rawPayload != nil {
+			rctx.Payload = rawPayload.(*CreateCareTeamPayload)
+		} else {
+			return goa.MissingPayloadError()
+		}
 		return ctrl.Create(rctx)
 	}
-	service.Mux.Handle("POST", "/api/care_teams", ctrl.MuxHandler("create", h, nil))
+	service.Mux.Handle("POST", "/api/care_teams", ctrl.MuxHandler("create", h, unmarshalCreateCareTeamPayload))
 	service.LogInfo("mount", "ctrl", "CareTeam", "action", "Create", "route", "POST /api/care_teams")
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
@@ -73,8 +79,8 @@ func MountCareTeamController(service *goa.Service, ctrl CareTeamController) {
 		}
 		return ctrl.Delete(rctx)
 	}
-	service.Mux.Handle("DELETE", "/api/care_teams", ctrl.MuxHandler("delete", h, nil))
-	service.LogInfo("mount", "ctrl", "CareTeam", "action", "Delete", "route", "DELETE /api/care_teams")
+	service.Mux.Handle("DELETE", "/api/care_teams/:id", ctrl.MuxHandler("delete", h, nil))
+	service.LogInfo("mount", "ctrl", "CareTeam", "action", "Delete", "route", "DELETE /api/care_teams/:id")
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 		// Check if there was an error loading the request
@@ -116,10 +122,46 @@ func MountCareTeamController(service *goa.Service, ctrl CareTeamController) {
 		if err != nil {
 			return err
 		}
+		// Build the payload
+		if rawPayload := goa.ContextRequest(ctx).Payload; rawPayload != nil {
+			rctx.Payload = rawPayload.(*UpdateCareTeamPayload)
+		} else {
+			return goa.MissingPayloadError()
+		}
 		return ctrl.Update(rctx)
 	}
-	service.Mux.Handle("PUT", "/api/care_teams", ctrl.MuxHandler("update", h, nil))
-	service.LogInfo("mount", "ctrl", "CareTeam", "action", "Update", "route", "PUT /api/care_teams")
+	service.Mux.Handle("PUT", "/api/care_teams/:id", ctrl.MuxHandler("update", h, unmarshalUpdateCareTeamPayload))
+	service.LogInfo("mount", "ctrl", "CareTeam", "action", "Update", "route", "PUT /api/care_teams/:id")
+}
+
+// unmarshalCreateCareTeamPayload unmarshals the request body into the context request data Payload field.
+func unmarshalCreateCareTeamPayload(ctx context.Context, service *goa.Service, req *http.Request) error {
+	payload := &createCareTeamPayload{}
+	if err := service.DecodeRequest(req, payload); err != nil {
+		return err
+	}
+	if err := payload.Validate(); err != nil {
+		// Initialize payload with private data structure so it can be logged
+		goa.ContextRequest(ctx).Payload = payload
+		return err
+	}
+	goa.ContextRequest(ctx).Payload = payload.Publicize()
+	return nil
+}
+
+// unmarshalUpdateCareTeamPayload unmarshals the request body into the context request data Payload field.
+func unmarshalUpdateCareTeamPayload(ctx context.Context, service *goa.Service, req *http.Request) error {
+	payload := &updateCareTeamPayload{}
+	if err := service.DecodeRequest(req, payload); err != nil {
+		return err
+	}
+	if err := payload.Validate(); err != nil {
+		// Initialize payload with private data structure so it can be logged
+		goa.ContextRequest(ctx).Payload = payload
+		return err
+	}
+	goa.ContextRequest(ctx).Payload = payload.Publicize()
+	return nil
 }
 
 // PatientController is the controller interface for the Patient actions.
@@ -176,15 +218,15 @@ func MountSwaggerController(service *goa.Service, ctrl SwaggerController) {
 	initService(service)
 	var h goa.Handler
 
-	h = ctrl.FileHandler("/swagger-ui/*filepath", "swagger-ui/dist/")
+	h = ctrl.FileHandler("/swagger/swagger.json", "/swagger.json")
+	service.Mux.Handle("GET", "/swagger/swagger.json", ctrl.MuxHandler("serve", h, nil))
+	service.LogInfo("mount", "ctrl", "Swagger", "files", "/swagger.json", "route", "GET /swagger/swagger.json")
+
+	h = ctrl.FileHandler("/swagger-ui/*filepath", "swagger-ui/")
 	service.Mux.Handle("GET", "/swagger-ui/*filepath", ctrl.MuxHandler("serve", h, nil))
-	service.LogInfo("mount", "ctrl", "Swagger", "files", "swagger-ui/dist/", "route", "GET /swagger-ui/*filepath")
+	service.LogInfo("mount", "ctrl", "Swagger", "files", "swagger-ui/", "route", "GET /swagger-ui/*filepath")
 
-	h = ctrl.FileHandler("/swagger.json", "swagger/swagger.json")
-	service.Mux.Handle("GET", "/swagger.json", ctrl.MuxHandler("serve", h, nil))
-	service.LogInfo("mount", "ctrl", "Swagger", "files", "swagger/swagger.json", "route", "GET /swagger.json")
-
-	h = ctrl.FileHandler("/swagger-ui/", "swagger-ui/dist/index.html")
+	h = ctrl.FileHandler("/swagger-ui/", "swagger-ui/index.html")
 	service.Mux.Handle("GET", "/swagger-ui/", ctrl.MuxHandler("serve", h, nil))
-	service.LogInfo("mount", "ctrl", "Swagger", "files", "swagger-ui/dist/index.html", "route", "GET /swagger-ui/")
+	service.LogInfo("mount", "ctrl", "Swagger", "files", "swagger-ui/index.html", "route", "GET /swagger-ui/")
 }

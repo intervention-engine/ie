@@ -14,6 +14,48 @@ import (
 	"time"
 )
 
+// careTeamPayload user type.
+type careTeamPayload struct {
+	// Timestamp for care team creation
+	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" xml:"createdAt,omitempty"`
+	// Unique care team ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Care team leader
+	Leader *string `form:"leader,omitempty" json:"leader,omitempty" xml:"leader,omitempty"`
+	// Care team name
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+}
+
+// Publicize creates CareTeamPayload from careTeamPayload
+func (ut *careTeamPayload) Publicize() *CareTeamPayload {
+	var pub CareTeamPayload
+	if ut.CreatedAt != nil {
+		pub.CreatedAt = ut.CreatedAt
+	}
+	if ut.ID != nil {
+		pub.ID = ut.ID
+	}
+	if ut.Leader != nil {
+		pub.Leader = ut.Leader
+	}
+	if ut.Name != nil {
+		pub.Name = ut.Name
+	}
+	return &pub
+}
+
+// CareTeamPayload user type.
+type CareTeamPayload struct {
+	// Timestamp for care team creation
+	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" xml:"createdAt,omitempty"`
+	// Unique care team ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Care team leader
+	Leader *string `form:"leader,omitempty" json:"leader,omitempty" xml:"leader,omitempty"`
+	// Care team name
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+}
+
 // address user type.
 type address struct {
 	// City Name

@@ -44,6 +44,35 @@ definitions:
     title: 'Mediatype identifier: application/vnd.careteam+json; type=collection;
       view=default'
     type: array
+  CreateCareTeamPayload:
+    example:
+      createdAt: 1970-07-27T08:23:11-04:00
+      id: At omnis aut consequatur id eos cumque.
+      leader: Aut occaecati.
+      name: Quis deleniti earum qui autem rerum temporibus.
+    properties:
+      createdAt:
+        description: Timestamp for care team creation
+        example: 1970-07-27T08:23:11-04:00
+        format: date-time
+        type: string
+      id:
+        description: Unique care team ID
+        example: At omnis aut consequatur id eos cumque.
+        type: string
+      leader:
+        description: Care team leader
+        example: Aut occaecati.
+        type: string
+      name:
+        description: Care team name
+        example: Quis deleniti earum qui autem rerum temporibus.
+        type: string
+    required:
+    - name
+    - leader
+    title: CreateCareTeamPayload
+    type: object
   Patient:
     description: A patient (default view)
     example:
@@ -158,6 +187,35 @@ definitions:
       $ref: '#/definitions/Patient'
     title: 'Mediatype identifier: application/vnd.patient+json; type=collection; view=default'
     type: array
+  UpdateCareTeamPayload:
+    example:
+      createdAt: 1970-07-27T08:23:11-04:00
+      id: At omnis aut consequatur id eos cumque.
+      leader: Aut occaecati.
+      name: Quis deleniti earum qui autem rerum temporibus.
+    properties:
+      createdAt:
+        description: Timestamp for care team creation
+        example: 1970-07-27T08:23:11-04:00
+        format: date-time
+        type: string
+      id:
+        description: Unique care team ID
+        example: At omnis aut consequatur id eos cumque.
+        type: string
+      leader:
+        description: Care team leader
+        example: Aut occaecati.
+        type: string
+      name:
+        description: Care team name
+        example: Quis deleniti earum qui autem rerum temporibus.
+        type: string
+    required:
+    - name
+    - leader
+    title: UpdateCareTeamPayload
+    type: object
   address:
     example:
       city: Cum aut blanditiis accusantium molestiae et.
@@ -256,7 +314,7 @@ definitions:
         type: integer
     title: riskAssessment
     type: object
-host: localhost:8080
+host: localhost:3001
 info:
   description: An api used to interact with Intervention Engine
   license:
@@ -266,33 +324,10 @@ info:
   version: ""
 paths:
   /api/care_teams:
-    delete:
-      description: Delete care team.
-      operationId: care_team#delete
-      produces:
-      - application/vnd.careteam+json
-      - application/vnd.goa.error
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/Careteam'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/error'
-        "404":
-          description: Not Found
-      schemes:
-      - http
-      summary: delete care_team
-      tags:
-      - care_team
     get:
       description: List all care teams.
       operationId: care_team#list
       produces:
-      - application/vnd.goa.error
       - application/vnd.careteam+json; type=collection
       responses:
         "200":
@@ -301,10 +336,10 @@ paths:
             $ref: '#/definitions/CareteamCollection'
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/error'
         "404":
           description: Not Found
+        "500":
+          description: Internal Server Error
       schemes:
       - http
       summary: list care_team
@@ -313,8 +348,13 @@ paths:
     post:
       description: Create care team.
       operationId: care_team#create
+      parameters:
+      - in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/CreateCareTeamPayload'
       produces:
-      - application/vnd.goa.error
       - application/vnd.careteam+json
       responses:
         "200":
@@ -323,20 +363,25 @@ paths:
             $ref: '#/definitions/Careteam'
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/error'
         "404":
           description: Not Found
+        "500":
+          description: Internal Server Error
       schemes:
       - http
       summary: create care_team
       tags:
       - care_team
-    put:
-      description: Update care team.
-      operationId: care_team#update
+  /api/care_teams/{id}:
+    delete:
+      description: Delete care team.
+      operationId: care_team#delete
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
       produces:
-      - application/vnd.goa.error
       - application/vnd.careteam+json
       responses:
         "200":
@@ -345,16 +390,15 @@ paths:
             $ref: '#/definitions/Careteam'
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/error'
         "404":
           description: Not Found
+        "500":
+          description: Internal Server Error
       schemes:
       - http
-      summary: update care_team
+      summary: delete care_team
       tags:
       - care_team
-  /api/care_teams/{id}:
     get:
       description: Get care team by id.
       operationId: care_team#show
@@ -365,7 +409,6 @@ paths:
         required: true
         type: string
       produces:
-      - application/vnd.goa.error
       - application/vnd.careteam+json
       responses:
         "200":
@@ -374,21 +417,66 @@ paths:
             $ref: '#/definitions/Careteam'
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/error'
         "404":
           description: Not Found
+        "500":
+          description: Internal Server Error
       schemes:
       - http
       summary: show care_team
+      tags:
+      - care_team
+    put:
+      description: Update care team.
+      operationId: care_team#update
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+      - in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/UpdateCareTeamPayload'
+      produces:
+      - application/vnd.careteam+json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Careteam'
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      schemes:
+      - http
+      summary: update care_team
       tags:
       - care_team
   /api/patients:
     get:
       description: List all patients.
       operationId: patient#list
+      parameters:
+      - in: query
+        minimum: 1
+        name: page
+        required: false
+        type: integer
+      - in: query
+        minimum: 1
+        name: per_page
+        required: false
+        type: integer
+      - in: query
+        name: sort_by
+        required: false
+        type: string
       produces:
-      - application/vnd.goa.error
       - application/vnd.patient+json; type=collection
       responses:
         "200":
@@ -397,10 +485,10 @@ paths:
             $ref: '#/definitions/PatientCollection'
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/error'
         "404":
           description: Not Found
+        "500":
+          description: Internal Server Error
       schemes:
       - http
       summary: list patient
@@ -418,7 +506,6 @@ paths:
         type: string
       produces:
       - application/vnd.patient+json
-      - application/vnd.goa.error
       responses:
         "200":
           description: OK
@@ -426,10 +513,10 @@ paths:
             $ref: '#/definitions/Patient'
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/error'
         "404":
           description: Not Found
+        "500":
+          description: Internal Server Error
       schemes:
       - http
       summary: show patient
@@ -455,10 +542,10 @@ paths:
             $ref: '#/definitions/error'
       schemes:
       - http
-      summary: Download swagger-ui/dist/
-  /swagger.json:
+      summary: Download swagger-ui/
+  /swagger/swagger.json:
     get:
-      operationId: swagger#/swagger.json
+      operationId: swagger#/swagger/swagger.json
       responses:
         "200":
           description: File downloaded
@@ -466,19 +553,20 @@ paths:
             type: file
       schemes:
       - http
-      summary: Download swagger/swagger.json
+      summary: Download /swagger.json
 produces:
 - application/json
 - application/xml
 - application/gob
 - application/x-gob
 responses:
-  NotFound:
-    description: Not Found
-  OK:
-    description: OK
-    schema:
-      $ref: '#/definitions/Careteam'
+  RCreated:
+    description: Resource created
+    headers:
+      Link:
+        type: string
+  RNotFound:
+    description: Resource not found
 schemes:
 - http
 swagger: "2.0"
