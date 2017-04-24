@@ -2,6 +2,9 @@ package storage
 
 import "github.com/intervention-engine/ie/app"
 
+// Service is a description of a factory that the app expects a storage package to
+// implement in order for the application to be able to access its resources particular
+// service.
 type Service interface {
 	NewCareTeamService() CareTeamService
 	NewPatientService() PatientService
@@ -16,7 +19,9 @@ type CareTeamService interface {
 	DeleteCareTeam(id string) error
 }
 
+// PatientService describes the interface for storing a Patient
 type PatientService interface {
 	Patient(id string) (*app.Patient, error)
 	Patients() ([]*app.Patient, error)
+	SortBy(...string) ([]*app.Patient, error)
 }

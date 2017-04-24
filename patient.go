@@ -1,6 +1,8 @@
 package ie
 
 import (
+	"strings"
+
 	"github.com/goadesign/goa"
 	"github.com/intervention-engine/ie/app"
 )
@@ -37,7 +39,31 @@ func (c *PatientController) Show(ctx *app.ShowPatientContext) error {
 func (c *PatientController) List(ctx *app.ListPatientContext) error {
 	s := GetStorageService(ctx.Context)
 	ps := s.NewPatientService()
-	// TODO: check params for paging.
+	if ctx.Page != nil {
+		// Time to do paging!
+		page := *ctx.Page
+		perpage := 50
+		if ctx.PerPage != nil {
+			perpage = *ctx.PerPage
+		}
+		sortby := "name.full"
+		if ctx.SortBy != nil {
+			sortby = *ctx.SortBy
+		}
+		list := strings.Split(sortby, ",")
+		pp, err := ps.SortBy(list...)
+		if err != nil {
+			return goa.ErrInternal("internal server error trying to list patients")
+		}
+		// grab the actual ones we need to send over the wire.
+		total := len(pp)
+		dot := page * perpage
+		if dot >= total {
+			return goa.ErrBadRequest("requested section is out of bounds of what is available")
+		}
+		return ctx.OK(pp)
+
+	}
 	pp, err := ps.Patients()
 	if err != nil {
 		return goa.ErrInternal("internal server error trying to list patients")
