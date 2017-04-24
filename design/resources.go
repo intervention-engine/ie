@@ -84,6 +84,10 @@ var _ = Resource("care_team", func() {
 
 var _ = Resource("swagger", func() {
 	Description("The API Swagger specification")
-	Files("/swagger.json", "/swagger/swagger.json")
+	Origin("*", func() {
+		Methods("GET", "OPTIONS")
+	})
+	NoSecurity()
+	Files("/swagger.json", "swagger/swagger.json")
 	Files("/swagger-ui/*filepath", "swagger-ui/")
 })

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/goadesign/goa"
@@ -49,6 +50,7 @@ func (c *PatientController) List(ctx *app.ListPatientContext) error {
 		}
 		sortby := "name.full"
 		if ctx.SortBy != nil {
+			log.Println("got the sortby param")
 			sortby = *ctx.SortBy
 		}
 		list := strings.Split(sortby, ",")
