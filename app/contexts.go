@@ -114,6 +114,12 @@ func (ctx *CreateCareTeamContext) OKLink(r *CareteamLink) error {
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
 }
 
+// Created sends a HTTP response with status code 201.
+func (ctx *CreateCareTeamContext) Created() error {
+	ctx.ResponseData.WriteHeader(201)
+	return nil
+}
+
 // BadRequest sends a HTTP response with status code 400.
 func (ctx *CreateCareTeamContext) BadRequest() error {
 	ctx.ResponseData.WriteHeader(400)
@@ -167,6 +173,12 @@ func (ctx *DeleteCareTeamContext) OK(r *Careteam) error {
 func (ctx *DeleteCareTeamContext) OKLink(r *CareteamLink) error {
 	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.careteam+json")
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// NoContent sends a HTTP response with status code 204.
+func (ctx *DeleteCareTeamContext) NoContent() error {
+	ctx.ResponseData.WriteHeader(204)
+	return nil
 }
 
 // BadRequest sends a HTTP response with status code 400.
@@ -328,11 +340,17 @@ type updateCareTeamPayload struct {
 
 // Validate runs the validation rules defined in the design.
 func (payload *updateCareTeamPayload) Validate() (err error) {
+	if payload.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "id"))
+	}
 	if payload.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "name"))
 	}
 	if payload.Leader == nil {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "leader"))
+	}
+	if payload.CreatedAt == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "createdAt"))
 	}
 	return
 }
@@ -341,10 +359,10 @@ func (payload *updateCareTeamPayload) Validate() (err error) {
 func (payload *updateCareTeamPayload) Publicize() *UpdateCareTeamPayload {
 	var pub UpdateCareTeamPayload
 	if payload.CreatedAt != nil {
-		pub.CreatedAt = payload.CreatedAt
+		pub.CreatedAt = *payload.CreatedAt
 	}
 	if payload.ID != nil {
-		pub.ID = payload.ID
+		pub.ID = *payload.ID
 	}
 	if payload.Leader != nil {
 		pub.Leader = *payload.Leader
@@ -358,9 +376,9 @@ func (payload *updateCareTeamPayload) Publicize() *UpdateCareTeamPayload {
 // UpdateCareTeamPayload is the care_team update action payload.
 type UpdateCareTeamPayload struct {
 	// Timestamp for care team creation
-	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" xml:"createdAt,omitempty"`
+	CreatedAt time.Time `form:"createdAt" json:"createdAt" xml:"createdAt"`
 	// Unique care team ID
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	ID string `form:"id" json:"id" xml:"id"`
 	// Care team leader
 	Leader string `form:"leader" json:"leader" xml:"leader"`
 	// Care team name
@@ -369,12 +387,16 @@ type UpdateCareTeamPayload struct {
 
 // Validate runs the validation rules defined in the design.
 func (payload *UpdateCareTeamPayload) Validate() (err error) {
+	if payload.ID == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "id"))
+	}
 	if payload.Name == "" {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "name"))
 	}
 	if payload.Leader == "" {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "leader"))
 	}
+
 	return
 }
 
@@ -388,6 +410,12 @@ func (ctx *UpdateCareTeamContext) OK(r *Careteam) error {
 func (ctx *UpdateCareTeamContext) OKLink(r *CareteamLink) error {
 	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.careteam+json")
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// NoContent sends a HTTP response with status code 204.
+func (ctx *UpdateCareTeamContext) NoContent() error {
+	ctx.ResponseData.WriteHeader(204)
+	return nil
 }
 
 // BadRequest sends a HTTP response with status code 400.

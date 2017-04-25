@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/goadesign/goa"
@@ -26,12 +25,15 @@ func (c *PatientController) Show(ctx *app.ShowPatientContext) error {
 	p, err := ps.Patient(ctx.ID)
 	if err != nil {
 		if err.Error() == "bad id" {
-			return goa.ErrBadRequest("id was not a proper bson object id")
+			// return goa.ErrBadRequest("id was not a proper bson object id")
+			return ctx.BadRequest()
 		}
 		if err.Error() == "not found" {
-			return goa.ErrNotFound("could not find patient")
+			// return goa.ErrNotFound("could not find resource")
+			return ctx.NotFound()
 		}
-		return goa.ErrInternal("internal server error trying to find patient")
+		// return goa.ErrInternal("internal server error trying to fulfill request")
+		return ctx.InternalServerError()
 	}
 
 	return ctx.OK(p)
@@ -43,45 +45,88 @@ func (c *PatientController) List(ctx *app.ListPatientContext) error {
 	ps := s.NewPatientService()
 	if ctx.Page != nil {
 		// Time to do paging!
-		page := *ctx.Page
-		perpage := 50
-		if ctx.PerPage != nil {
-			perpage = *ctx.PerPage
-		}
 		sortby := "name.full"
 		if ctx.SortBy != nil {
-			log.Println("got the sortby param")
 			sortby = *ctx.SortBy
 		}
 		list := strings.Split(sortby, ",")
 		pp, err := ps.SortBy(list...)
 		if err != nil {
-			return goa.ErrInternal("internal server error trying to list patients")
+			// return goa.ErrInternal("internal server error trying to list patients")
+			return ctx.InternalServerError()
 		}
 		// grab the actual ones we need to send over the wire.
 		total := len(pp)
-		last := (total / perpage) + 1
-		dot := (page * perpage) - perpage
-		if dot > total {
-			return goa.ErrBadRequest("requested page is out of bounds of what is available")
+		pageinfo, err := pagingInfo(*ctx.Page, *ctx.PerPage, total)
+		if err != nil {
+			// TODO: actually get error message
+			return ctx.BadRequest()
 		}
-		enddot := dot + perpage
-		if enddot > total {
-			// This is the last page, which will most likely go over the total patients.
-			enddot = total
-		}
-
-		// TODO: remove hard links
-		var linkTmpl string
-		linkTmpl = "<http://localhost:3001/patients?page=%d&per_page=%d>; rel=\"next\", <http://localhost:3001/patients?page=%d&per_page=%d>; rel=\"last\", <http://localhost:3001/patients?page=%d&per_page=%d>; rel=\"first\", <http://localhost:3001/patients?page=%d&per_page=%d>; rel=\"prev\", total=%d"
-		links := fmt.Sprintf(linkTmpl, page+1, perpage, last, perpage, 1, perpage, page-1, perpage, total)
+		links := linkInfo(pageinfo)
 		ctx.ResponseWriter.Header().Set("Link", links)
 
-		return ctx.OK(pp[dot:enddot])
+		return ctx.OK(pp[pageinfo.dot:pageinfo.enddot])
 	}
 	pp, err := ps.Patients()
 	if err != nil {
-		return goa.ErrInternal("internal server error trying to list patients")
+		// return goa.ErrInternal("internal server error trying to list patients")
+		return ctx.InternalServerError()
 	}
 	return ctx.OK(pp)
+}
+
+type page struct {
+	num    int
+	per    int
+	next   int
+	prev   int
+	first  int
+	last   int
+	total  int
+	dot    int
+	enddot int
+}
+
+func pagingInfo(num int, perpage int, total int) (page, error) {
+	if perpage == 0 {
+		perpage = 50
+	}
+	last := (total / perpage) + 1
+
+	dot := (num * perpage) - perpage
+	if dot > total {
+		return page{}, goa.ErrBadRequest("requested page is out of bounds of what is available")
+	}
+	enddot := dot + perpage
+	if enddot > total {
+		// This is the last page, which will most likely go over the total patients.
+		enddot = total
+	}
+	prev := 1
+	if num != 1 {
+		prev = num - 1
+	}
+	next := num + 1
+	if num == last {
+		next = last
+	}
+
+	return page{
+		next:   next,
+		prev:   prev,
+		num:    num,
+		total:  total,
+		last:   last,
+		first:  1,
+		per:    perpage,
+		dot:    dot,
+		enddot: enddot,
+	}, nil
+}
+
+// TODO: pass the context into linkInfo and make the URL dynamic.
+var linkTmpl string = "<http://localhost:3001/patients?page=%d&per_page=%d>; rel=\"next\", <http://localhost:3001/patients?page=%d&per_page=%d>; rel=\"last\", <http://localhost:3001/patients?page=%d&per_page=%d>; rel=\"first\", <http://localhost:3001/patients?page=%d&per_page=%d>; rel=\"prev\", total=%d"
+
+func linkInfo(info page) string {
+	return fmt.Sprintf(linkTmpl, info.next, info.per, info.last, info.per, 1, info.per, info.prev, info.per, info.total)
 }

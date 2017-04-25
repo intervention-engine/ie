@@ -68,17 +68,20 @@ var _ = Resource("care_team", func() {
 			Required("name", "leader")
 		})
 		Description("Create care team.")
+		Response(Created)
 	})
 	Action("update", func() {
 		Routing(PUT("/:id"))
 		Payload(CareTeamPayload, func() {
-			Required("name", "leader")
+			Required("id", "name", "leader", "createdAt")
 		})
 		Description("Update care team.")
+		Response(NoContent)
 	})
 	Action("delete", func() {
 		Routing(DELETE("/:id"))
 		Description("Delete care team.")
+		Response(NoContent)
 	})
 })
 
