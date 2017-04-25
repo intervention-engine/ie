@@ -120,6 +120,12 @@ func (ctx *CreateCareTeamContext) Created() error {
 	return nil
 }
 
+// NoContent sends a HTTP response with status code 204.
+func (ctx *CreateCareTeamContext) NoContent() error {
+	ctx.ResponseData.WriteHeader(204)
+	return nil
+}
+
 // BadRequest sends a HTTP response with status code 400.
 func (ctx *CreateCareTeamContext) BadRequest() error {
 	ctx.ResponseData.WriteHeader(400)
@@ -175,6 +181,12 @@ func (ctx *DeleteCareTeamContext) OKLink(r *CareteamLink) error {
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
 }
 
+// Created sends a HTTP response with status code 201.
+func (ctx *DeleteCareTeamContext) Created() error {
+	ctx.ResponseData.WriteHeader(201)
+	return nil
+}
+
 // NoContent sends a HTTP response with status code 204.
 func (ctx *DeleteCareTeamContext) NoContent() error {
 	ctx.ResponseData.WriteHeader(204)
@@ -225,6 +237,18 @@ func (ctx *ListCareTeamContext) OK(r CareteamCollection) error {
 		r = CareteamCollection{}
 	}
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// Created sends a HTTP response with status code 201.
+func (ctx *ListCareTeamContext) Created() error {
+	ctx.ResponseData.WriteHeader(201)
+	return nil
+}
+
+// NoContent sends a HTTP response with status code 204.
+func (ctx *ListCareTeamContext) NoContent() error {
+	ctx.ResponseData.WriteHeader(204)
+	return nil
 }
 
 // BadRequest sends a HTTP response with status code 400.
@@ -280,6 +304,18 @@ func (ctx *ShowCareTeamContext) OK(r *Careteam) error {
 func (ctx *ShowCareTeamContext) OKLink(r *CareteamLink) error {
 	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.careteam+json")
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// Created sends a HTTP response with status code 201.
+func (ctx *ShowCareTeamContext) Created() error {
+	ctx.ResponseData.WriteHeader(201)
+	return nil
+}
+
+// NoContent sends a HTTP response with status code 204.
+func (ctx *ShowCareTeamContext) NoContent() error {
+	ctx.ResponseData.WriteHeader(204)
+	return nil
 }
 
 // BadRequest sends a HTTP response with status code 400.
@@ -410,6 +446,12 @@ func (ctx *UpdateCareTeamContext) OK(r *Careteam) error {
 func (ctx *UpdateCareTeamContext) OKLink(r *CareteamLink) error {
 	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.careteam+json")
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// Created sends a HTTP response with status code 201.
+func (ctx *UpdateCareTeamContext) Created() error {
+	ctx.ResponseData.WriteHeader(201)
+	return nil
 }
 
 // NoContent sends a HTTP response with status code 204.

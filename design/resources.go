@@ -43,6 +43,8 @@ var _ = Resource("care_team", func() {
 	DefaultMedia(CareTeamMedia)
 	BasePath("/care_teams")
 	Response(OK)
+	// Response(Created)
+	// Response(NoContent)
 	Response(NotFound)
 	Response(BadRequest)
 	Response(InternalServerError)

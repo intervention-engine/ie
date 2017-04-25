@@ -212,8 +212,10 @@ definitions:
         example: Quis deleniti earum qui autem rerum temporibus.
         type: string
     required:
+    - id
     - name
     - leader
+    - createdAt
     title: UpdateCareTeamPayload
     type: object
   address:
@@ -361,6 +363,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/Careteam'
+        "201":
+          description: Created
         "400":
           description: Bad Request
         "404":
@@ -388,6 +392,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/Careteam'
+        "204":
+          description: No Content
         "400":
           description: Bad Request
         "404":
@@ -446,6 +452,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/Careteam'
+        "204":
+          description: No Content
         "400":
           description: Bad Request
         "404":
@@ -553,13 +561,17 @@ paths:
             type: file
       schemes:
       - http
-      summary: Download /swagger/swagger.json
+      summary: Download swagger/swagger.json
 produces:
 - application/json
 - application/xml
 - application/gob
 - application/x-gob
 responses:
+  Created:
+    description: Created
+  NoContent:
+    description: No Content
   RCreated:
     description: Resource created
     headers:

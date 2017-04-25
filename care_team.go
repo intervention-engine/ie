@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/goadesign/goa"
 	"github.com/intervention-engine/ie/app"
 )
@@ -24,9 +26,10 @@ func (c *CareTeamController) Create(ctx *app.CreateCareTeamContext) error {
 	ct.Name = &ctx.Payload.Name
 	err := cs.CreateCareTeam(&ct)
 	if err != nil {
-		return goa.ErrInternal("internal server error trying to create care team")
+		// return goa.ErrInternal("internal server error trying to create care team")
+		return ctx.InternalServerError()
 	}
-	ctx.ResponseData.Header().Set("Location", careteamHref(*ct.ID))
+	ctx.ResponseData.Header().Set("Location", app.CareTeamHref(*ct.ID))
 
 	return ctx.Created()
 }
@@ -58,7 +61,10 @@ func (c *CareTeamController) List(ctx *app.ListCareTeamContext) error {
 	cc, err := cs.CareTeams()
 	if err != nil {
 		// return goa.ErrInternal("error trying to list patients")
-		return ctx.Err()
+		return ctx.InternalServerError()
+	}
+	if len(cc) == 0 {
+		return ctx.NotFound()
 	}
 
 	return ctx.OK(cc)
@@ -68,6 +74,7 @@ func (c *CareTeamController) List(ctx *app.ListCareTeamContext) error {
 func (c *CareTeamController) Show(ctx *app.ShowCareTeamContext) error {
 	s := GetStorageService(ctx.Context)
 	cs := s.NewCareTeamService()
+	log.Println("ID received is: " + ctx.ID)
 	ct, err := cs.CareTeam(ctx.ID)
 	if err != nil {
 		if err.Error() == "bad id" {
@@ -109,8 +116,4 @@ func (c *CareTeamController) Update(ctx *app.UpdateCareTeamContext) error {
 		return ctx.InternalServerError()
 	}
 	return ctx.NoContent()
-}
-
-func careteamHref(ID string) string {
-	return "/care_teams/" + ID
 }
