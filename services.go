@@ -15,5 +15,6 @@ func Adapt(h gin.HandlerFunc, adapters ...Adapter) gin.HandlerFunc {
 type Services interface {
 	CareTeamService() Adapter
 	PatientService() Adapter
-	MembershipService() Adapter
+	CareTeamMembershipService() Adapter
+	HuddleService() Adapter
 }

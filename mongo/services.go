@@ -53,14 +53,26 @@ func (s *Services) PatientService() ie.Adapter {
 	}
 }
 
-func (s *Services) MembershipService() ie.Adapter {
+func (s *Services) CareTeamMembershipService() ie.Adapter {
 	return func(h gin.HandlerFunc) gin.HandlerFunc {
 		return func(ctx *gin.Context) {
 			session := s.S.Copy()
 			defer session.Close()
 			col := col(session, "care_team_memberships")
-			service := &MembershipService{C: col}
-			ctx.Set("membershipService", service)
+			service := &CareTeamMembershipService{C: col}
+			ctx.Set("careTeamMembershipService", service)
+		}
+	}
+}
+
+func (s *Services) HuddleMembershipService() ie.Adapter {
+	return func(h gin.HandlerFunc) gin.HandlerFunc {
+		return func(ctx *gin.Context) {
+			session := s.S.Copy()
+			defer session.Close()
+			col := col(session, "care_team_memberships")
+			service := &HuddleMembershipService{C: col}
+			ctx.Set("huddleMembershipService", service)
 		}
 	}
 }

@@ -126,3 +126,17 @@ func (c *CareTeamController) Update(ctx *app.UpdateCareTeamContext) error {
 	}
 	return ctx.NoContent()
 }
+
+// CareTeamMembership Represents many to many relationship between patients and care teams
+type CareTeamMembership struct {
+	ID         string    `bson:"_id,omitempty" json:"id,omitempty"`
+	CareTeamID string    `bson:"care_team_id" json:"care_team_id" binding:"required"`
+	PatientID  string    `bson:"care_team_id" json:"patient_id" binding:"required"`
+	CreatedAt  time.Time `bson:"created_at,omitempty" json:"created_at,omitempty"`
+}
+
+// MembershipService Manage membership in care teams for patients
+type CareTeamMembershipService interface {
+	CreateMembership(mem CareTeamMembership) error
+	PatientMemberships(id string) ([]CareTeamMembership, error)
+}
