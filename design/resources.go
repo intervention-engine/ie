@@ -72,9 +72,7 @@ var _ = Resource("care_team", func() {
 	})
 	Action("update", func() {
 		Routing(PUT("/:id"))
-		Payload(CareTeamPayload, func() {
-			Required("name", "leader", "createdAt")
-		})
+		Payload(CareTeamPayload)
 		Description("Update care team.")
 		Response(NoContent)
 	})

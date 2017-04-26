@@ -125,7 +125,7 @@ func MountCareTeamController(service *goa.Service, ctrl CareTeamController) {
 		}
 		// Build the payload
 		if rawPayload := goa.ContextRequest(ctx).Payload; rawPayload != nil {
-			rctx.Payload = rawPayload.(*UpdateCareTeamPayload)
+			rctx.Payload = rawPayload.(*CareTeamPayload)
 		} else {
 			return goa.MissingPayloadError()
 		}
@@ -152,13 +152,8 @@ func unmarshalCreateCareTeamPayload(ctx context.Context, service *goa.Service, r
 
 // unmarshalUpdateCareTeamPayload unmarshals the request body into the context request data Payload field.
 func unmarshalUpdateCareTeamPayload(ctx context.Context, service *goa.Service, req *http.Request) error {
-	payload := &updateCareTeamPayload{}
+	payload := &careTeamPayload{}
 	if err := service.DecodeRequest(req, payload); err != nil {
-		return err
-	}
-	if err := payload.Validate(); err != nil {
-		// Initialize payload with private data structure so it can be logged
-		goa.ContextRequest(ctx).Payload = payload
 		return err
 	}
 	goa.ContextRequest(ctx).Payload = payload.Publicize()

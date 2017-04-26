@@ -44,6 +44,32 @@ definitions:
     title: 'Mediatype identifier: application/vnd.careteam+json; type=collection;
       view=default'
     type: array
+  CareTeamPayload:
+    example:
+      createdAt: 1970-07-27T08:23:11-04:00
+      id: At omnis aut consequatur id eos cumque.
+      leader: Aut occaecati.
+      name: Quis deleniti earum qui autem rerum temporibus.
+    properties:
+      createdAt:
+        description: Timestamp for care team creation
+        example: 1970-07-27T08:23:11-04:00
+        format: date-time
+        type: string
+      id:
+        description: Unique care team ID
+        example: At omnis aut consequatur id eos cumque.
+        type: string
+      leader:
+        description: Care team leader
+        example: Aut occaecati.
+        type: string
+      name:
+        description: Care team name
+        example: Quis deleniti earum qui autem rerum temporibus.
+        type: string
+    title: CareTeamPayload
+    type: object
   CreateCareTeamPayload:
     example:
       createdAt: 1970-07-27T08:23:11-04:00
@@ -187,36 +213,6 @@ definitions:
       $ref: '#/definitions/Patient'
     title: 'Mediatype identifier: application/vnd.patient+json; type=collection; view=default'
     type: array
-  UpdateCareTeamPayload:
-    example:
-      createdAt: 1970-07-27T08:23:11-04:00
-      id: At omnis aut consequatur id eos cumque.
-      leader: Aut occaecati.
-      name: Quis deleniti earum qui autem rerum temporibus.
-    properties:
-      createdAt:
-        description: Timestamp for care team creation
-        example: 1970-07-27T08:23:11-04:00
-        format: date-time
-        type: string
-      id:
-        description: Unique care team ID
-        example: At omnis aut consequatur id eos cumque.
-        type: string
-      leader:
-        description: Care team leader
-        example: Aut occaecati.
-        type: string
-      name:
-        description: Care team name
-        example: Quis deleniti earum qui autem rerum temporibus.
-        type: string
-    required:
-    - name
-    - leader
-    - createdAt
-    title: UpdateCareTeamPayload
-    type: object
   address:
     example:
       city: Cum aut blanditiis accusantium molestiae et.
@@ -443,7 +439,7 @@ paths:
         name: payload
         required: true
         schema:
-          $ref: '#/definitions/UpdateCareTeamPayload'
+          $ref: '#/definitions/CareTeamPayload'
       produces:
       - application/vnd.careteam+json
       responses:

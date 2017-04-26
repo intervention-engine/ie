@@ -306,7 +306,7 @@ type UpdateCareTeamContext struct {
 	*goa.ResponseData
 	*goa.RequestData
 	ID      string
-	Payload *UpdateCareTeamPayload
+	Payload *CareTeamPayload
 }
 
 // NewUpdateCareTeamContext parses the incoming request URL and body, performs validations and creates the
@@ -324,74 +324,6 @@ func NewUpdateCareTeamContext(ctx context.Context, r *http.Request, service *goa
 		rctx.ID = rawID
 	}
 	return &rctx, err
-}
-
-// updateCareTeamPayload is the care_team update action payload.
-type updateCareTeamPayload struct {
-	// Timestamp for care team creation
-	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" xml:"createdAt,omitempty"`
-	// Unique care team ID
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Care team leader
-	Leader *string `form:"leader,omitempty" json:"leader,omitempty" xml:"leader,omitempty"`
-	// Care team name
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-}
-
-// Validate runs the validation rules defined in the design.
-func (payload *updateCareTeamPayload) Validate() (err error) {
-	if payload.Name == nil {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "name"))
-	}
-	if payload.Leader == nil {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "leader"))
-	}
-	if payload.CreatedAt == nil {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "createdAt"))
-	}
-	return
-}
-
-// Publicize creates UpdateCareTeamPayload from updateCareTeamPayload
-func (payload *updateCareTeamPayload) Publicize() *UpdateCareTeamPayload {
-	var pub UpdateCareTeamPayload
-	if payload.CreatedAt != nil {
-		pub.CreatedAt = *payload.CreatedAt
-	}
-	if payload.ID != nil {
-		pub.ID = payload.ID
-	}
-	if payload.Leader != nil {
-		pub.Leader = *payload.Leader
-	}
-	if payload.Name != nil {
-		pub.Name = *payload.Name
-	}
-	return &pub
-}
-
-// UpdateCareTeamPayload is the care_team update action payload.
-type UpdateCareTeamPayload struct {
-	// Timestamp for care team creation
-	CreatedAt time.Time `form:"createdAt" json:"createdAt" xml:"createdAt"`
-	// Unique care team ID
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Care team leader
-	Leader string `form:"leader" json:"leader" xml:"leader"`
-	// Care team name
-	Name string `form:"name" json:"name" xml:"name"`
-}
-
-// Validate runs the validation rules defined in the design.
-func (payload *UpdateCareTeamPayload) Validate() (err error) {
-	if payload.Name == "" {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "name"))
-	}
-	if payload.Leader == "" {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "leader"))
-	}
-
-	return
 }
 
 // OK sends a HTTP response with status code 200.

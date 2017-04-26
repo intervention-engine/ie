@@ -74,11 +74,24 @@ func (s *CareTeamService) CreateCareTeam(c *app.CareTeam) error {
 
 func (s *CareTeamService) UpdateCareTeam(c *app.CareTeam) error {
 	defer s.S.Close()
-	mc := CareTeam{ID: *c.ID, CareTeam: *c}
-	if !bson.IsObjectIdHex(*c.ID) {
+	if c.ID == nil {
+		return errors.New("nil id")
+	}
+	mc := CareTeam{ID: *c.ID}
+	if !bson.IsObjectIdHex(mc.ID) {
 		return errors.New("bad id")
 	}
-	err := s.C.UpdateId(mc.ID, &mc)
+	err := s.C.FindId(mc.ID).One(&mc)
+	if err != nil {
+		return err
+	}
+	if c.Leader != nil {
+		mc.Leader = c.Leader
+	}
+	if c.Name != nil {
+		mc.Name = c.Name
+	}
+	err = s.C.UpdateId(mc.ID, &mc)
 	return err
 }
 

@@ -97,11 +97,20 @@ func (c *CareTeamController) Update(ctx *app.UpdateCareTeamContext) error {
 	s := GetStorageService(ctx.Context)
 	cs := s.NewCareTeamService()
 
+	var validupdate bool
 	var ct app.CareTeam
 	ct.ID = &ctx.ID
-	ct.Name = &ctx.Payload.Name
-	ct.Leader = &ctx.Payload.Leader
-	ct.CreatedAt = &ctx.Payload.CreatedAt
+	if ctx.Payload.Name != nil {
+		validupdate = true
+		ct.Name = ctx.Payload.Name
+	}
+	if ctx.Payload.Leader != nil {
+		validupdate = true
+		ct.Leader = ctx.Payload.Leader
+	}
+	if !validupdate {
+		return ctx.BadRequest()
+	}
 	err := cs.UpdateCareTeam(&ct)
 	if err != nil {
 		if err.Error() == "bad id" {
