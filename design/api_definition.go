@@ -15,17 +15,4 @@ var _ = API("api", func() {
 	Scheme("http")
 	Host("localhost:3001")
 	BasePath("/api")
-	ResponseTemplate("RNotFound", func() {
-		Description("Resource not found")
-		Status(404)
-	})
-	// TODO: might not need this template
-	ResponseTemplate("RCreated", func() {
-		Description("Resource created")
-		Status(201)
-		Headers(func() {
-			Header("Link", func() {
-			})
-		})
-	})
 })

@@ -4,7 +4,7 @@ consumes:
 - application/gob
 - application/x-gob
 definitions:
-  Careteam:
+  CareTeam:
     description: A care team (default view)
     example:
       createdAt: 1976-09-25T22:49:04-04:00
@@ -31,8 +31,8 @@ definitions:
         type: string
     title: 'Mediatype identifier: application/vnd.careteam+json; view=default'
     type: object
-  CareteamCollection:
-    description: CareteamCollection is the media type for an array of Careteam (default
+  CareTeamCollection:
+    description: CareTeamCollection is the media type for an array of CareTeam (default
       view)
     example:
     - createdAt: 1976-09-25T22:49:04-04:00
@@ -40,7 +40,7 @@ definitions:
       leader: Sit dolor neque nulla.
       name: Nisi dolorum.
     items:
-      $ref: '#/definitions/Careteam'
+      $ref: '#/definitions/CareTeam'
     title: 'Mediatype identifier: application/vnd.careteam+json; type=collection;
       view=default'
     type: array
@@ -212,7 +212,6 @@ definitions:
         example: Quis deleniti earum qui autem rerum temporibus.
         type: string
     required:
-    - id
     - name
     - leader
     - createdAt
@@ -335,7 +334,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/CareteamCollection'
+            $ref: '#/definitions/CareTeamCollection'
         "400":
           description: Bad Request
         "404":
@@ -362,7 +361,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Careteam'
+            $ref: '#/definitions/CareTeam'
         "201":
           description: Created
         "400":
@@ -391,7 +390,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Careteam'
+            $ref: '#/definitions/CareTeam'
         "204":
           description: No Content
         "400":
@@ -420,7 +419,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Careteam'
+            $ref: '#/definitions/CareTeam'
         "400":
           description: Bad Request
         "404":
@@ -451,7 +450,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Careteam'
+            $ref: '#/definitions/CareTeam'
         "204":
           description: No Content
         "400":
@@ -572,13 +571,6 @@ responses:
     description: Created
   NoContent:
     description: No Content
-  RCreated:
-    description: Resource created
-    headers:
-      Link:
-        type: string
-  RNotFound:
-    description: Resource not found
 schemes:
 - http
 swagger: "2.0"

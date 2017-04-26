@@ -21,7 +21,7 @@ func NewCareTeamController(service *goa.Service) *CareTeamController {
 func (c *CareTeamController) Create(ctx *app.CreateCareTeamContext) error {
 	s := GetStorageService(ctx.Context)
 	cs := s.NewCareTeamService()
-	var ct app.Careteam
+	var ct app.CareTeam
 	ct.Leader = &ctx.Payload.Leader
 	ct.Name = &ctx.Payload.Name
 	err := cs.CreateCareTeam(&ct)
@@ -97,8 +97,8 @@ func (c *CareTeamController) Update(ctx *app.UpdateCareTeamContext) error {
 	s := GetStorageService(ctx.Context)
 	cs := s.NewCareTeamService()
 
-	var ct app.Careteam
-	ct.ID = &ctx.Payload.ID
+	var ct app.CareTeam
+	ct.ID = &ctx.ID
 	ct.Name = &ctx.Payload.Name
 	ct.Leader = &ctx.Payload.Leader
 	ct.CreatedAt = &ctx.Payload.CreatedAt

@@ -43,8 +43,6 @@ var _ = Resource("care_team", func() {
 	DefaultMedia(CareTeamMedia)
 	BasePath("/care_teams")
 	Response(OK)
-	// Response(Created)
-	// Response(NoContent)
 	Response(NotFound)
 	Response(BadRequest)
 	Response(InternalServerError)
@@ -75,7 +73,7 @@ var _ = Resource("care_team", func() {
 	Action("update", func() {
 		Routing(PUT("/:id"))
 		Payload(CareTeamPayload, func() {
-			Required("id", "name", "leader", "createdAt")
+			Required("name", "leader", "createdAt")
 		})
 		Description("Update care team.")
 		Response(NoContent)

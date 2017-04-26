@@ -103,26 +103,20 @@ func (payload *CreateCareTeamPayload) Validate() (err error) {
 }
 
 // OK sends a HTTP response with status code 200.
-func (ctx *CreateCareTeamContext) OK(r *Careteam) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.careteam+json")
+func (ctx *CreateCareTeamContext) OK(r *CareTeam) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/json")
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
 }
 
 // OKLink sends a HTTP response with status code 200.
-func (ctx *CreateCareTeamContext) OKLink(r *CareteamLink) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.careteam+json")
+func (ctx *CreateCareTeamContext) OKLink(r *CareTeamLink) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/json")
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
 }
 
 // Created sends a HTTP response with status code 201.
 func (ctx *CreateCareTeamContext) Created() error {
 	ctx.ResponseData.WriteHeader(201)
-	return nil
-}
-
-// NoContent sends a HTTP response with status code 204.
-func (ctx *CreateCareTeamContext) NoContent() error {
-	ctx.ResponseData.WriteHeader(204)
 	return nil
 }
 
@@ -170,21 +164,15 @@ func NewDeleteCareTeamContext(ctx context.Context, r *http.Request, service *goa
 }
 
 // OK sends a HTTP response with status code 200.
-func (ctx *DeleteCareTeamContext) OK(r *Careteam) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.careteam+json")
+func (ctx *DeleteCareTeamContext) OK(r *CareTeam) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/json")
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
 }
 
 // OKLink sends a HTTP response with status code 200.
-func (ctx *DeleteCareTeamContext) OKLink(r *CareteamLink) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.careteam+json")
+func (ctx *DeleteCareTeamContext) OKLink(r *CareTeamLink) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/json")
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
-}
-
-// Created sends a HTTP response with status code 201.
-func (ctx *DeleteCareTeamContext) Created() error {
-	ctx.ResponseData.WriteHeader(201)
-	return nil
 }
 
 // NoContent sends a HTTP response with status code 204.
@@ -231,24 +219,12 @@ func NewListCareTeamContext(ctx context.Context, r *http.Request, service *goa.S
 }
 
 // OK sends a HTTP response with status code 200.
-func (ctx *ListCareTeamContext) OK(r CareteamCollection) error {
+func (ctx *ListCareTeamContext) OK(r CareTeamCollection) error {
 	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.careteam+json; type=collection")
 	if r == nil {
-		r = CareteamCollection{}
+		r = CareTeamCollection{}
 	}
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
-}
-
-// Created sends a HTTP response with status code 201.
-func (ctx *ListCareTeamContext) Created() error {
-	ctx.ResponseData.WriteHeader(201)
-	return nil
-}
-
-// NoContent sends a HTTP response with status code 204.
-func (ctx *ListCareTeamContext) NoContent() error {
-	ctx.ResponseData.WriteHeader(204)
-	return nil
 }
 
 // BadRequest sends a HTTP response with status code 400.
@@ -295,27 +271,15 @@ func NewShowCareTeamContext(ctx context.Context, r *http.Request, service *goa.S
 }
 
 // OK sends a HTTP response with status code 200.
-func (ctx *ShowCareTeamContext) OK(r *Careteam) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.careteam+json")
+func (ctx *ShowCareTeamContext) OK(r *CareTeam) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/json")
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
 }
 
 // OKLink sends a HTTP response with status code 200.
-func (ctx *ShowCareTeamContext) OKLink(r *CareteamLink) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.careteam+json")
+func (ctx *ShowCareTeamContext) OKLink(r *CareTeamLink) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/json")
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
-}
-
-// Created sends a HTTP response with status code 201.
-func (ctx *ShowCareTeamContext) Created() error {
-	ctx.ResponseData.WriteHeader(201)
-	return nil
-}
-
-// NoContent sends a HTTP response with status code 204.
-func (ctx *ShowCareTeamContext) NoContent() error {
-	ctx.ResponseData.WriteHeader(204)
-	return nil
 }
 
 // BadRequest sends a HTTP response with status code 400.
@@ -376,9 +340,6 @@ type updateCareTeamPayload struct {
 
 // Validate runs the validation rules defined in the design.
 func (payload *updateCareTeamPayload) Validate() (err error) {
-	if payload.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "id"))
-	}
 	if payload.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "name"))
 	}
@@ -398,7 +359,7 @@ func (payload *updateCareTeamPayload) Publicize() *UpdateCareTeamPayload {
 		pub.CreatedAt = *payload.CreatedAt
 	}
 	if payload.ID != nil {
-		pub.ID = *payload.ID
+		pub.ID = payload.ID
 	}
 	if payload.Leader != nil {
 		pub.Leader = *payload.Leader
@@ -414,7 +375,7 @@ type UpdateCareTeamPayload struct {
 	// Timestamp for care team creation
 	CreatedAt time.Time `form:"createdAt" json:"createdAt" xml:"createdAt"`
 	// Unique care team ID
-	ID string `form:"id" json:"id" xml:"id"`
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Care team leader
 	Leader string `form:"leader" json:"leader" xml:"leader"`
 	// Care team name
@@ -423,9 +384,6 @@ type UpdateCareTeamPayload struct {
 
 // Validate runs the validation rules defined in the design.
 func (payload *UpdateCareTeamPayload) Validate() (err error) {
-	if payload.ID == "" {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "id"))
-	}
 	if payload.Name == "" {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "name"))
 	}
@@ -437,21 +395,15 @@ func (payload *UpdateCareTeamPayload) Validate() (err error) {
 }
 
 // OK sends a HTTP response with status code 200.
-func (ctx *UpdateCareTeamContext) OK(r *Careteam) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.careteam+json")
+func (ctx *UpdateCareTeamContext) OK(r *CareTeam) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/json")
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
 }
 
 // OKLink sends a HTTP response with status code 200.
-func (ctx *UpdateCareTeamContext) OKLink(r *CareteamLink) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.careteam+json")
+func (ctx *UpdateCareTeamContext) OKLink(r *CareTeamLink) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/json")
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
-}
-
-// Created sends a HTTP response with status code 201.
-func (ctx *UpdateCareTeamContext) Created() error {
-	ctx.ResponseData.WriteHeader(201)
-	return nil
 }
 
 // NoContent sends a HTTP response with status code 204.
@@ -591,13 +543,13 @@ func NewShowPatientContext(ctx context.Context, r *http.Request, service *goa.Se
 
 // OK sends a HTTP response with status code 200.
 func (ctx *ShowPatientContext) OK(r *Patient) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.patient+json")
+	ctx.ResponseData.Header().Set("Content-Type", "application/json")
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
 }
 
 // OKLink sends a HTTP response with status code 200.
 func (ctx *ShowPatientContext) OKLink(r *PatientLink) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.patient+json")
+	ctx.ResponseData.Header().Set("Content-Type", "application/json")
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
 }
 

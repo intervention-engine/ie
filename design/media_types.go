@@ -6,7 +6,9 @@ import (
 )
 
 var PatientMedia = MediaType("application/vnd.patient+json", func() {
+	TypeName("Patient")
 	Description("A patient")
+	ContentType("application/json")
 	Attributes(func() {
 		Attribute("id", String, "Unique patient ID")
 		Attribute("name", func() {
@@ -38,8 +40,10 @@ var PatientMedia = MediaType("application/vnd.patient+json", func() {
 })
 
 var CareTeamMedia = MediaType("application/vnd.careteam+json", func() {
+	TypeName("CareTeam")
 	Description("A care team")
 	Reference(CareTeamPayload)
+	ContentType("application/json")
 	Attributes(func() {
 		// Inherit from CareTeamPayload
 		Attribute("id")

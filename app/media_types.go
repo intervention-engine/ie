@@ -18,7 +18,7 @@ import (
 // A care team (default view)
 //
 // Identifier: application/vnd.careteam+json; view=default
-type Careteam struct {
+type CareTeam struct {
 	// Timestamp for care team creation
 	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" xml:"createdAt,omitempty"`
 	// Unique care team ID
@@ -32,17 +32,17 @@ type Careteam struct {
 // A care team (link view)
 //
 // Identifier: application/vnd.careteam+json; view=link
-type CareteamLink struct {
+type CareTeamLink struct {
 	// Unique care team ID
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Care team name
 	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
 }
 
-// CareteamCollection is the media type for an array of Careteam (default view)
+// CareTeamCollection is the media type for an array of CareTeam (default view)
 //
 // Identifier: application/vnd.careteam+json; type=collection; view=default
-type CareteamCollection []*Careteam
+type CareTeamCollection []*CareTeam
 
 // A patient (default view)
 //

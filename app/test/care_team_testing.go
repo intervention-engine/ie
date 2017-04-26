@@ -228,74 +228,6 @@ func CreateCareTeamInternalServerError(t goatest.TInterface, ctx context.Context
 	return rw
 }
 
-// CreateCareTeamNoContent runs the method Create of the given controller with the given parameters and payload.
-// It returns the response writer so it's possible to inspect the response headers.
-// If ctx is nil then context.Background() is used.
-// If service is nil then a default service is created.
-func CreateCareTeamNoContent(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, payload *app.CreateCareTeamPayload) http.ResponseWriter {
-	// Setup service
-	var (
-		logBuf bytes.Buffer
-		resp   interface{}
-
-		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
-	)
-	if service == nil {
-		service = goatest.Service(&logBuf, respSetter)
-	} else {
-		logger := log.New(&logBuf, "", log.Ltime)
-		service.WithLogger(goa.NewLogger(logger))
-		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
-		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
-		service.Encoder.Register(newEncoder, "*/*")
-	}
-
-	// Validate payload
-	err := payload.Validate()
-	if err != nil {
-		e, ok := err.(goa.ServiceError)
-		if !ok {
-			panic(err) // bug
-		}
-		t.Errorf("unexpected payload validation error: %+v", e)
-		return nil
-	}
-
-	// Setup request context
-	rw := httptest.NewRecorder()
-	u := &url.URL{
-		Path: fmt.Sprintf("/api/care_teams"),
-	}
-	req, _err := http.NewRequest("POST", u.String(), nil)
-	if _err != nil {
-		panic("invalid test " + _err.Error()) // bug
-	}
-	prms := url.Values{}
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	goaCtx := goa.NewContext(goa.WithAction(ctx, "CareTeamTest"), rw, req, prms)
-	createCtx, __err := app.NewCreateCareTeamContext(goaCtx, req, service)
-	if __err != nil {
-		panic("invalid test data " + __err.Error()) // bug
-	}
-	createCtx.Payload = payload
-
-	// Perform action
-	__err = ctrl.Create(createCtx)
-
-	// Validate response
-	if __err != nil {
-		t.Fatalf("controller returned %+v, logs:\n%s", __err, logBuf.String())
-	}
-	if rw.Code != 204 {
-		t.Errorf("invalid response status code: got %+v, expected 204", rw.Code)
-	}
-
-	// Return results
-	return rw
-}
-
 // CreateCareTeamNotFound runs the method Create of the given controller with the given parameters and payload.
 // It returns the response writer so it's possible to inspect the response headers.
 // If ctx is nil then context.Background() is used.
@@ -368,7 +300,7 @@ func CreateCareTeamNotFound(t goatest.TInterface, ctx context.Context, service *
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func CreateCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, payload *app.CreateCareTeamPayload) (http.ResponseWriter, *app.Careteam) {
+func CreateCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, payload *app.CreateCareTeamPayload) (http.ResponseWriter, *app.CareTeam) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -427,12 +359,12 @@ func CreateCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Se
 	if rw.Code != 200 {
 		t.Errorf("invalid response status code: got %+v, expected 200", rw.Code)
 	}
-	var mt *app.Careteam
+	var mt *app.CareTeam
 	if resp != nil {
 		var _ok bool
-		mt, _ok = resp.(*app.Careteam)
+		mt, _ok = resp.(*app.CareTeam)
 		if !_ok {
-			t.Fatalf("invalid response media: got %+v, expected instance of app.Careteam", resp)
+			t.Fatalf("invalid response media: got %+v, expected instance of app.CareTeam", resp)
 		}
 	}
 
@@ -444,7 +376,7 @@ func CreateCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Se
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func CreateCareTeamOKLink(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, payload *app.CreateCareTeamPayload) (http.ResponseWriter, *app.CareteamLink) {
+func CreateCareTeamOKLink(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, payload *app.CreateCareTeamPayload) (http.ResponseWriter, *app.CareTeamLink) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -503,12 +435,12 @@ func CreateCareTeamOKLink(t goatest.TInterface, ctx context.Context, service *go
 	if rw.Code != 200 {
 		t.Errorf("invalid response status code: got %+v, expected 200", rw.Code)
 	}
-	var mt *app.CareteamLink
+	var mt *app.CareTeamLink
 	if resp != nil {
 		var _ok bool
-		mt, _ok = resp.(*app.CareteamLink)
+		mt, _ok = resp.(*app.CareTeamLink)
 		if !_ok {
-			t.Fatalf("invalid response media: got %+v, expected instance of app.CareteamLink", resp)
+			t.Fatalf("invalid response media: got %+v, expected instance of app.CareTeamLink", resp)
 		}
 	}
 
@@ -567,63 +499,6 @@ func DeleteCareTeamBadRequest(t goatest.TInterface, ctx context.Context, service
 	}
 	if rw.Code != 400 {
 		t.Errorf("invalid response status code: got %+v, expected 400", rw.Code)
-	}
-
-	// Return results
-	return rw
-}
-
-// DeleteCareTeamCreated runs the method Delete of the given controller with the given parameters.
-// It returns the response writer so it's possible to inspect the response headers.
-// If ctx is nil then context.Background() is used.
-// If service is nil then a default service is created.
-func DeleteCareTeamCreated(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string) http.ResponseWriter {
-	// Setup service
-	var (
-		logBuf bytes.Buffer
-		resp   interface{}
-
-		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
-	)
-	if service == nil {
-		service = goatest.Service(&logBuf, respSetter)
-	} else {
-		logger := log.New(&logBuf, "", log.Ltime)
-		service.WithLogger(goa.NewLogger(logger))
-		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
-		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
-		service.Encoder.Register(newEncoder, "*/*")
-	}
-
-	// Setup request context
-	rw := httptest.NewRecorder()
-	u := &url.URL{
-		Path: fmt.Sprintf("/api/care_teams/%v", id),
-	}
-	req, err := http.NewRequest("DELETE", u.String(), nil)
-	if err != nil {
-		panic("invalid test " + err.Error()) // bug
-	}
-	prms := url.Values{}
-	prms["id"] = []string{fmt.Sprintf("%v", id)}
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	goaCtx := goa.NewContext(goa.WithAction(ctx, "CareTeamTest"), rw, req, prms)
-	deleteCtx, _err := app.NewDeleteCareTeamContext(goaCtx, req, service)
-	if _err != nil {
-		panic("invalid test data " + _err.Error()) // bug
-	}
-
-	// Perform action
-	_err = ctrl.Delete(deleteCtx)
-
-	// Validate response
-	if _err != nil {
-		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
-	}
-	if rw.Code != 201 {
-		t.Errorf("invalid response status code: got %+v, expected 201", rw.Code)
 	}
 
 	// Return results
@@ -805,7 +680,7 @@ func DeleteCareTeamNotFound(t goatest.TInterface, ctx context.Context, service *
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func DeleteCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string) (http.ResponseWriter, *app.Careteam) {
+func DeleteCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string) (http.ResponseWriter, *app.CareTeam) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -853,12 +728,12 @@ func DeleteCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Se
 	if rw.Code != 200 {
 		t.Errorf("invalid response status code: got %+v, expected 200", rw.Code)
 	}
-	var mt *app.Careteam
+	var mt *app.CareTeam
 	if resp != nil {
 		var ok bool
-		mt, ok = resp.(*app.Careteam)
+		mt, ok = resp.(*app.CareTeam)
 		if !ok {
-			t.Fatalf("invalid response media: got %+v, expected instance of app.Careteam", resp)
+			t.Fatalf("invalid response media: got %+v, expected instance of app.CareTeam", resp)
 		}
 	}
 
@@ -870,7 +745,7 @@ func DeleteCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Se
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func DeleteCareTeamOKLink(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string) (http.ResponseWriter, *app.CareteamLink) {
+func DeleteCareTeamOKLink(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string) (http.ResponseWriter, *app.CareTeamLink) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -918,12 +793,12 @@ func DeleteCareTeamOKLink(t goatest.TInterface, ctx context.Context, service *go
 	if rw.Code != 200 {
 		t.Errorf("invalid response status code: got %+v, expected 200", rw.Code)
 	}
-	var mt *app.CareteamLink
+	var mt *app.CareTeamLink
 	if resp != nil {
 		var ok bool
-		mt, ok = resp.(*app.CareteamLink)
+		mt, ok = resp.(*app.CareTeamLink)
 		if !ok {
-			t.Fatalf("invalid response media: got %+v, expected instance of app.CareteamLink", resp)
+			t.Fatalf("invalid response media: got %+v, expected instance of app.CareTeamLink", resp)
 		}
 	}
 
@@ -987,62 +862,6 @@ func ListCareTeamBadRequest(t goatest.TInterface, ctx context.Context, service *
 	return rw
 }
 
-// ListCareTeamCreated runs the method List of the given controller with the given parameters.
-// It returns the response writer so it's possible to inspect the response headers.
-// If ctx is nil then context.Background() is used.
-// If service is nil then a default service is created.
-func ListCareTeamCreated(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController) http.ResponseWriter {
-	// Setup service
-	var (
-		logBuf bytes.Buffer
-		resp   interface{}
-
-		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
-	)
-	if service == nil {
-		service = goatest.Service(&logBuf, respSetter)
-	} else {
-		logger := log.New(&logBuf, "", log.Ltime)
-		service.WithLogger(goa.NewLogger(logger))
-		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
-		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
-		service.Encoder.Register(newEncoder, "*/*")
-	}
-
-	// Setup request context
-	rw := httptest.NewRecorder()
-	u := &url.URL{
-		Path: fmt.Sprintf("/api/care_teams"),
-	}
-	req, err := http.NewRequest("GET", u.String(), nil)
-	if err != nil {
-		panic("invalid test " + err.Error()) // bug
-	}
-	prms := url.Values{}
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	goaCtx := goa.NewContext(goa.WithAction(ctx, "CareTeamTest"), rw, req, prms)
-	listCtx, _err := app.NewListCareTeamContext(goaCtx, req, service)
-	if _err != nil {
-		panic("invalid test data " + _err.Error()) // bug
-	}
-
-	// Perform action
-	_err = ctrl.List(listCtx)
-
-	// Validate response
-	if _err != nil {
-		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
-	}
-	if rw.Code != 201 {
-		t.Errorf("invalid response status code: got %+v, expected 201", rw.Code)
-	}
-
-	// Return results
-	return rw
-}
-
 // ListCareTeamInternalServerError runs the method List of the given controller with the given parameters.
 // It returns the response writer so it's possible to inspect the response headers.
 // If ctx is nil then context.Background() is used.
@@ -1093,62 +912,6 @@ func ListCareTeamInternalServerError(t goatest.TInterface, ctx context.Context, 
 	}
 	if rw.Code != 500 {
 		t.Errorf("invalid response status code: got %+v, expected 500", rw.Code)
-	}
-
-	// Return results
-	return rw
-}
-
-// ListCareTeamNoContent runs the method List of the given controller with the given parameters.
-// It returns the response writer so it's possible to inspect the response headers.
-// If ctx is nil then context.Background() is used.
-// If service is nil then a default service is created.
-func ListCareTeamNoContent(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController) http.ResponseWriter {
-	// Setup service
-	var (
-		logBuf bytes.Buffer
-		resp   interface{}
-
-		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
-	)
-	if service == nil {
-		service = goatest.Service(&logBuf, respSetter)
-	} else {
-		logger := log.New(&logBuf, "", log.Ltime)
-		service.WithLogger(goa.NewLogger(logger))
-		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
-		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
-		service.Encoder.Register(newEncoder, "*/*")
-	}
-
-	// Setup request context
-	rw := httptest.NewRecorder()
-	u := &url.URL{
-		Path: fmt.Sprintf("/api/care_teams"),
-	}
-	req, err := http.NewRequest("GET", u.String(), nil)
-	if err != nil {
-		panic("invalid test " + err.Error()) // bug
-	}
-	prms := url.Values{}
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	goaCtx := goa.NewContext(goa.WithAction(ctx, "CareTeamTest"), rw, req, prms)
-	listCtx, _err := app.NewListCareTeamContext(goaCtx, req, service)
-	if _err != nil {
-		panic("invalid test data " + _err.Error()) // bug
-	}
-
-	// Perform action
-	_err = ctrl.List(listCtx)
-
-	// Validate response
-	if _err != nil {
-		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
-	}
-	if rw.Code != 204 {
-		t.Errorf("invalid response status code: got %+v, expected 204", rw.Code)
 	}
 
 	// Return results
@@ -1215,7 +978,7 @@ func ListCareTeamNotFound(t goatest.TInterface, ctx context.Context, service *go
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func ListCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController) (http.ResponseWriter, app.CareteamCollection) {
+func ListCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController) (http.ResponseWriter, app.CareTeamCollection) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -1262,12 +1025,12 @@ func ListCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Serv
 	if rw.Code != 200 {
 		t.Errorf("invalid response status code: got %+v, expected 200", rw.Code)
 	}
-	var mt app.CareteamCollection
+	var mt app.CareTeamCollection
 	if resp != nil {
 		var ok bool
-		mt, ok = resp.(app.CareteamCollection)
+		mt, ok = resp.(app.CareTeamCollection)
 		if !ok {
-			t.Fatalf("invalid response media: got %+v, expected instance of app.CareteamCollection", resp)
+			t.Fatalf("invalid response media: got %+v, expected instance of app.CareTeamCollection", resp)
 		}
 	}
 
@@ -1332,63 +1095,6 @@ func ShowCareTeamBadRequest(t goatest.TInterface, ctx context.Context, service *
 	return rw
 }
 
-// ShowCareTeamCreated runs the method Show of the given controller with the given parameters.
-// It returns the response writer so it's possible to inspect the response headers.
-// If ctx is nil then context.Background() is used.
-// If service is nil then a default service is created.
-func ShowCareTeamCreated(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string) http.ResponseWriter {
-	// Setup service
-	var (
-		logBuf bytes.Buffer
-		resp   interface{}
-
-		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
-	)
-	if service == nil {
-		service = goatest.Service(&logBuf, respSetter)
-	} else {
-		logger := log.New(&logBuf, "", log.Ltime)
-		service.WithLogger(goa.NewLogger(logger))
-		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
-		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
-		service.Encoder.Register(newEncoder, "*/*")
-	}
-
-	// Setup request context
-	rw := httptest.NewRecorder()
-	u := &url.URL{
-		Path: fmt.Sprintf("/api/care_teams/%v", id),
-	}
-	req, err := http.NewRequest("GET", u.String(), nil)
-	if err != nil {
-		panic("invalid test " + err.Error()) // bug
-	}
-	prms := url.Values{}
-	prms["id"] = []string{fmt.Sprintf("%v", id)}
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	goaCtx := goa.NewContext(goa.WithAction(ctx, "CareTeamTest"), rw, req, prms)
-	showCtx, _err := app.NewShowCareTeamContext(goaCtx, req, service)
-	if _err != nil {
-		panic("invalid test data " + _err.Error()) // bug
-	}
-
-	// Perform action
-	_err = ctrl.Show(showCtx)
-
-	// Validate response
-	if _err != nil {
-		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
-	}
-	if rw.Code != 201 {
-		t.Errorf("invalid response status code: got %+v, expected 201", rw.Code)
-	}
-
-	// Return results
-	return rw
-}
-
 // ShowCareTeamInternalServerError runs the method Show of the given controller with the given parameters.
 // It returns the response writer so it's possible to inspect the response headers.
 // If ctx is nil then context.Background() is used.
@@ -1440,63 +1146,6 @@ func ShowCareTeamInternalServerError(t goatest.TInterface, ctx context.Context, 
 	}
 	if rw.Code != 500 {
 		t.Errorf("invalid response status code: got %+v, expected 500", rw.Code)
-	}
-
-	// Return results
-	return rw
-}
-
-// ShowCareTeamNoContent runs the method Show of the given controller with the given parameters.
-// It returns the response writer so it's possible to inspect the response headers.
-// If ctx is nil then context.Background() is used.
-// If service is nil then a default service is created.
-func ShowCareTeamNoContent(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string) http.ResponseWriter {
-	// Setup service
-	var (
-		logBuf bytes.Buffer
-		resp   interface{}
-
-		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
-	)
-	if service == nil {
-		service = goatest.Service(&logBuf, respSetter)
-	} else {
-		logger := log.New(&logBuf, "", log.Ltime)
-		service.WithLogger(goa.NewLogger(logger))
-		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
-		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
-		service.Encoder.Register(newEncoder, "*/*")
-	}
-
-	// Setup request context
-	rw := httptest.NewRecorder()
-	u := &url.URL{
-		Path: fmt.Sprintf("/api/care_teams/%v", id),
-	}
-	req, err := http.NewRequest("GET", u.String(), nil)
-	if err != nil {
-		panic("invalid test " + err.Error()) // bug
-	}
-	prms := url.Values{}
-	prms["id"] = []string{fmt.Sprintf("%v", id)}
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	goaCtx := goa.NewContext(goa.WithAction(ctx, "CareTeamTest"), rw, req, prms)
-	showCtx, _err := app.NewShowCareTeamContext(goaCtx, req, service)
-	if _err != nil {
-		panic("invalid test data " + _err.Error()) // bug
-	}
-
-	// Perform action
-	_err = ctrl.Show(showCtx)
-
-	// Validate response
-	if _err != nil {
-		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
-	}
-	if rw.Code != 204 {
-		t.Errorf("invalid response status code: got %+v, expected 204", rw.Code)
 	}
 
 	// Return results
@@ -1564,7 +1213,7 @@ func ShowCareTeamNotFound(t goatest.TInterface, ctx context.Context, service *go
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func ShowCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string) (http.ResponseWriter, *app.Careteam) {
+func ShowCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string) (http.ResponseWriter, *app.CareTeam) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -1612,12 +1261,12 @@ func ShowCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Serv
 	if rw.Code != 200 {
 		t.Errorf("invalid response status code: got %+v, expected 200", rw.Code)
 	}
-	var mt *app.Careteam
+	var mt *app.CareTeam
 	if resp != nil {
 		var ok bool
-		mt, ok = resp.(*app.Careteam)
+		mt, ok = resp.(*app.CareTeam)
 		if !ok {
-			t.Fatalf("invalid response media: got %+v, expected instance of app.Careteam", resp)
+			t.Fatalf("invalid response media: got %+v, expected instance of app.CareTeam", resp)
 		}
 	}
 
@@ -1629,7 +1278,7 @@ func ShowCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Serv
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func ShowCareTeamOKLink(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string) (http.ResponseWriter, *app.CareteamLink) {
+func ShowCareTeamOKLink(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string) (http.ResponseWriter, *app.CareTeamLink) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -1677,12 +1326,12 @@ func ShowCareTeamOKLink(t goatest.TInterface, ctx context.Context, service *goa.
 	if rw.Code != 200 {
 		t.Errorf("invalid response status code: got %+v, expected 200", rw.Code)
 	}
-	var mt *app.CareteamLink
+	var mt *app.CareTeamLink
 	if resp != nil {
 		var ok bool
-		mt, ok = resp.(*app.CareteamLink)
+		mt, ok = resp.(*app.CareTeamLink)
 		if !ok {
-			t.Fatalf("invalid response media: got %+v, expected instance of app.CareteamLink", resp)
+			t.Fatalf("invalid response media: got %+v, expected instance of app.CareTeamLink", resp)
 		}
 	}
 
@@ -1753,75 +1402,6 @@ func UpdateCareTeamBadRequest(t goatest.TInterface, ctx context.Context, service
 	}
 	if rw.Code != 400 {
 		t.Errorf("invalid response status code: got %+v, expected 400", rw.Code)
-	}
-
-	// Return results
-	return rw
-}
-
-// UpdateCareTeamCreated runs the method Update of the given controller with the given parameters and payload.
-// It returns the response writer so it's possible to inspect the response headers.
-// If ctx is nil then context.Background() is used.
-// If service is nil then a default service is created.
-func UpdateCareTeamCreated(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string, payload *app.UpdateCareTeamPayload) http.ResponseWriter {
-	// Setup service
-	var (
-		logBuf bytes.Buffer
-		resp   interface{}
-
-		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
-	)
-	if service == nil {
-		service = goatest.Service(&logBuf, respSetter)
-	} else {
-		logger := log.New(&logBuf, "", log.Ltime)
-		service.WithLogger(goa.NewLogger(logger))
-		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
-		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
-		service.Encoder.Register(newEncoder, "*/*")
-	}
-
-	// Validate payload
-	err := payload.Validate()
-	if err != nil {
-		e, ok := err.(goa.ServiceError)
-		if !ok {
-			panic(err) // bug
-		}
-		t.Errorf("unexpected payload validation error: %+v", e)
-		return nil
-	}
-
-	// Setup request context
-	rw := httptest.NewRecorder()
-	u := &url.URL{
-		Path: fmt.Sprintf("/api/care_teams/%v", id),
-	}
-	req, _err := http.NewRequest("PUT", u.String(), nil)
-	if _err != nil {
-		panic("invalid test " + _err.Error()) // bug
-	}
-	prms := url.Values{}
-	prms["id"] = []string{fmt.Sprintf("%v", id)}
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	goaCtx := goa.NewContext(goa.WithAction(ctx, "CareTeamTest"), rw, req, prms)
-	updateCtx, __err := app.NewUpdateCareTeamContext(goaCtx, req, service)
-	if __err != nil {
-		panic("invalid test data " + __err.Error()) // bug
-	}
-	updateCtx.Payload = payload
-
-	// Perform action
-	__err = ctrl.Update(updateCtx)
-
-	// Validate response
-	if __err != nil {
-		t.Fatalf("controller returned %+v, logs:\n%s", __err, logBuf.String())
-	}
-	if rw.Code != 201 {
-		t.Errorf("invalid response status code: got %+v, expected 201", rw.Code)
 	}
 
 	// Return results
@@ -2039,7 +1619,7 @@ func UpdateCareTeamNotFound(t goatest.TInterface, ctx context.Context, service *
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func UpdateCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string, payload *app.UpdateCareTeamPayload) (http.ResponseWriter, *app.Careteam) {
+func UpdateCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string, payload *app.UpdateCareTeamPayload) (http.ResponseWriter, *app.CareTeam) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -2099,12 +1679,12 @@ func UpdateCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Se
 	if rw.Code != 200 {
 		t.Errorf("invalid response status code: got %+v, expected 200", rw.Code)
 	}
-	var mt *app.Careteam
+	var mt *app.CareTeam
 	if resp != nil {
 		var _ok bool
-		mt, _ok = resp.(*app.Careteam)
+		mt, _ok = resp.(*app.CareTeam)
 		if !_ok {
-			t.Fatalf("invalid response media: got %+v, expected instance of app.Careteam", resp)
+			t.Fatalf("invalid response media: got %+v, expected instance of app.CareTeam", resp)
 		}
 	}
 
@@ -2116,7 +1696,7 @@ func UpdateCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Se
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func UpdateCareTeamOKLink(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string, payload *app.UpdateCareTeamPayload) (http.ResponseWriter, *app.CareteamLink) {
+func UpdateCareTeamOKLink(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string, payload *app.UpdateCareTeamPayload) (http.ResponseWriter, *app.CareTeamLink) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -2176,12 +1756,12 @@ func UpdateCareTeamOKLink(t goatest.TInterface, ctx context.Context, service *go
 	if rw.Code != 200 {
 		t.Errorf("invalid response status code: got %+v, expected 200", rw.Code)
 	}
-	var mt *app.CareteamLink
+	var mt *app.CareTeamLink
 	if resp != nil {
 		var _ok bool
-		mt, _ok = resp.(*app.CareteamLink)
+		mt, _ok = resp.(*app.CareTeamLink)
 		if !_ok {
-			t.Fatalf("invalid response media: got %+v, expected instance of app.CareteamLink", resp)
+			t.Fatalf("invalid response media: got %+v, expected instance of app.CareTeamLink", resp)
 		}
 	}
 

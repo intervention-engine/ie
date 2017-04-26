@@ -18,13 +18,6 @@ type PatientService struct {
 	C *mgo.Collection
 }
 
-// Patient embeds FHIR model and adds Risk/Huddle information
-type Patient struct {
-	models.Patient  `bson:",inline"`
-	RiskAssessments []app.RiskAssessment `bson:"risk_assessment,omitempty" json:"risk_assessment,omitempty"`
-	NextHuddleID    string               `bson:"next_huddle_id,omitempty" json:"next_huddle_id,omitempty"`
-}
-
 // Patient gets a patient with the given id.
 func (s *PatientService) Patient(id string) (*app.Patient, error) {
 	defer s.S.Close()
@@ -76,20 +69,44 @@ func (s *PatientService) SortBy(fields ...string) ([]*app.Patient, error) {
 	return pp, nil
 }
 
+// Patient embeds FHIR model and adds Risk/Huddle information
+type Patient struct {
+	models.Patient  `bson:",inline"`
+	RiskAssessments []app.RiskAssessment `bson:"risk_assessment,omitempty" json:"risk_assessment,omitempty"`
+	NextHuddleID    string               `bson:"next_huddle_id,omitempty" json:"next_huddle_id,omitempty"`
+}
+
 func newPatient(fhirPatient Patient) *app.Patient {
 	p := app.Patient{}
 	p.ID = fhirPatient.Id
-	p.Address = newAddress(fhirPatient.Address[0])
-	age := age(fhirPatient.BirthDate)
-	p.Age = &age
+	if len(fhirPatient.Address) > 0 {
+		p.Address = newAddress(fhirPatient.Address[0])
+	}
+	if fhirPatient.BirthDate != nil {
+		age := age(fhirPatient.BirthDate)
+		p.Age = &age
+	}
 	p.Gender = &fhirPatient.Gender
-	// TODO: do this conversion
-	// p.BirthDate = &fhirPatient.BirthDate
-	name := fhirPatient.Name[0]
-	p.Name.Family = &name.Family[0]
-	p.Name.Given = &name.Given[0]
-	full := fmt.Sprintf("%s %s", name.Given, name.Family)
-	p.Name.Full = &full
+	p.BirthDate = &fhirPatient.BirthDate.Time
+	var family, given string
+	if len(fhirPatient.Name) > 0 {
+		if len(fhirPatient.Name[0].Given) > 0 {
+			given = fhirPatient.Name[0].Given[0]
+			p.Name.Given = &fhirPatient.Name[0].Given[0]
+		}
+		if len(fhirPatient.Name[0].Family) > 0 {
+			family = fhirPatient.Name[0].Family[0]
+			p.Name.Family = &fhirPatient.Name[0].Family[0]
+		}
+		if (given != "") && (family != "") {
+			full := fmt.Sprintf("%s %s", given, family)
+			p.Name.Full = &full
+		} else if given != "" {
+			p.Name.Full = &given
+		} else if family != "" {
+			p.Name.Full = &family
+		}
+	}
 	// p.NextHuddleID = &fhirPatient.NextHuddleID
 	// p.RecentRiskAssessments = fhirPatient.RiskAssessments
 	return &p

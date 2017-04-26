@@ -12,10 +12,10 @@ type Service interface {
 
 // CareTeamService describes the interface for storing a CareTeam
 type CareTeamService interface {
-	CareTeam(id string) (*app.Careteam, error)
-	CareTeams() ([]*app.Careteam, error)
-	CreateCareTeam(c *app.Careteam) error
-	UpdateCareTeam(c *app.Careteam) error
+	CareTeam(id string) (*app.CareTeam, error)
+	CareTeams() ([]*app.CareTeam, error)
+	CreateCareTeam(c *app.CareTeam) error
+	UpdateCareTeam(c *app.CareTeam) error
 	DeleteCareTeam(id string) error
 }
 
