@@ -56,17 +56,8 @@ type Patient struct {
 	// Gender of Patient
 	Gender *string `form:"gender,omitempty" json:"gender,omitempty" xml:"gender,omitempty"`
 	// Unique patient ID
-	ID   string `form:"id" json:"id" xml:"id"`
-	Name *struct {
-		// Family Name
-		Family *string `form:"family,omitempty" json:"family,omitempty" xml:"family,omitempty"`
-		// Full Name
-		Full *string `form:"full,omitempty" json:"full,omitempty" xml:"full,omitempty"`
-		// Given Name
-		Given *string `form:"given,omitempty" json:"given,omitempty" xml:"given,omitempty"`
-		// Middle Initial
-		MiddleInitial *string `form:"middleInitial,omitempty" json:"middleInitial,omitempty" xml:"middleInitial,omitempty"`
-	} `form:"name" json:"name" xml:"name"`
+	ID              string            `form:"id" json:"id" xml:"id"`
+	Name            *Name             `form:"name" json:"name" xml:"name"`
 	RiskAssessments []*RiskAssessment `form:"riskAssessments,omitempty" json:"riskAssessments,omitempty" xml:"riskAssessments,omitempty"`
 }
 
@@ -87,16 +78,7 @@ func (mt *Patient) Validate() (err error) {
 type PatientLink struct {
 	// Unique patient ID
 	ID   string `form:"id" json:"id" xml:"id"`
-	Name *struct {
-		// Family Name
-		Family *string `form:"family,omitempty" json:"family,omitempty" xml:"family,omitempty"`
-		// Full Name
-		Full *string `form:"full,omitempty" json:"full,omitempty" xml:"full,omitempty"`
-		// Given Name
-		Given *string `form:"given,omitempty" json:"given,omitempty" xml:"given,omitempty"`
-		// Middle Initial
-		MiddleInitial *string `form:"middleInitial,omitempty" json:"middleInitial,omitempty" xml:"middleInitial,omitempty"`
-	} `form:"name" json:"name" xml:"name"`
+	Name *Name  `form:"name" json:"name" xml:"name"`
 }
 
 // Validate validates the PatientLink media type instance.

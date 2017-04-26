@@ -146,29 +146,7 @@ definitions:
         example: Explicabo quas est minus.
         type: string
       name:
-        example:
-          family: Aut mollitia illum quia.
-          full: Suscipit quis exercitationem ut ipsum quis saepe.
-          given: Cum repellat tempora eum.
-          middleInitial: Qui et et.
-        properties:
-          family:
-            description: Family Name
-            example: Aut mollitia illum quia.
-            type: string
-          full:
-            description: Full Name
-            example: Suscipit quis exercitationem ut ipsum quis saepe.
-            type: string
-          given:
-            description: Given Name
-            example: Cum repellat tempora eum.
-            type: string
-          middleInitial:
-            description: Middle Initial
-            example: Qui et et.
-            type: string
-        type: object
+        $ref: '#/definitions/name'
       riskAssessments:
         example:
         - date: 2008-12-18T15:13:10-05:00
@@ -283,6 +261,31 @@ definitions:
         example: "400"
         type: string
     title: 'Mediatype identifier: application/vnd.goa.error; view=default'
+    type: object
+  name:
+    example:
+      family: Aut mollitia illum quia.
+      full: Suscipit quis exercitationem ut ipsum quis saepe.
+      given: Cum repellat tempora eum.
+      middleInitial: Qui et et.
+    properties:
+      family:
+        description: Family Name
+        example: Aut mollitia illum quia.
+        type: string
+      full:
+        description: Full Name
+        example: Suscipit quis exercitationem ut ipsum quis saepe.
+        type: string
+      given:
+        description: Given Name
+        example: Cum repellat tempora eum.
+        type: string
+      middleInitial:
+        description: Middle Initial
+        example: Qui et et.
+        type: string
+    title: name
     type: object
   riskAssessment:
     example:

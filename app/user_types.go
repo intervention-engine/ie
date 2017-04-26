@@ -98,6 +98,48 @@ type Address struct {
 	Street []string `form:"street,omitempty" json:"street,omitempty" xml:"street,omitempty"`
 }
 
+// name user type.
+type name struct {
+	// Family Name
+	Family *string `form:"family,omitempty" json:"family,omitempty" xml:"family,omitempty"`
+	// Full Name
+	Full *string `form:"full,omitempty" json:"full,omitempty" xml:"full,omitempty"`
+	// Given Name
+	Given *string `form:"given,omitempty" json:"given,omitempty" xml:"given,omitempty"`
+	// Middle Initial
+	MiddleInitial *string `form:"middleInitial,omitempty" json:"middleInitial,omitempty" xml:"middleInitial,omitempty"`
+}
+
+// Publicize creates Name from name
+func (ut *name) Publicize() *Name {
+	var pub Name
+	if ut.Family != nil {
+		pub.Family = ut.Family
+	}
+	if ut.Full != nil {
+		pub.Full = ut.Full
+	}
+	if ut.Given != nil {
+		pub.Given = ut.Given
+	}
+	if ut.MiddleInitial != nil {
+		pub.MiddleInitial = ut.MiddleInitial
+	}
+	return &pub
+}
+
+// Name user type.
+type Name struct {
+	// Family Name
+	Family *string `form:"family,omitempty" json:"family,omitempty" xml:"family,omitempty"`
+	// Full Name
+	Full *string `form:"full,omitempty" json:"full,omitempty" xml:"full,omitempty"`
+	// Given Name
+	Given *string `form:"given,omitempty" json:"given,omitempty" xml:"given,omitempty"`
+	// Middle Initial
+	MiddleInitial *string `form:"middleInitial,omitempty" json:"middleInitial,omitempty" xml:"middleInitial,omitempty"`
+}
+
 // riskAssessment user type.
 type riskAssessment struct {
 	// Date

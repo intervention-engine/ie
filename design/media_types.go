@@ -11,12 +11,7 @@ var PatientMedia = MediaType("application/vnd.patient+json", func() {
 	ContentType("application/json")
 	Attributes(func() {
 		Attribute("id", String, "Unique patient ID")
-		Attribute("name", func() {
-			Attribute("family", String, "Family Name")
-			Attribute("given", String, "Given Name")
-			Attribute("middleInitial", String, "Middle Initial")
-			Attribute("full", String, "Full Name")
-		})
+		Attribute("name", PatientName)
 		Attribute("address", Address)
 		Attribute("riskAssessments", ArrayOf(RiskAssessment))
 		Attribute("age", Integer, "Age of Patient")

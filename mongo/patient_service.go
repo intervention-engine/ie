@@ -44,9 +44,9 @@ func (s *PatientService) Patients() ([]*app.Patient, error) {
 		return nil, err
 	}
 
-	pp := make([]*app.Patient, len(data))
-	for i, patient := range data {
-		pp[i] = newPatient(patient)
+	pp := make([]*app.Patient, len(data), len(data))
+	for i, _ := range data {
+		pp[i] = newPatient(data[i])
 	}
 
 	return pp, nil
@@ -88,28 +88,34 @@ func newPatient(fhirPatient Patient) *app.Patient {
 	}
 	p.Gender = &fhirPatient.Gender
 	p.BirthDate = &fhirPatient.BirthDate.Time
-	var family, given string
 	if len(fhirPatient.Name) > 0 {
-		if len(fhirPatient.Name[0].Given) > 0 {
-			given = fhirPatient.Name[0].Given[0]
-			p.Name.Given = &fhirPatient.Name[0].Given[0]
-		}
-		if len(fhirPatient.Name[0].Family) > 0 {
-			family = fhirPatient.Name[0].Family[0]
-			p.Name.Family = &fhirPatient.Name[0].Family[0]
-		}
-		if (given != "") && (family != "") {
-			full := fmt.Sprintf("%s %s", given, family)
-			p.Name.Full = &full
-		} else if given != "" {
-			p.Name.Full = &given
-		} else if family != "" {
-			p.Name.Full = &family
-		}
+		p.Name = newName(fhirPatient.Name[0])
 	}
 	// p.NextHuddleID = &fhirPatient.NextHuddleID
 	// p.RecentRiskAssessments = fhirPatient.RiskAssessments
 	return &p
+}
+
+func newName(name models.HumanName) *app.Name {
+	n := app.Name{}
+	var family, given string
+	if len(name.Given) > 0 {
+		given = name.Given[0]
+		n.Given = &given
+	}
+	if len(name.Family) > 0 {
+		family = name.Family[0]
+		n.Family = &family
+	}
+	if (given != "") && (family != "") {
+		full := fmt.Sprintf("%s %s", given, family)
+		n.Full = &full
+	} else if given != "" {
+		n.Full = &given
+	} else if family != "" {
+		n.Full = &family
+	}
+	return &n
 }
 
 func newAddress(address models.Address) *app.Address {

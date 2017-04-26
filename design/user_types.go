@@ -12,6 +12,13 @@ var RiskAssessment = Type("riskAssessment", func() {
 	Attribute("value", Integer, "Value")
 })
 
+var PatientName = Type("name", func() {
+	Attribute("family", String, "Family Name")
+	Attribute("given", String, "Given Name")
+	Attribute("middleInitial", String, "Middle Initial")
+	Attribute("full", String, "Full Name")
+})
+
 var Address = Type("address", func() {
 	Attribute("street", ArrayOf(String), "Street Name")
 	Attribute("city", String, "City Name")
