@@ -72,9 +72,7 @@ func (c *PatientController) List(ctx *app.ListPatientContext) error {
 		// return goa.ErrInternal("internal server error trying to list patients")
 		return ctx.InternalServerError()
 	}
-	if len(pp) == 0 {
-		return ctx.NotFound()
-	}
+
 	return ctx.OK(pp)
 }
 

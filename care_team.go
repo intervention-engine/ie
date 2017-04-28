@@ -63,9 +63,6 @@ func (c *CareTeamController) List(ctx *app.ListCareTeamContext) error {
 		// return goa.ErrInternal("error trying to list patients")
 		return ctx.InternalServerError()
 	}
-	if len(cc) == 0 {
-		return ctx.NotFound()
-	}
 
 	return ctx.OK(cc)
 }
