@@ -14,5 +14,8 @@ var _ = API("api", func() {
 	})
 	Scheme("http")
 	Host("localhost:3001")
+	Origin("*", func() {
+		Methods("GET", "POST", "PUT", "DELETE")
+	})
 	BasePath("/api")
 })

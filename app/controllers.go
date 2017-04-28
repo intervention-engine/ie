@@ -46,6 +46,8 @@ type CareTeamController interface {
 func MountCareTeamController(service *goa.Service, ctrl CareTeamController) {
 	initService(service)
 	var h goa.Handler
+	service.Mux.Handle("OPTIONS", "/api/care_teams", ctrl.MuxHandler("preflight", handleCareTeamOrigin(cors.HandlePreflight()), nil))
+	service.Mux.Handle("OPTIONS", "/api/care_teams/:id", ctrl.MuxHandler("preflight", handleCareTeamOrigin(cors.HandlePreflight()), nil))
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 		// Check if there was an error loading the request
@@ -65,6 +67,7 @@ func MountCareTeamController(service *goa.Service, ctrl CareTeamController) {
 		}
 		return ctrl.Create(rctx)
 	}
+	h = handleCareTeamOrigin(h)
 	service.Mux.Handle("POST", "/api/care_teams", ctrl.MuxHandler("create", h, unmarshalCreateCareTeamPayload))
 	service.LogInfo("mount", "ctrl", "CareTeam", "action", "Create", "route", "POST /api/care_teams")
 
@@ -80,6 +83,7 @@ func MountCareTeamController(service *goa.Service, ctrl CareTeamController) {
 		}
 		return ctrl.Delete(rctx)
 	}
+	h = handleCareTeamOrigin(h)
 	service.Mux.Handle("DELETE", "/api/care_teams/:id", ctrl.MuxHandler("delete", h, nil))
 	service.LogInfo("mount", "ctrl", "CareTeam", "action", "Delete", "route", "DELETE /api/care_teams/:id")
 
@@ -95,6 +99,7 @@ func MountCareTeamController(service *goa.Service, ctrl CareTeamController) {
 		}
 		return ctrl.List(rctx)
 	}
+	h = handleCareTeamOrigin(h)
 	service.Mux.Handle("GET", "/api/care_teams", ctrl.MuxHandler("list", h, nil))
 	service.LogInfo("mount", "ctrl", "CareTeam", "action", "List", "route", "GET /api/care_teams")
 
@@ -110,6 +115,7 @@ func MountCareTeamController(service *goa.Service, ctrl CareTeamController) {
 		}
 		return ctrl.Show(rctx)
 	}
+	h = handleCareTeamOrigin(h)
 	service.Mux.Handle("GET", "/api/care_teams/:id", ctrl.MuxHandler("show", h, nil))
 	service.LogInfo("mount", "ctrl", "CareTeam", "action", "Show", "route", "GET /api/care_teams/:id")
 
@@ -131,8 +137,33 @@ func MountCareTeamController(service *goa.Service, ctrl CareTeamController) {
 		}
 		return ctrl.Update(rctx)
 	}
+	h = handleCareTeamOrigin(h)
 	service.Mux.Handle("PUT", "/api/care_teams/:id", ctrl.MuxHandler("update", h, unmarshalUpdateCareTeamPayload))
 	service.LogInfo("mount", "ctrl", "CareTeam", "action", "Update", "route", "PUT /api/care_teams/:id")
+}
+
+// handleCareTeamOrigin applies the CORS response headers corresponding to the origin.
+func handleCareTeamOrigin(h goa.Handler) goa.Handler {
+
+	return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		origin := req.Header.Get("Origin")
+		if origin == "" {
+			// Not a CORS request
+			return h(ctx, rw, req)
+		}
+		if cors.MatchOrigin(origin, "*") {
+			ctx = goa.WithLogContext(ctx, "origin", origin)
+			rw.Header().Set("Access-Control-Allow-Origin", origin)
+			rw.Header().Set("Access-Control-Allow-Credentials", "false")
+			if acrm := req.Header.Get("Access-Control-Request-Method"); acrm != "" {
+				// We are handling a preflight request
+				rw.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
+			}
+			return h(ctx, rw, req)
+		}
+
+		return h(ctx, rw, req)
+	}
 }
 
 // unmarshalCreateCareTeamPayload unmarshals the request body into the context request data Payload field.
@@ -171,6 +202,8 @@ type PatientController interface {
 func MountPatientController(service *goa.Service, ctrl PatientController) {
 	initService(service)
 	var h goa.Handler
+	service.Mux.Handle("OPTIONS", "/api/patients", ctrl.MuxHandler("preflight", handlePatientOrigin(cors.HandlePreflight()), nil))
+	service.Mux.Handle("OPTIONS", "/api/patients/:id", ctrl.MuxHandler("preflight", handlePatientOrigin(cors.HandlePreflight()), nil))
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 		// Check if there was an error loading the request
@@ -184,6 +217,7 @@ func MountPatientController(service *goa.Service, ctrl PatientController) {
 		}
 		return ctrl.List(rctx)
 	}
+	h = handlePatientOrigin(h)
 	service.Mux.Handle("GET", "/api/patients", ctrl.MuxHandler("list", h, nil))
 	service.LogInfo("mount", "ctrl", "Patient", "action", "List", "route", "GET /api/patients")
 
@@ -199,8 +233,33 @@ func MountPatientController(service *goa.Service, ctrl PatientController) {
 		}
 		return ctrl.Show(rctx)
 	}
+	h = handlePatientOrigin(h)
 	service.Mux.Handle("GET", "/api/patients/:id", ctrl.MuxHandler("show", h, nil))
 	service.LogInfo("mount", "ctrl", "Patient", "action", "Show", "route", "GET /api/patients/:id")
+}
+
+// handlePatientOrigin applies the CORS response headers corresponding to the origin.
+func handlePatientOrigin(h goa.Handler) goa.Handler {
+
+	return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		origin := req.Header.Get("Origin")
+		if origin == "" {
+			// Not a CORS request
+			return h(ctx, rw, req)
+		}
+		if cors.MatchOrigin(origin, "*") {
+			ctx = goa.WithLogContext(ctx, "origin", origin)
+			rw.Header().Set("Access-Control-Allow-Origin", origin)
+			rw.Header().Set("Access-Control-Allow-Credentials", "false")
+			if acrm := req.Header.Get("Access-Control-Request-Method"); acrm != "" {
+				// We are handling a preflight request
+				rw.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
+			}
+			return h(ctx, rw, req)
+		}
+
+		return h(ctx, rw, req)
+	}
 }
 
 // SwaggerController is the controller interface for the Swagger actions.
