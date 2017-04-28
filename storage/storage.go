@@ -19,9 +19,27 @@ type CareTeamService interface {
 	DeleteCareTeam(id string) error
 }
 
+type HuddleService interface {
+	CareTeamHuddles(id string) ([]app.Huddle, error)
+	UpsertHuddles(huddles []app.Huddle) error
+}
+
 // PatientService describes the interface for storing a Patient
 type PatientService interface {
 	Patient(id string) (*app.Patient, error)
 	Patients() ([]*app.Patient, error)
 	SortBy(...string) ([]*app.Patient, error)
+}
+
+type HuddleMembershipService interface {
+	CreateMembership(mem app.HuddleMembership) error
+	DeleteMembership(id string) error
+	HuddleMemberships(id string) ([]app.HuddleMembership, error)
+	PatientMemberships(id string) ([]app.HuddleMembership, error)
+}
+
+// CareTeamMembershipService Manage membership in care teams for patients
+type CareTeamMembershipService interface {
+	CreateMembership(mem app.CareTeamMembership) error
+	PatientMemberships(id string) ([]app.CareTeamMembership, error)
 }

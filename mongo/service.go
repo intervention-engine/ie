@@ -8,7 +8,7 @@ import (
 	mgo "gopkg.in/mgo.v2"
 )
 
-type MongoService struct {
+type Service struct {
 	S *mgo.Session
 }
 
@@ -26,6 +26,20 @@ func (m *MongoService) NewPatientService() storage.PatientService {
 	s := m.S.Copy()
 	c := s.DB("fhir").C("patients")
 	return &PatientService{S: s, C: c}
+}
+
+// func (m *MongoService) NewHuddleService() storage.HuddleService {
+// 	s,c
+// }
+
+func (m *MongoService) buildService() (*mgo.Session, ) {
+	s := m.S.Copy()
+	c := s.DB("fhir").C("patients")
+
+}
+
+type  func(sess *mgo.Session)  {
+
 }
 
 func compensateForBsonFail(id string) string {

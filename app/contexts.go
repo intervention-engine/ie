@@ -362,6 +362,110 @@ func (ctx *UpdateCareTeamContext) InternalServerError() error {
 	return nil
 }
 
+// CareTeamListHuddleContext provides the huddle care_team_list action context.
+type CareTeamListHuddleContext struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+	ID string
+}
+
+// NewCareTeamListHuddleContext parses the incoming request URL and body, performs validations and creates the
+// context used by the huddle controller care_team_list action.
+func NewCareTeamListHuddleContext(ctx context.Context, r *http.Request, service *goa.Service) (*CareTeamListHuddleContext, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := CareTeamListHuddleContext{Context: ctx, ResponseData: resp, RequestData: req}
+	paramID := req.Params["id"]
+	if len(paramID) > 0 {
+		rawID := paramID[0]
+		rctx.ID = rawID
+	}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *CareTeamListHuddleContext) OK(r CareTeamCollection) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.careteam+json; type=collection")
+	if r == nil {
+		r = CareTeamCollection{}
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// BadRequest sends a HTTP response with status code 400.
+func (ctx *CareTeamListHuddleContext) BadRequest() error {
+	ctx.ResponseData.WriteHeader(400)
+	return nil
+}
+
+// NotFound sends a HTTP response with status code 404.
+func (ctx *CareTeamListHuddleContext) NotFound() error {
+	ctx.ResponseData.WriteHeader(404)
+	return nil
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *CareTeamListHuddleContext) InternalServerError() error {
+	ctx.ResponseData.WriteHeader(500)
+	return nil
+}
+
+// PatientListHuddleContext provides the huddle patient_list action context.
+type PatientListHuddleContext struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+	ID string
+}
+
+// NewPatientListHuddleContext parses the incoming request URL and body, performs validations and creates the
+// context used by the huddle controller patient_list action.
+func NewPatientListHuddleContext(ctx context.Context, r *http.Request, service *goa.Service) (*PatientListHuddleContext, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := PatientListHuddleContext{Context: ctx, ResponseData: resp, RequestData: req}
+	paramID := req.Params["id"]
+	if len(paramID) > 0 {
+		rawID := paramID[0]
+		rctx.ID = rawID
+	}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *PatientListHuddleContext) OK(r CareTeamCollection) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.careteam+json; type=collection")
+	if r == nil {
+		r = CareTeamCollection{}
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// BadRequest sends a HTTP response with status code 400.
+func (ctx *PatientListHuddleContext) BadRequest() error {
+	ctx.ResponseData.WriteHeader(400)
+	return nil
+}
+
+// NotFound sends a HTTP response with status code 404.
+func (ctx *PatientListHuddleContext) NotFound() error {
+	ctx.ResponseData.WriteHeader(404)
+	return nil
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *PatientListHuddleContext) InternalServerError() error {
+	ctx.ResponseData.WriteHeader(500)
+	return nil
+}
+
 // ListPatientContext provides the patient list action context.
 type ListPatientContext struct {
 	context.Context

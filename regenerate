@@ -1,0 +1,7 @@
+#!/bin/bash
+code=$(goagen -d github.com/intervention-engine/ie/design app)
+if [ code == 0 ]
+  then
+    goagen -d github.com/intervention-engine/ie/design swagger
+fi
+go build

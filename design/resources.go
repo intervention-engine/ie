@@ -81,6 +81,32 @@ var _ = Resource("care_team", func() {
 		Description("Delete care team.")
 		Response(NoContent)
 	})
+
+})
+
+var _ = Resource("huddle", func() {
+	DefaultMedia(HuddleMedia)
+	BasePath("/huddles")
+	Response(OK)
+	Response(NotFound)
+	Response(BadRequest)
+	Response(InternalServerError)
+	Parent("care_team")
+	Action("care_team_list", func() {
+		Routing(GET(""))
+		Description("List all huddles for a care team")
+		Response(OK, func() {
+			Media(CollectionOf(CareTeamMedia), "default")
+		})
+	})
+	Parent("patient")
+	Action("patient_list", func() {
+		Routing(GET(""))
+		Description("List all huddles for a patient")
+		Response(OK, func() {
+			Media(CollectionOf(CareTeamMedia), "default")
+		})
+	})
 })
 
 var _ = Resource("swagger", func() {

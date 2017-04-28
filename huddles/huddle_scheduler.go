@@ -14,13 +14,12 @@ import (
 	"github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/search"
 	"github.com/intervention-engine/fhir/server"
-	"github.com/intervention-engine/ie"
 )
 
 // HuddleScheduler schedules huddles based on the passed in config.
 type HuddleScheduler struct {
 	Config            *HuddleConfig
-	Huddles           []ie.Huddle
+	Huddles           []Huddle
 	Services          ie.Services
 	patientScheduling patientSchedulingInfoMap
 }
@@ -88,9 +87,12 @@ func (p *patientSchedulingInfo) UpdateHuddleTargets(config *HuddleConfig) {
 	}
 }
 
+func (hs *HuddleScheduler) ScheduleHuddlesForTeam(team *ie.CareTeam) ([]ie.Huddle, error) {
+}
+
 // ScheduleHuddles schedules huddles based on the passed in config.  It will schedule out the number
 // of huddles as specified in the config.LookAhead.
-func (hs *HuddleScheduler) ScheduleHuddles(team *ie.CareTeam) ([]ie.Huddle, error) {
+func (hs *HuddleScheduler) ScheduleHuddlesForTeam(team *ie.CareTeam) ([]ie.Huddle, error) {
 	// First populate the structures we need to do the scheduling
 	if err := hs.populatePatientInfosWithRiskScores(); err != nil {
 		return nil, err
@@ -107,11 +109,11 @@ func (hs *HuddleScheduler) ScheduleHuddles(team *ie.CareTeam) ([]ie.Huddle, erro
 		return nil, err
 	}
 
-	err = hs.Service.UpsertHuddles(hs.Huddles)
+	err = hs.Services.HuddleService()
 
 	hs.printInfo()
 
-	return hs.Huddles, err
+	return err
 }
 
 func (hs *HuddleScheduler) populatePatientInfosWithRiskScores() error {

@@ -32,3 +32,19 @@ var CareTeamPayload = Type("CareTeamPayload", func() {
 	Attribute("leader", String, "Care team leader")
 	Attribute("createdAt", DateTime, "Timestamp for care team creation")
 })
+
+var HuddleMembership = Type("HuddleMembership", func() {
+	Attribute("id", String, "Relationship ID")
+	Attribute("huddle_id", String, "huddle ID")
+	Attribute("patient_id", String, "Patient ID")
+	Attribute("created_at", DateTime, "Timestamp of membership")
+	Attribute("reason", String, "Reason patient was added to huddle")
+	Attribute("reviewed", Boolean, "Has patient been reviewed in this huddle")
+})
+
+var CareTeamMembership = Type("CareTeamMembership", func() {
+	Attribute("id", String, "Relationship ID")
+	Attribute("care_team_id", String, "Care Team ID")
+	Attribute("patient_id", String, "Patient ID")
+	Attribute("created_at", DateTime, "Timestamp of membership")
+})

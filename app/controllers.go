@@ -160,6 +160,49 @@ func unmarshalUpdateCareTeamPayload(ctx context.Context, service *goa.Service, r
 	return nil
 }
 
+// HuddleController is the controller interface for the Huddle actions.
+type HuddleController interface {
+	goa.Muxer
+	CareTeamList(*CareTeamListHuddleContext) error
+	PatientList(*PatientListHuddleContext) error
+}
+
+// MountHuddleController "mounts" a Huddle resource controller on the given service.
+func MountHuddleController(service *goa.Service, ctrl HuddleController) {
+	initService(service)
+	var h goa.Handler
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewCareTeamListHuddleContext(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.CareTeamList(rctx)
+	}
+	service.Mux.Handle("GET", "/api/patients/:id/huddles", ctrl.MuxHandler("care_team_list", h, nil))
+	service.LogInfo("mount", "ctrl", "Huddle", "action", "CareTeamList", "route", "GET /api/patients/:id/huddles")
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewPatientListHuddleContext(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.PatientList(rctx)
+	}
+	service.Mux.Handle("GET", "/api/patients/:id/huddles", ctrl.MuxHandler("patient_list", h, nil))
+	service.LogInfo("mount", "ctrl", "Huddle", "action", "PatientList", "route", "GET /api/patients/:id/huddles")
+}
+
 // PatientController is the controller interface for the Patient actions.
 type PatientController interface {
 	goa.Muxer

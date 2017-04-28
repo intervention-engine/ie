@@ -1,116 +1,135 @@
-package mongo
+package main
 
 import (
-	"errors"
 	"fmt"
-	"time"
+	"strings"
 
-	"github.com/intervention-engine/fhir/models"
+	"github.com/goadesign/goa"
 	"github.com/intervention-engine/ie/app"
-	mgo "gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 )
 
-// PatientService provides a mongo implementation of a
-// Storage Service for patients.
-type PatientService struct {
-	S *mgo.Session
-	C *mgo.Collection
+// PatientController implements the patient resource.
+type PatientController struct {
+	*goa.Controller
 }
 
-// Patient embeds FHIR model and adds Risk/Huddle information
-type Patient struct {
-	models.Patient  `bson:",inline"`
-	RiskAssessments []app.RiskAssessment `bson:"risk_assessment,omitempty" json:"risk_assessment,omitempty"`
-	NextHuddleID    string               `bson:"next_huddle_id,omitempty" json:"next_huddle_id,omitempty"`
+// NewPatientController creates a patient controller.
+func NewPatientController(service *goa.Service) *PatientController {
+	return &PatientController{Controller: service.NewController("PatientController")}
 }
 
-// Patient gets a patient with the given id.
-func (s *PatientService) Patient(id string) (*app.Patient, error) {
-	defer s.S.Close()
-	if !bson.IsObjectIdHex(id) {
-		return nil, errors.New("bad id")
-	}
-	var data Patient
-	err := s.C.FindId(id).One(&data)
+// Show runs the show action.
+func (c *PatientController) Show(ctx *app.ShowPatientContext) error {
+	s := GetStorageService(ctx.Context)
+	ps := s.NewPatientService()
+	p, err := ps.Patient(ctx.ID)
 	if err != nil {
-		return nil, err
+		if err.Error() == "bad id" {
+			// return goa.ErrBadRequest("id was not a proper bson object id")
+			return ctx.BadRequest()
+		}
+		if err.Error() == "not found" {
+			// return goa.ErrNotFound("could not find resource")
+			return ctx.NotFound()
+		}
+		// return goa.ErrInternal("internal server error trying to fulfill request")
+		return ctx.InternalServerError()
 	}
 
-	p := newPatient(data)
-
-	return p, nil
+	return ctx.OK(p)
 }
 
-// Patients gets all the patients in the db.
-func (s *PatientService) Patients() ([]*app.Patient, error) {
-	defer s.S.Close()
-	var data []Patient
-	err := s.C.Find(nil).All(&data)
+// List runs the list action.
+func (c *PatientController) List(ctx *app.ListPatientContext) error {
+	s := GetStorageService(ctx.Context)
+	ps := s.NewPatientService()
+	if ctx.Page != nil {
+		// Time to do paging!
+		sortby := "name.full"
+		if ctx.SortBy != nil {
+			sortby = *ctx.SortBy
+		}
+		list := strings.Split(sortby, ",")
+		pp, err := ps.SortBy(list...)
+		if err != nil {
+			// return goa.ErrInternal("internal server error trying to list patients")
+			return ctx.InternalServerError()
+		}
+		// grab the actual ones we need to send over the wire.
+		total := len(pp)
+		pageinfo, err := pagingInfo(*ctx.Page, *ctx.PerPage, total)
+		if err != nil {
+			// TODO: actually get error message
+			return ctx.BadRequest()
+		}
+		links := linkInfo(pageinfo)
+		ctx.ResponseWriter.Header().Set("Link", links)
+
+		return ctx.OK(pp[pageinfo.dot:pageinfo.enddot])
+	}
+	pp, err := ps.Patients()
 	if err != nil {
-		return nil, err
+		// return goa.ErrInternal("internal server error trying to list patients")
+		return ctx.InternalServerError()
 	}
-
-	pp := make([]*app.Patient, len(data))
-	for i, patient := range data {
-		pp[i] = newPatient(patient)
+	if len(pp) == 0 {
+		return ctx.NotFound()
 	}
-
-	return pp, nil
+	return ctx.OK(pp)
 }
 
-// SortBy gets patients sorted by the fields given.
-func (s *PatientService) SortBy(fields ...string) ([]*app.Patient, error) {
-	defer s.S.Close()
-	var data []Patient
-	err := s.C.Find(nil).Sort(fields...).All(&data)
-	if err != nil {
-		return nil, err
-	}
-
-	pp := make([]*app.Patient, len(data))
-	for i, patient := range data {
-		pp[i] = newPatient(patient)
-	}
-
-	return pp, nil
+type page struct {
+	num    int
+	per    int
+	next   int
+	prev   int
+	first  int
+	last   int
+	total  int
+	dot    int
+	enddot int
 }
 
-func newPatient(fhirPatient Patient) *app.Patient {
-	p := app.Patient{}
-	p.ID = fhirPatient.Id
-	p.Address = newAddress(fhirPatient.Address[0])
-	age := age(fhirPatient.BirthDate)
-	p.Age = &age
-	p.Gender = &fhirPatient.Gender
-	// TODO: do this conversion
-	// p.BirthDate = &fhirPatient.BirthDate
-	name := fhirPatient.Name[0]
-	p.Name.Family = &name.Family[0]
-	p.Name.Given = &name.Given[0]
-	full := fmt.Sprintf("%s %s", name.Given, name.Family)
-	p.Name.Full = &full
-	// p.NextHuddleID = &fhirPatient.NextHuddleID
-	// p.RecentRiskAssessments = fhirPatient.RiskAssessments
-	return &p
-}
+func pagingInfo(num int, perpage int, total int) (page, error) {
+	if perpage == 0 {
+		perpage = 50
+	}
+	last := (total / perpage) + 1
 
-func newAddress(address models.Address) *app.Address {
-	a := app.Address{}
-	a.Street = address.Line
-	a.City = &address.City
-	a.State = &address.State
-	a.PostalCode = &address.PostalCode
-	return &a
-}
-
-func age(birthday *models.FHIRDateTime) int {
-	now := time.Now()
-	years := now.Year() - birthday.Time.Year()
-
-	if now.YearDay() < birthday.Time.YearDay() {
-		years--
+	dot := (num * perpage) - perpage
+	if dot > total {
+		return page{}, goa.ErrBadRequest("requested page is out of bounds of what is available")
+	}
+	enddot := dot + perpage
+	if enddot > total {
+		// This is the last page, which will most likely go over the total patients.
+		enddot = total
+	}
+	prev := 1
+	if num != 1 {
+		prev = num - 1
+	}
+	next := num + 1
+	if num == last {
+		next = last
 	}
 
-	return years
+	return page{
+		next:   next,
+		prev:   prev,
+		num:    num,
+		total:  total,
+		last:   last,
+		first:  1,
+		per:    perpage,
+		dot:    dot,
+		enddot: enddot,
+	}, nil
+}
+
+// TODO: pass the context into linkInfo and make the URL dynamic.
+var linkTmpl string = "<http://localhost:3001/patients?page=%d&per_page=%d>; rel=\"next\", <http://localhost:3001/patients?page=%d&per_page=%d>; rel=\"last\", <http://localhost:3001/patients?page=%d&per_page=%d>; rel=\"first\", <http://localhost:3001/patients?page=%d&per_page=%d>; rel=\"prev\", total=%d"
+
+func linkInfo(info page) string {
+	return fmt.Sprintf(linkTmpl, info.next, info.per, info.last, info.per, 1, info.per, info.prev, info.per, info.total)
 }

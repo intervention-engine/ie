@@ -5,6 +5,18 @@ import (
 	. "github.com/goadesign/goa/design/apidsl"
 )
 
+var HuddleMedia = MediaType("application/vnd.huddle+json", func() {
+	Description("A single gathering of a care team at a specific time")
+	Attributes(func() {
+		Attribute("id", String, "Unique Huddle ID")
+		Attribute("date", DateTime, "Creation timestamp")
+	})
+	View("default", func() {
+		Attribute("id", String, "Unique Huddle ID")
+		Attribute("date", DateTime, "Creation timestamp")
+	})
+})
+
 var PatientMedia = MediaType("application/vnd.patient+json", func() {
 	TypeName("Patient")
 	Description("A patient")

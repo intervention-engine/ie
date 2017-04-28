@@ -14,6 +14,48 @@ import (
 	"time"
 )
 
+// careTeamMembership user type.
+type careTeamMembership struct {
+	// Care Team ID
+	CareTeamID *string `form:"care_team_id,omitempty" json:"care_team_id,omitempty" xml:"care_team_id,omitempty"`
+	// Timestamp of membership
+	CreatedAt *time.Time `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
+	// Relationship ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Patient ID
+	PatientID *string `form:"patient_id,omitempty" json:"patient_id,omitempty" xml:"patient_id,omitempty"`
+}
+
+// Publicize creates CareTeamMembership from careTeamMembership
+func (ut *careTeamMembership) Publicize() *CareTeamMembership {
+	var pub CareTeamMembership
+	if ut.CareTeamID != nil {
+		pub.CareTeamID = ut.CareTeamID
+	}
+	if ut.CreatedAt != nil {
+		pub.CreatedAt = ut.CreatedAt
+	}
+	if ut.ID != nil {
+		pub.ID = ut.ID
+	}
+	if ut.PatientID != nil {
+		pub.PatientID = ut.PatientID
+	}
+	return &pub
+}
+
+// CareTeamMembership user type.
+type CareTeamMembership struct {
+	// Care Team ID
+	CareTeamID *string `form:"care_team_id,omitempty" json:"care_team_id,omitempty" xml:"care_team_id,omitempty"`
+	// Timestamp of membership
+	CreatedAt *time.Time `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
+	// Relationship ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Patient ID
+	PatientID *string `form:"patient_id,omitempty" json:"patient_id,omitempty" xml:"patient_id,omitempty"`
+}
+
 // careTeamPayload user type.
 type careTeamPayload struct {
 	// Timestamp for care team creation
@@ -54,6 +96,62 @@ type CareTeamPayload struct {
 	Leader *string `form:"leader,omitempty" json:"leader,omitempty" xml:"leader,omitempty"`
 	// Care team name
 	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+}
+
+// huddleMembership user type.
+type huddleMembership struct {
+	// Timestamp of membership
+	CreatedAt *time.Time `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
+	// huddle ID
+	HuddleID *string `form:"huddle_id,omitempty" json:"huddle_id,omitempty" xml:"huddle_id,omitempty"`
+	// Relationship ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Patient ID
+	PatientID *string `form:"patient_id,omitempty" json:"patient_id,omitempty" xml:"patient_id,omitempty"`
+	// Reason patient was added to huddle
+	Reason *string `form:"reason,omitempty" json:"reason,omitempty" xml:"reason,omitempty"`
+	// Has patient been reviewed in this huddle
+	Reviewed *bool `form:"reviewed,omitempty" json:"reviewed,omitempty" xml:"reviewed,omitempty"`
+}
+
+// Publicize creates HuddleMembership from huddleMembership
+func (ut *huddleMembership) Publicize() *HuddleMembership {
+	var pub HuddleMembership
+	if ut.CreatedAt != nil {
+		pub.CreatedAt = ut.CreatedAt
+	}
+	if ut.HuddleID != nil {
+		pub.HuddleID = ut.HuddleID
+	}
+	if ut.ID != nil {
+		pub.ID = ut.ID
+	}
+	if ut.PatientID != nil {
+		pub.PatientID = ut.PatientID
+	}
+	if ut.Reason != nil {
+		pub.Reason = ut.Reason
+	}
+	if ut.Reviewed != nil {
+		pub.Reviewed = ut.Reviewed
+	}
+	return &pub
+}
+
+// HuddleMembership user type.
+type HuddleMembership struct {
+	// Timestamp of membership
+	CreatedAt *time.Time `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
+	// huddle ID
+	HuddleID *string `form:"huddle_id,omitempty" json:"huddle_id,omitempty" xml:"huddle_id,omitempty"`
+	// Relationship ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Patient ID
+	PatientID *string `form:"patient_id,omitempty" json:"patient_id,omitempty" xml:"patient_id,omitempty"`
+	// Reason patient was added to huddle
+	Reason *string `form:"reason,omitempty" json:"reason,omitempty" xml:"reason,omitempty"`
+	// Has patient been reviewed in this huddle
+	Reviewed *bool `form:"reviewed,omitempty" json:"reviewed,omitempty" xml:"reviewed,omitempty"`
 }
 
 // address user type.
