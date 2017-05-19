@@ -25,7 +25,8 @@ func main() {
 	service.Use(middleware.LogRequest(true))
 	service.Use(middleware.ErrorHandler(service, true))
 	service.Use(middleware.Recover())
-	service.Use(WithMongoService(sess))
+	service.Use(exposeHeaderField("Link"))
+	service.Use(withMongoService(sess))
 
 	// Mount "patient" controller
 	pc := NewPatientController(service)

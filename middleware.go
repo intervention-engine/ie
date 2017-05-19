@@ -10,7 +10,16 @@ import (
 	mgo "gopkg.in/mgo.v2"
 )
 
-func WithMongoService(session *mgo.Session) goa.Middleware {
+func exposeHeaderField(field string) goa.Middleware {
+	return func(h goa.Handler) goa.Handler {
+		return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+			rw.Header().Set("Access-Control-Expose-Headers", field)
+			return h(ctx, rw, req)
+		}
+	}
+}
+
+func withMongoService(session *mgo.Session) goa.Middleware {
 	return func(h goa.Handler) goa.Handler {
 		return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 			newctx := context.WithValue(ctx, "service", mongo.NewMongoService(session))

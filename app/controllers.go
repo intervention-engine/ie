@@ -154,7 +154,6 @@ func handleCareTeamOrigin(h goa.Handler) goa.Handler {
 		if cors.MatchOrigin(origin, "*") {
 			ctx = goa.WithLogContext(ctx, "origin", origin)
 			rw.Header().Set("Access-Control-Allow-Origin", origin)
-			rw.Header().Set("Access-Control-Expose-Headers", "Link")
 			rw.Header().Set("Access-Control-Allow-Credentials", "false")
 			if acrm := req.Header.Get("Access-Control-Request-Method"); acrm != "" {
 				// We are handling a preflight request
@@ -251,7 +250,6 @@ func handlePatientOrigin(h goa.Handler) goa.Handler {
 		if cors.MatchOrigin(origin, "*") {
 			ctx = goa.WithLogContext(ctx, "origin", origin)
 			rw.Header().Set("Access-Control-Allow-Origin", origin)
-			rw.Header().Set("Access-Control-Expose-Headers", "Link")
 			rw.Header().Set("Access-Control-Allow-Credentials", "false")
 			if acrm := req.Header.Get("Access-Control-Request-Method"); acrm != "" {
 				// We are handling a preflight request
