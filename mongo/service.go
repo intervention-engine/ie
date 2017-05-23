@@ -1,12 +1,17 @@
 package mongo
 
 import (
+	"log"
 	"strings"
 
 	"github.com/intervention-engine/ie/storage"
 
 	mgo "gopkg.in/mgo.v2"
 )
+
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+}
 
 type MongoService struct {
 	S *mgo.Session

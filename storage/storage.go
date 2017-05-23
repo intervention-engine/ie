@@ -23,5 +23,26 @@ type CareTeamService interface {
 type PatientService interface {
 	Patient(id string) (*app.Patient, error)
 	Patients() ([]*app.Patient, error)
-	SortBy(...string) ([]*app.Patient, error)
+	PatientsSortBy(...string) ([]*app.Patient, error)
+}
+
+var AcceptedQueryFields = []string{
+	//"+name",
+	"name",
+	"-name",
+	//"+birthdate",
+	"birthdate",
+	"-birthdate",
+	//"+gender",
+	"gender",
+	"-gender",
+	//"+address",
+	"address",
+	"-address",
+	//"+riskScore",
+	//"riskScore",
+	//"-riskScore",
+	//"+notifications",
+	//"notifications",
+	//"-notifications",
 }

@@ -1,11 +1,14 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/goadesign/goa"
 	"github.com/intervention-engine/ie/app"
+	"github.com/intervention-engine/ie/storage"
 )
 
 // PatientController implements the patient resource.
@@ -43,21 +46,38 @@ func (c *PatientController) Show(ctx *app.ShowPatientContext) error {
 func (c *PatientController) List(ctx *app.ListPatientContext) error {
 	s := GetStorageService(ctx.Context)
 	ps := s.NewPatientService()
-	if ctx.Page != nil {
-		// Time to do paging!
-		sortby := "name.full"
-		if ctx.SortBy != nil {
-			sortby = *ctx.SortBy
-		}
-		list := strings.Split(sortby, ",")
-		pp, err := ps.SortBy(list...)
+	var pp []*app.Patient
+	var err error
+	if ctx.SortBy != nil {
+		log.Println("sort_by is: ", *ctx.SortBy)
+		query, err := c.parseSortQuery(*ctx.SortBy)
 		if err != nil {
-			// return goa.ErrInternal("internal server error trying to list patients")
+			// err has good error messages
+			return ctx.BadRequest()
+		}
+		log.Println("query is: ", query)
+		pp, err = ps.PatientsSortBy(query...)
+		if err != nil {
+			// "internal server error trying to list patients"
 			return ctx.InternalServerError()
 		}
+	} else {
+		pp, err = ps.Patients()
+		if err != nil {
+			// "internal server error trying to list patients"
+			return ctx.InternalServerError()
+		}
+	}
+
+	if ctx.Page != nil {
+		// Time to do paging!
 		// grab the actual ones we need to send over the wire.
 		total := len(pp)
-		pageinfo, err := pagingInfo(*ctx.Page, *ctx.PerPage, total)
+		var perpage int
+		if ctx.PerPage != nil {
+			perpage = *ctx.PerPage
+		}
+		pageinfo, err := pagingInfo(*ctx.Page, perpage, total)
 		if err != nil {
 			// TODO: actually get error message
 			return ctx.BadRequest()
@@ -67,13 +87,34 @@ func (c *PatientController) List(ctx *app.ListPatientContext) error {
 
 		return ctx.OK(pp[pageinfo.dot:pageinfo.enddot])
 	}
-	pp, err := ps.Patients()
-	if err != nil {
-		// return goa.ErrInternal("internal server error trying to list patients")
-		return ctx.InternalServerError()
-	}
 
 	return ctx.OK(pp)
+}
+
+func (c *PatientController) parseSortQuery(query string) ([]string, error) {
+	if query == "" {
+		log.Println("sortby string was empty")
+		return nil, errors.New("sortby string was empty")
+	}
+	q := strings.Split(query, ",")
+	if len(q) > 2 {
+		log.Println("sortby string had more than two fields to sort by")
+		return nil, errors.New("sortby string had more than two fields to sort by")
+	}
+	valid := false
+	for _, arg := range q {
+		for _, goodField := range storage.AcceptedQueryFields {
+			if arg == goodField {
+				valid = true
+			}
+		}
+		if !valid {
+			log.Println("sortby string contained invalid field: ", arg)
+			return nil, errors.New("sortby string contained invalid field: " + arg)
+		}
+		valid = false
+	}
+	return q, nil
 }
 
 type page struct {
@@ -88,9 +129,11 @@ type page struct {
 	enddot int
 }
 
+const defaultPerPage = 50
+
 func pagingInfo(num int, perpage int, total int) (page, error) {
 	if perpage == 0 {
-		perpage = 50
+		perpage = defaultPerPage
 	}
 	last := (total / perpage) + 1
 

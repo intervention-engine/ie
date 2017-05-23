@@ -3,6 +3,7 @@ package mongo
 import (
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/intervention-engine/fhir/models"
@@ -24,7 +25,7 @@ func (s *PatientService) Patient(id string) (*app.Patient, error) {
 	if !bson.IsObjectIdHex(id) {
 		return nil, errors.New("bad id")
 	}
-	var data Patient
+	var data models.Patient
 	err := s.C.FindId(id).One(&data)
 	if err != nil {
 		return nil, err
@@ -38,7 +39,7 @@ func (s *PatientService) Patient(id string) (*app.Patient, error) {
 // Patients gets all the patients in the db.
 func (s *PatientService) Patients() ([]*app.Patient, error) {
 	defer s.S.Close()
-	var data []Patient
+	var data []models.Patient
 	err := s.C.Find(nil).All(&data)
 	if err != nil {
 		return nil, err
@@ -53,14 +54,21 @@ func (s *PatientService) Patients() ([]*app.Patient, error) {
 }
 
 // SortBy gets patients sorted by the fields given.
-func (s *PatientService) SortBy(fields ...string) ([]*app.Patient, error) {
+func (s *PatientService) PatientsSortBy(fields ...string) ([]*app.Patient, error) {
 	defer s.S.Close()
-	var data []Patient
-	err := s.C.Find(nil).Sort(fields...).All(&data)
+	var data []models.Patient
+	log.Println("fields is: ", fields)
+	query, err := convertQuery(fields...)
 	if err != nil {
 		return nil, err
 	}
-
+	log.Println("query is:", query)
+	err = s.C.Find(nil).Sort(query...).All(&data)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	log.Println("data gotten is: ", data)
 	pp := make([]*app.Patient, len(data))
 	for i, patient := range data {
 		pp[i] = newPatient(patient)
@@ -69,14 +77,38 @@ func (s *PatientService) SortBy(fields ...string) ([]*app.Patient, error) {
 	return pp, nil
 }
 
-// Patient embeds FHIR model and adds Risk/Huddle information
-type Patient struct {
-	models.Patient  `bson:",inline"`
-	RiskAssessments []app.RiskAssessment `bson:"risk_assessment,omitempty" json:"risk_assessment,omitempty"`
-	NextHuddleID    string               `bson:"next_huddle_id,omitempty" json:"next_huddle_id,omitempty"`
+var conversions = map[string]string{
+	"name":       "name",
+	"-name":      "-name",
+	"birthdate":  "birthDate.time",
+	"-birthdate": "-birthDate.time",
+	"gender":     "gender",
+	"-gender":    "-gender",
+	// Sorting by address evidently wasn't useful and sorting by name and address causes an error in mongo.
+	//"address": "address.postalCode",
+	//"-address": "-address.postalCode",
+	// Haven't technically been implemented yet.
+	//"riskScore": "riskScore",
+	//"-riskScore": "-riskScore",
+	//"notifications": "notifications",
+	//"-notifications": "-notifications",
 }
 
-func newPatient(fhirPatient Patient) *app.Patient {
+func convertQuery(fields ...string) ([]string, error) {
+	query := make([]string, len(fields))
+	for i, field := range fields {
+		log.Println("field given is: ", field)
+		conv, ok := conversions[field]
+		if !ok {
+			return nil, errors.New("had no conversion for: " + field)
+		}
+		query[i] = conv
+		log.Println("query now is: ", query)
+	}
+	return query, nil
+}
+
+func newPatient(fhirPatient models.Patient) *app.Patient {
 	p := app.Patient{}
 	p.ID = fhirPatient.Id
 	if len(fhirPatient.Address) > 0 {
