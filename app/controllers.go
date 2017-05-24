@@ -35,9 +35,13 @@ func initService(service *goa.Service) {
 // CareTeamController is the controller interface for the CareTeam actions.
 type CareTeamController interface {
 	goa.Muxer
+	AddPatient(*AddPatientCareTeamContext) error
 	Create(*CreateCareTeamContext) error
 	Delete(*DeleteCareTeamContext) error
+	Huddles(*HuddlesCareTeamContext) error
 	List(*ListCareTeamContext) error
+	RemovePatient(*RemovePatientCareTeamContext) error
+	Schedule(*ScheduleCareTeamContext) error
 	Show(*ShowCareTeamContext) error
 	Update(*UpdateCareTeamContext) error
 }
@@ -46,8 +50,26 @@ type CareTeamController interface {
 func MountCareTeamController(service *goa.Service, ctrl CareTeamController) {
 	initService(service)
 	var h goa.Handler
+	service.Mux.Handle("OPTIONS", "/api/care_teams/:id/patients/:patient_id", ctrl.MuxHandler("preflight", handleCareTeamOrigin(cors.HandlePreflight()), nil))
 	service.Mux.Handle("OPTIONS", "/api/care_teams", ctrl.MuxHandler("preflight", handleCareTeamOrigin(cors.HandlePreflight()), nil))
 	service.Mux.Handle("OPTIONS", "/api/care_teams/:id", ctrl.MuxHandler("preflight", handleCareTeamOrigin(cors.HandlePreflight()), nil))
+	service.Mux.Handle("OPTIONS", "/api/care_teams/:id/huddles", ctrl.MuxHandler("preflight", handleCareTeamOrigin(cors.HandlePreflight()), nil))
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewAddPatientCareTeamContext(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.AddPatient(rctx)
+	}
+	h = handleCareTeamOrigin(h)
+	service.Mux.Handle("POST", "/api/care_teams/:id/patients/:patient_id", ctrl.MuxHandler("add_patient", h, nil))
+	service.LogInfo("mount", "ctrl", "CareTeam", "action", "AddPatient", "route", "POST /api/care_teams/:id/patients/:patient_id")
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 		// Check if there was an error loading the request
@@ -93,6 +115,22 @@ func MountCareTeamController(service *goa.Service, ctrl CareTeamController) {
 			return err
 		}
 		// Build the context
+		rctx, err := NewHuddlesCareTeamContext(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.Huddles(rctx)
+	}
+	h = handleCareTeamOrigin(h)
+	service.Mux.Handle("GET", "/api/care_teams/:id/huddles", ctrl.MuxHandler("huddles", h, nil))
+	service.LogInfo("mount", "ctrl", "CareTeam", "action", "Huddles", "route", "GET /api/care_teams/:id/huddles")
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
 		rctx, err := NewListCareTeamContext(ctx, req, service)
 		if err != nil {
 			return err
@@ -102,6 +140,44 @@ func MountCareTeamController(service *goa.Service, ctrl CareTeamController) {
 	h = handleCareTeamOrigin(h)
 	service.Mux.Handle("GET", "/api/care_teams", ctrl.MuxHandler("list", h, nil))
 	service.LogInfo("mount", "ctrl", "CareTeam", "action", "List", "route", "GET /api/care_teams")
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewRemovePatientCareTeamContext(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.RemovePatient(rctx)
+	}
+	h = handleCareTeamOrigin(h)
+	service.Mux.Handle("DELETE", "/api/care_teams/:id/patients/:patient_id", ctrl.MuxHandler("remove_patient", h, nil))
+	service.LogInfo("mount", "ctrl", "CareTeam", "action", "RemovePatient", "route", "DELETE /api/care_teams/:id/patients/:patient_id")
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewScheduleCareTeamContext(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		// Build the payload
+		if rawPayload := goa.ContextRequest(ctx).Payload; rawPayload != nil {
+			rctx.Payload = rawPayload.(*ScheduleCareTeamPayload)
+		} else {
+			return goa.MissingPayloadError()
+		}
+		return ctrl.Schedule(rctx)
+	}
+	h = handleCareTeamOrigin(h)
+	service.Mux.Handle("POST", "/api/care_teams/:id/huddles", ctrl.MuxHandler("schedule", h, unmarshalScheduleCareTeamPayload))
+	service.LogInfo("mount", "ctrl", "CareTeam", "action", "Schedule", "route", "POST /api/care_teams/:id/huddles")
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 		// Check if there was an error loading the request
@@ -181,6 +257,21 @@ func unmarshalCreateCareTeamPayload(ctx context.Context, service *goa.Service, r
 	return nil
 }
 
+// unmarshalScheduleCareTeamPayload unmarshals the request body into the context request data Payload field.
+func unmarshalScheduleCareTeamPayload(ctx context.Context, service *goa.Service, req *http.Request) error {
+	payload := &scheduleCareTeamPayload{}
+	if err := service.DecodeRequest(req, payload); err != nil {
+		return err
+	}
+	if err := payload.Validate(); err != nil {
+		// Initialize payload with private data structure so it can be logged
+		goa.ContextRequest(ctx).Payload = payload
+		return err
+	}
+	goa.ContextRequest(ctx).Payload = payload.Publicize()
+	return nil
+}
+
 // unmarshalUpdateCareTeamPayload unmarshals the request body into the context request data Payload field.
 func unmarshalUpdateCareTeamPayload(ctx context.Context, service *goa.Service, req *http.Request) error {
 	payload := &careTeamPayload{}
@@ -189,6 +280,59 @@ func unmarshalUpdateCareTeamPayload(ctx context.Context, service *goa.Service, r
 	}
 	goa.ContextRequest(ctx).Payload = payload.Publicize()
 	return nil
+}
+
+// HuddleController is the controller interface for the Huddle actions.
+type HuddleController interface {
+	goa.Muxer
+	Cancel(*CancelHuddleContext) error
+}
+
+// MountHuddleController "mounts" a Huddle resource controller on the given service.
+func MountHuddleController(service *goa.Service, ctrl HuddleController) {
+	initService(service)
+	var h goa.Handler
+	service.Mux.Handle("OPTIONS", "/api/huddles/:id/patients/:patient_id", ctrl.MuxHandler("preflight", handleHuddleOrigin(cors.HandlePreflight()), nil))
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewCancelHuddleContext(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.Cancel(rctx)
+	}
+	h = handleHuddleOrigin(h)
+	service.Mux.Handle("DELETE", "/api/huddles/:id/patients/:patient_id", ctrl.MuxHandler("cancel", h, nil))
+	service.LogInfo("mount", "ctrl", "Huddle", "action", "Cancel", "route", "DELETE /api/huddles/:id/patients/:patient_id")
+}
+
+// handleHuddleOrigin applies the CORS response headers corresponding to the origin.
+func handleHuddleOrigin(h goa.Handler) goa.Handler {
+
+	return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		origin := req.Header.Get("Origin")
+		if origin == "" {
+			// Not a CORS request
+			return h(ctx, rw, req)
+		}
+		if cors.MatchOrigin(origin, "*") {
+			ctx = goa.WithLogContext(ctx, "origin", origin)
+			rw.Header().Set("Access-Control-Allow-Origin", origin)
+			rw.Header().Set("Access-Control-Allow-Credentials", "false")
+			if acrm := req.Header.Get("Access-Control-Request-Method"); acrm != "" {
+				// We are handling a preflight request
+				rw.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
+			}
+			return h(ctx, rw, req)
+		}
+
+		return h(ctx, rw, req)
+	}
 }
 
 // PatientController is the controller interface for the Patient actions.

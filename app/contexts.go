@@ -18,6 +18,73 @@ import (
 	"time"
 )
 
+// AddPatientCareTeamContext provides the care_team add_patient action context.
+type AddPatientCareTeamContext struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+	ID        string
+	PatientID string
+}
+
+// NewAddPatientCareTeamContext parses the incoming request URL and body, performs validations and creates the
+// context used by the care_team controller add_patient action.
+func NewAddPatientCareTeamContext(ctx context.Context, r *http.Request, service *goa.Service) (*AddPatientCareTeamContext, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := AddPatientCareTeamContext{Context: ctx, ResponseData: resp, RequestData: req}
+	paramID := req.Params["id"]
+	if len(paramID) > 0 {
+		rawID := paramID[0]
+		rctx.ID = rawID
+	}
+	paramPatientID := req.Params["patient_id"]
+	if len(paramPatientID) > 0 {
+		rawPatientID := paramPatientID[0]
+		rctx.PatientID = rawPatientID
+	}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *AddPatientCareTeamContext) OK(r *CareTeam) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/json")
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// OKLink sends a HTTP response with status code 200.
+func (ctx *AddPatientCareTeamContext) OKLink(r *CareTeamLink) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/json")
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// NoContent sends a HTTP response with status code 204.
+func (ctx *AddPatientCareTeamContext) NoContent() error {
+	ctx.ResponseData.WriteHeader(204)
+	return nil
+}
+
+// BadRequest sends a HTTP response with status code 400.
+func (ctx *AddPatientCareTeamContext) BadRequest(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+}
+
+// NotFound sends a HTTP response with status code 404.
+func (ctx *AddPatientCareTeamContext) NotFound(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *AddPatientCareTeamContext) InternalServerError(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
+}
+
 // CreateCareTeamContext provides the care_team create action context.
 type CreateCareTeamContext struct {
 	context.Context
@@ -121,21 +188,21 @@ func (ctx *CreateCareTeamContext) Created() error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *CreateCareTeamContext) BadRequest() error {
-	ctx.ResponseData.WriteHeader(400)
-	return nil
+func (ctx *CreateCareTeamContext) BadRequest(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
 }
 
 // NotFound sends a HTTP response with status code 404.
-func (ctx *CreateCareTeamContext) NotFound() error {
-	ctx.ResponseData.WriteHeader(404)
-	return nil
+func (ctx *CreateCareTeamContext) NotFound(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
 }
 
 // InternalServerError sends a HTTP response with status code 500.
-func (ctx *CreateCareTeamContext) InternalServerError() error {
-	ctx.ResponseData.WriteHeader(500)
-	return nil
+func (ctx *CreateCareTeamContext) InternalServerError(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
 }
 
 // DeleteCareTeamContext provides the care_team delete action context.
@@ -182,21 +249,73 @@ func (ctx *DeleteCareTeamContext) NoContent() error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *DeleteCareTeamContext) BadRequest() error {
-	ctx.ResponseData.WriteHeader(400)
-	return nil
+func (ctx *DeleteCareTeamContext) BadRequest(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
 }
 
 // NotFound sends a HTTP response with status code 404.
-func (ctx *DeleteCareTeamContext) NotFound() error {
-	ctx.ResponseData.WriteHeader(404)
-	return nil
+func (ctx *DeleteCareTeamContext) NotFound(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
 }
 
 // InternalServerError sends a HTTP response with status code 500.
-func (ctx *DeleteCareTeamContext) InternalServerError() error {
-	ctx.ResponseData.WriteHeader(500)
-	return nil
+func (ctx *DeleteCareTeamContext) InternalServerError(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
+}
+
+// HuddlesCareTeamContext provides the care_team huddles action context.
+type HuddlesCareTeamContext struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+	ID string
+}
+
+// NewHuddlesCareTeamContext parses the incoming request URL and body, performs validations and creates the
+// context used by the care_team controller huddles action.
+func NewHuddlesCareTeamContext(ctx context.Context, r *http.Request, service *goa.Service) (*HuddlesCareTeamContext, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := HuddlesCareTeamContext{Context: ctx, ResponseData: resp, RequestData: req}
+	paramID := req.Params["id"]
+	if len(paramID) > 0 {
+		rawID := paramID[0]
+		rctx.ID = rawID
+	}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *HuddlesCareTeamContext) OK(r HuddleCollection) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.huddle+json; type=collection")
+	if r == nil {
+		r = HuddleCollection{}
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// BadRequest sends a HTTP response with status code 400.
+func (ctx *HuddlesCareTeamContext) BadRequest(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+}
+
+// NotFound sends a HTTP response with status code 404.
+func (ctx *HuddlesCareTeamContext) NotFound(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *HuddlesCareTeamContext) InternalServerError(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
 }
 
 // ListCareTeamContext provides the care_team list action context.
@@ -228,21 +347,194 @@ func (ctx *ListCareTeamContext) OK(r CareTeamCollection) error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *ListCareTeamContext) BadRequest() error {
-	ctx.ResponseData.WriteHeader(400)
-	return nil
+func (ctx *ListCareTeamContext) BadRequest(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
 }
 
 // NotFound sends a HTTP response with status code 404.
-func (ctx *ListCareTeamContext) NotFound() error {
-	ctx.ResponseData.WriteHeader(404)
-	return nil
+func (ctx *ListCareTeamContext) NotFound(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
 }
 
 // InternalServerError sends a HTTP response with status code 500.
-func (ctx *ListCareTeamContext) InternalServerError() error {
-	ctx.ResponseData.WriteHeader(500)
+func (ctx *ListCareTeamContext) InternalServerError(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
+}
+
+// RemovePatientCareTeamContext provides the care_team remove_patient action context.
+type RemovePatientCareTeamContext struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+	ID        string
+	PatientID string
+}
+
+// NewRemovePatientCareTeamContext parses the incoming request URL and body, performs validations and creates the
+// context used by the care_team controller remove_patient action.
+func NewRemovePatientCareTeamContext(ctx context.Context, r *http.Request, service *goa.Service) (*RemovePatientCareTeamContext, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := RemovePatientCareTeamContext{Context: ctx, ResponseData: resp, RequestData: req}
+	paramID := req.Params["id"]
+	if len(paramID) > 0 {
+		rawID := paramID[0]
+		rctx.ID = rawID
+	}
+	paramPatientID := req.Params["patient_id"]
+	if len(paramPatientID) > 0 {
+		rawPatientID := paramPatientID[0]
+		rctx.PatientID = rawPatientID
+	}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *RemovePatientCareTeamContext) OK(r *CareTeam) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/json")
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// OKLink sends a HTTP response with status code 200.
+func (ctx *RemovePatientCareTeamContext) OKLink(r *CareTeamLink) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/json")
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// NoContent sends a HTTP response with status code 204.
+func (ctx *RemovePatientCareTeamContext) NoContent() error {
+	ctx.ResponseData.WriteHeader(204)
 	return nil
+}
+
+// BadRequest sends a HTTP response with status code 400.
+func (ctx *RemovePatientCareTeamContext) BadRequest(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+}
+
+// NotFound sends a HTTP response with status code 404.
+func (ctx *RemovePatientCareTeamContext) NotFound(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *RemovePatientCareTeamContext) InternalServerError(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
+}
+
+// ScheduleCareTeamContext provides the care_team schedule action context.
+type ScheduleCareTeamContext struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+	ID      string
+	Payload *ScheduleCareTeamPayload
+}
+
+// NewScheduleCareTeamContext parses the incoming request URL and body, performs validations and creates the
+// context used by the care_team controller schedule action.
+func NewScheduleCareTeamContext(ctx context.Context, r *http.Request, service *goa.Service) (*ScheduleCareTeamContext, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := ScheduleCareTeamContext{Context: ctx, ResponseData: resp, RequestData: req}
+	paramID := req.Params["id"]
+	if len(paramID) > 0 {
+		rawID := paramID[0]
+		rctx.ID = rawID
+	}
+	return &rctx, err
+}
+
+// scheduleCareTeamPayload is the care_team schedule action payload.
+type scheduleCareTeamPayload struct {
+	// Date in YYYY-MM-dd format to schedule huddle
+	Date *string `form:"date,omitempty" json:"date,omitempty" xml:"date,omitempty"`
+	// Unique patient ID
+	PatientID *string `form:"patient_id,omitempty" json:"patient_id,omitempty" xml:"patient_id,omitempty"`
+}
+
+// Validate runs the validation rules defined in the design.
+func (payload *scheduleCareTeamPayload) Validate() (err error) {
+	if payload.PatientID == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "patient_id"))
+	}
+	if payload.Date == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "date"))
+	}
+	return
+}
+
+// Publicize creates ScheduleCareTeamPayload from scheduleCareTeamPayload
+func (payload *scheduleCareTeamPayload) Publicize() *ScheduleCareTeamPayload {
+	var pub ScheduleCareTeamPayload
+	if payload.Date != nil {
+		pub.Date = *payload.Date
+	}
+	if payload.PatientID != nil {
+		pub.PatientID = *payload.PatientID
+	}
+	return &pub
+}
+
+// ScheduleCareTeamPayload is the care_team schedule action payload.
+type ScheduleCareTeamPayload struct {
+	// Date in YYYY-MM-dd format to schedule huddle
+	Date string `form:"date" json:"date" xml:"date"`
+	// Unique patient ID
+	PatientID string `form:"patient_id" json:"patient_id" xml:"patient_id"`
+}
+
+// Validate runs the validation rules defined in the design.
+func (payload *ScheduleCareTeamPayload) Validate() (err error) {
+	if payload.PatientID == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "patient_id"))
+	}
+	if payload.Date == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "date"))
+	}
+	return
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *ScheduleCareTeamContext) OK(r *Huddle) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.huddle+json")
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// Created sends a HTTP response with status code 201.
+func (ctx *ScheduleCareTeamContext) Created(r *Huddle) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.huddle+json")
+	return ctx.ResponseData.Service.Send(ctx.Context, 201, r)
+}
+
+// BadRequest sends a HTTP response with status code 400.
+func (ctx *ScheduleCareTeamContext) BadRequest(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+}
+
+// NotFound sends a HTTP response with status code 404.
+func (ctx *ScheduleCareTeamContext) NotFound(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *ScheduleCareTeamContext) InternalServerError(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
 }
 
 // ShowCareTeamContext provides the care_team show action context.
@@ -283,21 +575,21 @@ func (ctx *ShowCareTeamContext) OKLink(r *CareTeamLink) error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *ShowCareTeamContext) BadRequest() error {
-	ctx.ResponseData.WriteHeader(400)
-	return nil
+func (ctx *ShowCareTeamContext) BadRequest(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
 }
 
 // NotFound sends a HTTP response with status code 404.
-func (ctx *ShowCareTeamContext) NotFound() error {
-	ctx.ResponseData.WriteHeader(404)
-	return nil
+func (ctx *ShowCareTeamContext) NotFound(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
 }
 
 // InternalServerError sends a HTTP response with status code 500.
-func (ctx *ShowCareTeamContext) InternalServerError() error {
-	ctx.ResponseData.WriteHeader(500)
-	return nil
+func (ctx *ShowCareTeamContext) InternalServerError(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
 }
 
 // UpdateCareTeamContext provides the care_team update action context.
@@ -345,21 +637,82 @@ func (ctx *UpdateCareTeamContext) NoContent() error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *UpdateCareTeamContext) BadRequest() error {
-	ctx.ResponseData.WriteHeader(400)
-	return nil
+func (ctx *UpdateCareTeamContext) BadRequest(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
 }
 
 // NotFound sends a HTTP response with status code 404.
-func (ctx *UpdateCareTeamContext) NotFound() error {
-	ctx.ResponseData.WriteHeader(404)
-	return nil
+func (ctx *UpdateCareTeamContext) NotFound(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
 }
 
 // InternalServerError sends a HTTP response with status code 500.
-func (ctx *UpdateCareTeamContext) InternalServerError() error {
-	ctx.ResponseData.WriteHeader(500)
+func (ctx *UpdateCareTeamContext) InternalServerError(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
+}
+
+// CancelHuddleContext provides the huddle cancel action context.
+type CancelHuddleContext struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+	ID        string
+	PatientID string
+}
+
+// NewCancelHuddleContext parses the incoming request URL and body, performs validations and creates the
+// context used by the huddle controller cancel action.
+func NewCancelHuddleContext(ctx context.Context, r *http.Request, service *goa.Service) (*CancelHuddleContext, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := CancelHuddleContext{Context: ctx, ResponseData: resp, RequestData: req}
+	paramID := req.Params["id"]
+	if len(paramID) > 0 {
+		rawID := paramID[0]
+		rctx.ID = rawID
+	}
+	paramPatientID := req.Params["patient_id"]
+	if len(paramPatientID) > 0 {
+		rawPatientID := paramPatientID[0]
+		rctx.PatientID = rawPatientID
+	}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *CancelHuddleContext) OK(r *Huddle) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.huddle+json")
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// NoContent sends a HTTP response with status code 204.
+func (ctx *CancelHuddleContext) NoContent() error {
+	ctx.ResponseData.WriteHeader(204)
 	return nil
+}
+
+// BadRequest sends a HTTP response with status code 400.
+func (ctx *CancelHuddleContext) BadRequest(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+}
+
+// NotFound sends a HTTP response with status code 404.
+func (ctx *CancelHuddleContext) NotFound(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *CancelHuddleContext) InternalServerError(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
 }
 
 // ListPatientContext provides the patient list action context.

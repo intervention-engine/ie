@@ -22,13 +22,13 @@ func exposeHeaderField(field string) goa.Middleware {
 func withMongoService(session *mgo.Session) goa.Middleware {
 	return func(h goa.Handler) goa.Handler {
 		return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-			newctx := context.WithValue(ctx, "service", mongo.NewMongoService(session))
+			newctx := context.WithValue(ctx, "serviceFactory", mongo.NewServiceFactory(session, "fhir"))
 			return h(newctx, rw, req)
 		}
 	}
 }
 
-func GetStorageService(ctx context.Context) storage.Service {
-	svc := ctx.Value("service")
-	return svc.(storage.Service)
+func GetServiceFactory(ctx context.Context) storage.ServiceFactory {
+	svc := ctx.Value("serviceFactory")
+	return svc.(storage.ServiceFactory)
 }

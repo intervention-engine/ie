@@ -44,6 +44,25 @@ type CareTeamLink struct {
 // Identifier: application/vnd.careteam+json; type=collection; view=default
 type CareTeamCollection []*CareTeam
 
+// A single gathering of a care team at a specific time (default view)
+//
+// Identifier: application/vnd.huddle+json; view=default
+type Huddle struct {
+	// ID of the care team associated with this Huddle
+	CareTeamID *string `form:"careTeamId,omitempty" json:"careTeamId,omitempty" xml:"careTeamId,omitempty"`
+	// Creation timestamp
+	Date *time.Time `form:"date,omitempty" json:"date,omitempty" xml:"date,omitempty"`
+	// Unique Huddle ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// List of patients scheduled for this huddle
+	Patients []*PatientHuddle `form:"patients,omitempty" json:"patients,omitempty" xml:"patients,omitempty"`
+}
+
+// HuddleCollection is the media type for an array of Huddle (default view)
+//
+// Identifier: application/vnd.huddle+json; type=collection; view=default
+type HuddleCollection []*Huddle
+
 // A patient (default view)
 //
 // Identifier: application/vnd.patient+json; view=default
