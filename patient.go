@@ -23,7 +23,7 @@ func NewPatientController(service *goa.Service) *PatientController {
 
 // Show runs the show action.
 func (c *PatientController) Show(ctx *app.ShowPatientContext) error {
-	s := GetStorageService(ctx.Context)
+	s := GetServiceFactory(ctx.Context)
 	ps := s.NewPatientService()
 	p, err := ps.Patient(ctx.ID)
 	if err != nil {
@@ -44,7 +44,7 @@ func (c *PatientController) Show(ctx *app.ShowPatientContext) error {
 
 // List runs the list action.
 func (c *PatientController) List(ctx *app.ListPatientContext) error {
-	s := GetStorageService(ctx.Context)
+	s := GetServiceFactory(ctx.Context)
 	ps := s.NewPatientService()
 	var pp []*app.Patient
 	var err error

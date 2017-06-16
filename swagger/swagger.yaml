@@ -46,113 +46,199 @@ definitions:
     type: array
   CareTeamPayload:
     example:
-      createdAt: 1970-07-27T08:23:11-04:00
-      id: At omnis aut consequatur id eos cumque.
-      leader: Aut occaecati.
-      name: Quis deleniti earum qui autem rerum temporibus.
+      createdAt: 1972-12-14T18:50:25-05:00
+      id: Dolor doloribus.
+      leader: Optio voluptatem aut esse commodi distinctio quam.
+      name: Maiores libero consequatur eos.
     properties:
       createdAt:
         description: Timestamp for care team creation
-        example: 1970-07-27T08:23:11-04:00
+        example: 1972-12-14T18:50:25-05:00
         format: date-time
         type: string
       id:
         description: Unique care team ID
-        example: At omnis aut consequatur id eos cumque.
+        example: Dolor doloribus.
         type: string
       leader:
         description: Care team leader
-        example: Aut occaecati.
+        example: Optio voluptatem aut esse commodi distinctio quam.
         type: string
       name:
         description: Care team name
-        example: Quis deleniti earum qui autem rerum temporibus.
+        example: Maiores libero consequatur eos.
         type: string
     title: CareTeamPayload
     type: object
   CreateCareTeamPayload:
     example:
-      createdAt: 1970-07-27T08:23:11-04:00
-      id: At omnis aut consequatur id eos cumque.
-      leader: Aut occaecati.
-      name: Quis deleniti earum qui autem rerum temporibus.
+      createdAt: 1972-12-14T18:50:25-05:00
+      id: Dolor doloribus.
+      leader: Optio voluptatem aut esse commodi distinctio quam.
+      name: Maiores libero consequatur eos.
     properties:
       createdAt:
         description: Timestamp for care team creation
-        example: 1970-07-27T08:23:11-04:00
+        example: 1972-12-14T18:50:25-05:00
         format: date-time
         type: string
       id:
         description: Unique care team ID
-        example: At omnis aut consequatur id eos cumque.
+        example: Dolor doloribus.
         type: string
       leader:
         description: Care team leader
-        example: Aut occaecati.
+        example: Optio voluptatem aut esse commodi distinctio quam.
         type: string
       name:
         description: Care team name
-        example: Quis deleniti earum qui autem rerum temporibus.
+        example: Maiores libero consequatur eos.
         type: string
     required:
     - name
     - leader
     title: CreateCareTeamPayload
     type: object
+  Huddle:
+    description: A single gathering of a care team at a specific time (default view)
+    example:
+      careTeamId: Cum aut blanditiis accusantium molestiae et.
+      date: 1995-11-09T03:25:18-05:00
+      id: Et beatae sapiente incidunt.
+      patients:
+      - id: Alias aut quo.
+        reason: Eveniet vel nesciunt omnis est ducimus est.
+        reason_type: Et veritatis non nostrum.
+        reviewed: false
+        reviewed_at: 1976-04-19T13:09:25-05:00
+      - id: Alias aut quo.
+        reason: Eveniet vel nesciunt omnis est ducimus est.
+        reason_type: Et veritatis non nostrum.
+        reviewed: false
+        reviewed_at: 1976-04-19T13:09:25-05:00
+      - id: Alias aut quo.
+        reason: Eveniet vel nesciunt omnis est ducimus est.
+        reason_type: Et veritatis non nostrum.
+        reviewed: false
+        reviewed_at: 1976-04-19T13:09:25-05:00
+    properties:
+      careTeamId:
+        description: ID of the care team associated with this Huddle
+        example: Cum aut blanditiis accusantium molestiae et.
+        type: string
+      date:
+        description: Creation timestamp
+        example: 1995-11-09T03:25:18-05:00
+        format: date-time
+        type: string
+      id:
+        description: Unique Huddle ID
+        example: Et beatae sapiente incidunt.
+        type: string
+      patients:
+        description: List of patients scheduled for this huddle
+        example:
+        - id: Alias aut quo.
+          reason: Eveniet vel nesciunt omnis est ducimus est.
+          reason_type: Et veritatis non nostrum.
+          reviewed: false
+          reviewed_at: 1976-04-19T13:09:25-05:00
+        - id: Alias aut quo.
+          reason: Eveniet vel nesciunt omnis est ducimus est.
+          reason_type: Et veritatis non nostrum.
+          reviewed: false
+          reviewed_at: 1976-04-19T13:09:25-05:00
+        - id: Alias aut quo.
+          reason: Eveniet vel nesciunt omnis est ducimus est.
+          reason_type: Et veritatis non nostrum.
+          reviewed: false
+          reviewed_at: 1976-04-19T13:09:25-05:00
+        items:
+          $ref: '#/definitions/PatientHuddle'
+        type: array
+    title: 'Mediatype identifier: application/vnd.huddle+json; view=default'
+    type: object
+  HuddleCollection:
+    description: HuddleCollection is the media type for an array of Huddle (default
+      view)
+    example:
+    - careTeamId: Cum aut blanditiis accusantium molestiae et.
+      date: 1995-11-09T03:25:18-05:00
+      id: Et beatae sapiente incidunt.
+      patients:
+      - id: Alias aut quo.
+        reason: Eveniet vel nesciunt omnis est ducimus est.
+        reason_type: Et veritatis non nostrum.
+        reviewed: false
+        reviewed_at: 1976-04-19T13:09:25-05:00
+      - id: Alias aut quo.
+        reason: Eveniet vel nesciunt omnis est ducimus est.
+        reason_type: Et veritatis non nostrum.
+        reviewed: false
+        reviewed_at: 1976-04-19T13:09:25-05:00
+      - id: Alias aut quo.
+        reason: Eveniet vel nesciunt omnis est ducimus est.
+        reason_type: Et veritatis non nostrum.
+        reviewed: false
+        reviewed_at: 1976-04-19T13:09:25-05:00
+    items:
+      $ref: '#/definitions/Huddle'
+    title: 'Mediatype identifier: application/vnd.huddle+json; type=collection; view=default'
+    type: array
   Patient:
     description: A patient (default view)
     example:
       address:
-        city: Cum aut blanditiis accusantium molestiae et.
-        postalCode: Tempora et.
-        state: Sapiente incidunt quia quo alias aut.
+        city: Minus in.
+        postalCode: Mollitia illum quia aperiam suscipit quis exercitationem.
+        state: Ipsum quis saepe.
         street:
-        - Eveniet vel nesciunt omnis est ducimus est.
-        - Eveniet vel nesciunt omnis est ducimus est.
-        - Eveniet vel nesciunt omnis est ducimus est.
-      age: 7.384679e+18
-      birthDate: 2000-07-16T01:52:47-04:00
-      gender: Non nostrum.
-      id: Explicabo quas est minus.
+        - Repellat tempora.
+        - Repellat tempora.
+        - Repellat tempora.
+      age: 8.854199e+18
+      birthDate: 1985-08-12T08:49:11-04:00
+      gender: Et et dolor fuga repudiandae et.
+      id: Deserunt voluptates.
       name:
-        family: Aut mollitia illum quia.
-        full: Suscipit quis exercitationem ut ipsum quis saepe.
-        given: Cum repellat tempora eum.
-        middleInitial: Qui et et.
+        family: Est nihil.
+        full: Sit ut aut.
+        given: Consequatur nisi quasi at omnis.
+        middleInitial: Consequatur id eos cumque nostrum aut.
       riskAssessments:
-      - date: 2008-12-18T15:13:10-05:00
-        groupId: Et et deserunt voluptates doloribus est nihil.
-        id: Sit ut aut.
-        value: 2.5970094e+18
+      - date: 1993-06-19T22:48:02-04:00
+        groupId: Deleniti earum qui autem.
+        id: Temporibus non eius.
+        value: 3.3432515e+18
     properties:
       address:
         $ref: '#/definitions/address'
       age:
         description: Age of Patient
-        example: 7.384679e+18
+        example: 8.854199e+18
         format: int64
         type: integer
       birthDate:
         description: Birth Date of Patient
-        example: 2000-07-16T01:52:47-04:00
+        example: 1985-08-12T08:49:11-04:00
         format: date-time
         type: string
       gender:
         description: Gender of Patient
-        example: Non nostrum.
+        example: Et et dolor fuga repudiandae et.
         type: string
       id:
         description: Unique patient ID
-        example: Explicabo quas est minus.
+        example: Deserunt voluptates.
         type: string
       name:
         $ref: '#/definitions/name'
       riskAssessments:
         example:
-        - date: 2008-12-18T15:13:10-05:00
-          groupId: Et et deserunt voluptates doloribus est nihil.
-          id: Sit ut aut.
-          value: 2.5970094e+18
+        - date: 1993-06-19T22:48:02-04:00
+          groupId: Deleniti earum qui autem.
+          id: Temporibus non eius.
+          value: 3.3432515e+18
         items:
           $ref: '#/definitions/riskAssessment'
         type: array
@@ -166,61 +252,151 @@ definitions:
       view)
     example:
     - address:
-        city: Cum aut blanditiis accusantium molestiae et.
-        postalCode: Tempora et.
-        state: Sapiente incidunt quia quo alias aut.
+        city: Minus in.
+        postalCode: Mollitia illum quia aperiam suscipit quis exercitationem.
+        state: Ipsum quis saepe.
         street:
-        - Eveniet vel nesciunt omnis est ducimus est.
-        - Eveniet vel nesciunt omnis est ducimus est.
-        - Eveniet vel nesciunt omnis est ducimus est.
-      age: 7.384679e+18
-      birthDate: 2000-07-16T01:52:47-04:00
-      gender: Non nostrum.
-      id: Explicabo quas est minus.
+        - Repellat tempora.
+        - Repellat tempora.
+        - Repellat tempora.
+      age: 8.854199e+18
+      birthDate: 1985-08-12T08:49:11-04:00
+      gender: Et et dolor fuga repudiandae et.
+      id: Deserunt voluptates.
       name:
-        family: Aut mollitia illum quia.
-        full: Suscipit quis exercitationem ut ipsum quis saepe.
-        given: Cum repellat tempora eum.
-        middleInitial: Qui et et.
+        family: Est nihil.
+        full: Sit ut aut.
+        given: Consequatur nisi quasi at omnis.
+        middleInitial: Consequatur id eos cumque nostrum aut.
       riskAssessments:
-      - date: 2008-12-18T15:13:10-05:00
-        groupId: Et et deserunt voluptates doloribus est nihil.
-        id: Sit ut aut.
-        value: 2.5970094e+18
+      - date: 1993-06-19T22:48:02-04:00
+        groupId: Deleniti earum qui autem.
+        id: Temporibus non eius.
+        value: 3.3432515e+18
+    - address:
+        city: Minus in.
+        postalCode: Mollitia illum quia aperiam suscipit quis exercitationem.
+        state: Ipsum quis saepe.
+        street:
+        - Repellat tempora.
+        - Repellat tempora.
+        - Repellat tempora.
+      age: 8.854199e+18
+      birthDate: 1985-08-12T08:49:11-04:00
+      gender: Et et dolor fuga repudiandae et.
+      id: Deserunt voluptates.
+      name:
+        family: Est nihil.
+        full: Sit ut aut.
+        given: Consequatur nisi quasi at omnis.
+        middleInitial: Consequatur id eos cumque nostrum aut.
+      riskAssessments:
+      - date: 1993-06-19T22:48:02-04:00
+        groupId: Deleniti earum qui autem.
+        id: Temporibus non eius.
+        value: 3.3432515e+18
+    - address:
+        city: Minus in.
+        postalCode: Mollitia illum quia aperiam suscipit quis exercitationem.
+        state: Ipsum quis saepe.
+        street:
+        - Repellat tempora.
+        - Repellat tempora.
+        - Repellat tempora.
+      age: 8.854199e+18
+      birthDate: 1985-08-12T08:49:11-04:00
+      gender: Et et dolor fuga repudiandae et.
+      id: Deserunt voluptates.
+      name:
+        family: Est nihil.
+        full: Sit ut aut.
+        given: Consequatur nisi quasi at omnis.
+        middleInitial: Consequatur id eos cumque nostrum aut.
+      riskAssessments:
+      - date: 1993-06-19T22:48:02-04:00
+        groupId: Deleniti earum qui autem.
+        id: Temporibus non eius.
+        value: 3.3432515e+18
     items:
       $ref: '#/definitions/Patient'
     title: 'Mediatype identifier: application/vnd.patient+json; type=collection; view=default'
     type: array
+  PatientHuddle:
+    example:
+      id: Alias aut quo.
+      reason: Eveniet vel nesciunt omnis est ducimus est.
+      reason_type: Et veritatis non nostrum.
+      reviewed: false
+      reviewed_at: 1976-04-19T13:09:25-05:00
+    properties:
+      id:
+        description: patient id
+        example: Alias aut quo.
+        type: string
+      reason:
+        description: reason for why patient is in this huddle
+        example: Eveniet vel nesciunt omnis est ducimus est.
+        type: string
+      reason_type:
+        example: Et veritatis non nostrum.
+        type: string
+      reviewed:
+        example: false
+        type: boolean
+      reviewed_at:
+        example: 1976-04-19T13:09:25-05:00
+        format: date-time
+        type: string
+    title: PatientHuddle
+    type: object
+  ScheduleCareTeamPayload:
+    example:
+      date: Deserunt aut velit.
+      patient_id: Perspiciatis a quidem unde eligendi veritatis.
+    properties:
+      date:
+        description: Date in YYYY-MM-dd format to schedule huddle
+        example: Deserunt aut velit.
+        type: string
+      patient_id:
+        description: Unique patient ID
+        example: Perspiciatis a quidem unde eligendi veritatis.
+        type: string
+    required:
+    - patient_id
+    - date
+    title: ScheduleCareTeamPayload
+    type: object
   address:
     example:
-      city: Cum aut blanditiis accusantium molestiae et.
-      postalCode: Tempora et.
-      state: Sapiente incidunt quia quo alias aut.
+      city: Minus in.
+      postalCode: Mollitia illum quia aperiam suscipit quis exercitationem.
+      state: Ipsum quis saepe.
       street:
-      - Eveniet vel nesciunt omnis est ducimus est.
-      - Eveniet vel nesciunt omnis est ducimus est.
-      - Eveniet vel nesciunt omnis est ducimus est.
+      - Repellat tempora.
+      - Repellat tempora.
+      - Repellat tempora.
     properties:
       city:
         description: City Name
-        example: Cum aut blanditiis accusantium molestiae et.
+        example: Minus in.
         type: string
       postalCode:
         description: Postal Code
-        example: Tempora et.
+        example: Mollitia illum quia aperiam suscipit quis exercitationem.
         type: string
       state:
         description: State Name
-        example: Sapiente incidunt quia quo alias aut.
+        example: Ipsum quis saepe.
         type: string
       street:
         description: Street Name
         example:
-        - Eveniet vel nesciunt omnis est ducimus est.
-        - Eveniet vel nesciunt omnis est ducimus est.
-        - Eveniet vel nesciunt omnis est ducimus est.
+        - Repellat tempora.
+        - Repellat tempora.
+        - Repellat tempora.
         items:
-          example: Eveniet vel nesciunt omnis est ducimus est.
+          example: Repellat tempora.
           type: string
         type: array
     title: address
@@ -264,52 +440,52 @@ definitions:
     type: object
   name:
     example:
-      family: Aut mollitia illum quia.
-      full: Suscipit quis exercitationem ut ipsum quis saepe.
-      given: Cum repellat tempora eum.
-      middleInitial: Qui et et.
+      family: Est nihil.
+      full: Sit ut aut.
+      given: Consequatur nisi quasi at omnis.
+      middleInitial: Consequatur id eos cumque nostrum aut.
     properties:
       family:
         description: Family Name
-        example: Aut mollitia illum quia.
+        example: Est nihil.
         type: string
       full:
         description: Full Name
-        example: Suscipit quis exercitationem ut ipsum quis saepe.
+        example: Sit ut aut.
         type: string
       given:
         description: Given Name
-        example: Cum repellat tempora eum.
+        example: Consequatur nisi quasi at omnis.
         type: string
       middleInitial:
         description: Middle Initial
-        example: Qui et et.
+        example: Consequatur id eos cumque nostrum aut.
         type: string
     title: name
     type: object
   riskAssessment:
     example:
-      date: 2008-12-18T15:13:10-05:00
-      groupId: Et et deserunt voluptates doloribus est nihil.
-      id: Sit ut aut.
-      value: 2.5970094e+18
+      date: 1993-06-19T22:48:02-04:00
+      groupId: Deleniti earum qui autem.
+      id: Temporibus non eius.
+      value: 3.3432515e+18
     properties:
       date:
         description: Date
-        example: 2008-12-18T15:13:10-05:00
+        example: 1993-06-19T22:48:02-04:00
         format: date-time
         type: string
       groupId:
         description: Risk Assessment Group ID
-        example: Et et deserunt voluptates doloribus est nihil.
+        example: Deleniti earum qui autem.
         type: string
       id:
         description: Risk Assessment ID
-        example: Sit ut aut.
+        example: Temporibus non eius.
         type: string
       value:
         description: Value
-        example: 2.5970094e+18
+        example: 3.3432515e+18
         format: int64
         type: integer
     title: riskAssessment
@@ -328,6 +504,7 @@ paths:
       description: List all care teams.
       operationId: care_team#list
       produces:
+      - application/vnd.goa.error
       - application/vnd.careteam+json; type=collection
       responses:
         "200":
@@ -336,10 +513,16 @@ paths:
             $ref: '#/definitions/CareTeamCollection'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
         "404":
           description: Not Found
+          schema:
+            $ref: '#/definitions/error'
         "500":
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
       schemes:
       - http
       summary: list care_team
@@ -355,6 +538,7 @@ paths:
         schema:
           $ref: '#/definitions/CreateCareTeamPayload'
       produces:
+      - application/vnd.goa.error
       - application/vnd.careteam+json
       responses:
         "200":
@@ -365,10 +549,16 @@ paths:
           description: Created
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
         "404":
           description: Not Found
+          schema:
+            $ref: '#/definitions/error'
         "500":
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
       schemes:
       - http
       summary: create care_team
@@ -384,6 +574,7 @@ paths:
         required: true
         type: string
       produces:
+      - application/vnd.goa.error
       - application/vnd.careteam+json
       responses:
         "200":
@@ -394,10 +585,16 @@ paths:
           description: No Content
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
         "404":
           description: Not Found
+          schema:
+            $ref: '#/definitions/error'
         "500":
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
       schemes:
       - http
       summary: delete care_team
@@ -413,6 +610,7 @@ paths:
         required: true
         type: string
       produces:
+      - application/vnd.goa.error
       - application/vnd.careteam+json
       responses:
         "200":
@@ -421,10 +619,16 @@ paths:
             $ref: '#/definitions/CareTeam'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
         "404":
           description: Not Found
+          schema:
+            $ref: '#/definitions/error'
         "500":
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
       schemes:
       - http
       summary: show care_team
@@ -444,6 +648,7 @@ paths:
         schema:
           $ref: '#/definitions/CareTeamPayload'
       produces:
+      - application/vnd.goa.error
       - application/vnd.careteam+json
       responses:
         "200":
@@ -454,15 +659,216 @@ paths:
           description: No Content
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
         "404":
           description: Not Found
+          schema:
+            $ref: '#/definitions/error'
         "500":
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
       schemes:
       - http
       summary: update care_team
       tags:
       - care_team
+  /api/care_teams/{id}/huddles:
+    get:
+      description: List all huddles for this care team.
+      operationId: care_team#huddles
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/vnd.huddle+json; type=collection
+      - application/vnd.goa.error
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/HuddleCollection'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
+      schemes:
+      - http
+      summary: huddles care_team
+      tags:
+      - care_team
+    post:
+      description: Schedule a patient for a huddle with this care team.
+      operationId: care_team#schedule
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+      - in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/ScheduleCareTeamPayload'
+      produces:
+      - application/vnd.goa.error
+      - application/vnd.huddle+json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Huddle'
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/Huddle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
+      schemes:
+      - http
+      summary: schedule care_team
+      tags:
+      - care_team
+  /api/care_teams/{id}/patients/{patient_id}:
+    delete:
+      description: Remove patient from care team.
+      operationId: care_team#remove_patient
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+      - in: path
+        name: patient_id
+        required: true
+        type: string
+      produces:
+      - application/vnd.careteam+json
+      - application/vnd.goa.error
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/CareTeam'
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
+      schemes:
+      - http
+      summary: remove_patient care_team
+      tags:
+      - care_team
+    post:
+      description: Add patient to care team
+      operationId: care_team#add_patient
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+      - in: path
+        name: patient_id
+        required: true
+        type: string
+      produces:
+      - application/vnd.goa.error
+      - application/vnd.careteam+json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/CareTeam'
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
+      schemes:
+      - http
+      summary: add_patient care_team
+      tags:
+      - care_team
+  /api/huddles/{id}/patients/{patient_id}:
+    delete:
+      description: Cancel patient's huddle
+      operationId: huddle#cancel
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+      - in: path
+        name: patient_id
+        required: true
+        type: string
+      produces:
+      - application/vnd.goa.error
+      - application/vnd.huddle+json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Huddle'
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
+      schemes:
+      - http
+      summary: cancel huddle
+      tags:
+      - huddle
   /api/patients:
     get:
       description: List all patients.

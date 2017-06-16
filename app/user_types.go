@@ -11,6 +11,7 @@
 package app
 
 import (
+	"github.com/goadesign/goa"
 	"time"
 )
 
@@ -54,6 +55,99 @@ type CareTeamPayload struct {
 	Leader *string `form:"leader,omitempty" json:"leader,omitempty" xml:"leader,omitempty"`
 	// Care team name
 	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+}
+
+// patientHuddle user type.
+type patientHuddle struct {
+	// patient id
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// reason for why patient is in this huddle
+	Reason     *string    `form:"reason,omitempty" json:"reason,omitempty" xml:"reason,omitempty"`
+	ReasonType *string    `form:"reason_type,omitempty" json:"reason_type,omitempty" xml:"reason_type,omitempty"`
+	Reviewed   *bool      `form:"reviewed,omitempty" json:"reviewed,omitempty" xml:"reviewed,omitempty"`
+	ReviewedAt *time.Time `form:"reviewed_at,omitempty" json:"reviewed_at,omitempty" xml:"reviewed_at,omitempty"`
+}
+
+// Publicize creates PatientHuddle from patientHuddle
+func (ut *patientHuddle) Publicize() *PatientHuddle {
+	var pub PatientHuddle
+	if ut.ID != nil {
+		pub.ID = ut.ID
+	}
+	if ut.Reason != nil {
+		pub.Reason = ut.Reason
+	}
+	if ut.ReasonType != nil {
+		pub.ReasonType = ut.ReasonType
+	}
+	if ut.Reviewed != nil {
+		pub.Reviewed = ut.Reviewed
+	}
+	if ut.ReviewedAt != nil {
+		pub.ReviewedAt = ut.ReviewedAt
+	}
+	return &pub
+}
+
+// PatientHuddle user type.
+type PatientHuddle struct {
+	// patient id
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// reason for why patient is in this huddle
+	Reason     *string    `form:"reason,omitempty" json:"reason,omitempty" xml:"reason,omitempty"`
+	ReasonType *string    `form:"reason_type,omitempty" json:"reason_type,omitempty" xml:"reason_type,omitempty"`
+	Reviewed   *bool      `form:"reviewed,omitempty" json:"reviewed,omitempty" xml:"reviewed,omitempty"`
+	ReviewedAt *time.Time `form:"reviewed_at,omitempty" json:"reviewed_at,omitempty" xml:"reviewed_at,omitempty"`
+}
+
+// schedulePatientPayload user type.
+type schedulePatientPayload struct {
+	// Date in YYYY-MM-dd format to schedule huddle
+	Date *string `form:"date,omitempty" json:"date,omitempty" xml:"date,omitempty"`
+	// Unique patient ID
+	PatientID *string `form:"patient_id,omitempty" json:"patient_id,omitempty" xml:"patient_id,omitempty"`
+}
+
+// Validate validates the schedulePatientPayload type instance.
+func (ut *schedulePatientPayload) Validate() (err error) {
+	if ut.PatientID == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "patient_id"))
+	}
+	if ut.Date == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "date"))
+	}
+	return
+}
+
+// Publicize creates SchedulePatientPayload from schedulePatientPayload
+func (ut *schedulePatientPayload) Publicize() *SchedulePatientPayload {
+	var pub SchedulePatientPayload
+	if ut.Date != nil {
+		pub.Date = *ut.Date
+	}
+	if ut.PatientID != nil {
+		pub.PatientID = *ut.PatientID
+	}
+	return &pub
+}
+
+// SchedulePatientPayload user type.
+type SchedulePatientPayload struct {
+	// Date in YYYY-MM-dd format to schedule huddle
+	Date string `form:"date" json:"date" xml:"date"`
+	// Unique patient ID
+	PatientID string `form:"patient_id" json:"patient_id" xml:"patient_id"`
+}
+
+// Validate validates the SchedulePatientPayload type instance.
+func (ut *SchedulePatientPayload) Validate() (err error) {
+	if ut.PatientID == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "patient_id"))
+	}
+	if ut.Date == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "date"))
+	}
+	return
 }
 
 // address user type.

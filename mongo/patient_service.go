@@ -8,15 +8,13 @@ import (
 
 	"github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/ie/app"
-	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
 // PatientService provides a mongo implementation of a
 // Storage Service for patients.
 type PatientService struct {
-	S *mgo.Session
-	C *mgo.Collection
+	Service
 }
 
 // Patient gets a patient with the given id.
