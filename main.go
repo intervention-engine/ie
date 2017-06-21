@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/goadesign/goa"
@@ -12,11 +13,17 @@ import (
 )
 
 func main() {
+	cfg := ConfigInit()
+	//setupLogFile(cfg.LogDir)
+	if cfg.PrintConfig {
+		fmt.Printf("%#+v\n", cfg)
+		return
+	}
 	// Create service
 	service := goa.New("api")
-	session, err := mgo.Dial("mongodb://localhost:27017")
+	session, err := mgo.Dial(cfg.MongoURL)
 	if err != nil {
-		log.Fatalln("dialing mongo failed for session at mongodb://localhost:27017")
+		log.Fatalln("dialing mongo failed for session at: ", cfg.MongoURL)
 	}
 	defer session.Close()
 
@@ -39,7 +46,8 @@ func main() {
 	app.MountSwaggerController(service, sc)
 
 	// Start service
-	if err := service.ListenAndServe(":3001"); err != nil {
+	log.Println("serving api at: ", cfg.HostURL)
+	if err := service.ListenAndServe(cfg.HostURL); err != nil {
 		service.LogError("startup", "err", err)
 	}
 }
