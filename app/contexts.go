@@ -855,3 +855,58 @@ func (ctx *ShowPatientContext) InternalServerError() error {
 	ctx.ResponseData.WriteHeader(500)
 	return nil
 }
+
+// ListRiskServiceContext provides the risk_service list action context.
+type ListRiskServiceContext struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+}
+
+// NewListRiskServiceContext parses the incoming request URL and body, performs validations and creates the
+// context used by the risk_service controller list action.
+func NewListRiskServiceContext(ctx context.Context, r *http.Request, service *goa.Service) (*ListRiskServiceContext, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := ListRiskServiceContext{Context: ctx, ResponseData: resp, RequestData: req}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *ListRiskServiceContext) OK(r RiskServiceCollection) error {
+	ctx.ResponseData.Header().Set("Content-Type", "applicatoin/vnd.riskservice+json; type=collection")
+	if r == nil {
+		r = RiskServiceCollection{}
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// OKList sends a HTTP response with status code 200.
+func (ctx *ListRiskServiceContext) OKList(r RiskServiceListCollection) error {
+	ctx.ResponseData.Header().Set("Content-Type", "applicatoin/vnd.riskservice+json; type=collection")
+	if r == nil {
+		r = RiskServiceListCollection{}
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// BadRequest sends a HTTP response with status code 400.
+func (ctx *ListRiskServiceContext) BadRequest(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+}
+
+// NotFound sends a HTTP response with status code 404.
+func (ctx *ListRiskServiceContext) NotFound(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *ListRiskServiceContext) InternalServerError(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
+}

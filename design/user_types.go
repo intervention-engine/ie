@@ -5,6 +5,12 @@ import (
 	. "github.com/goadesign/goa/design/apidsl"
 )
 
+// var RiskServicePayload = Type("riskServicePayload", func() {
+// 	Attribute("id", String, "Risk Service ID")
+// 	Attribute("name", String, "Name of the Risk Service. Corresponds to method attribute of FHIR RiskAssessment resources")
+// 	Attribute("url", String, "Address of the risk service endpoint")
+// })
+
 var RiskAssessment = Type("riskAssessment", func() {
 	Attribute("id", String, "Risk Assessment ID")
 	Attribute("groupId", String, "Risk Assessment Group ID")

@@ -34,6 +34,7 @@ func main() {
 	service.Use(middleware.Recover())
 	service.Use(exposeHeaderField("Link"))
 	service.Use(withMongoService(session))
+	service.Use(withRiskServices(cfg.RiskServicesPath))
 
 	// Mount "patient" controller
 	pc := NewPatientController(service)
@@ -45,6 +46,8 @@ func main() {
 	sc := NewSwaggerController(service)
 	app.MountSwaggerController(service, sc)
 
+	rsc := NewRiskServiceController(service)
+	app.MountRiskServiceController(service, rsc)
 	// Start service
 	log.Println("serving api at: ", cfg.HostURL)
 	if err := service.ListenAndServe(cfg.HostURL); err != nil {
