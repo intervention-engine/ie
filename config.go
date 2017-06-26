@@ -1,48 +1,52 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/intervention-engine/ie/app"
 )
 
 type Config struct {
-	PrintConfig    bool
-	CodeLookup     bool
-	Subscriptions  bool
-	ReqLog         bool
-	Icd9URL        string
-	Icd10URL       string
-	RiskServiceURL string
-	LogDir         string
-	MongoURL       string
-	HostURL        string
-	huddleString   string
-	Huddle         []string
+	PrintConfig      bool
+	CodeLookup       bool
+	Subscriptions    bool
+	ReqLog           bool
+	Icd9URL          string
+	Icd10URL         string
+	RiskServicesPath string
+	LogDir           string
+	MongoURL         string
+	HostURL          string
+	huddleString     string
+	Huddle           []string
 }
 
 const (
-	LoadCodesDesc     = "flag to enable download of icd-9 and icd-10 code lookup"
-	SubscriptionsDesc = "enables limited support for resource subscriptions"
-	ReqLogDesc        = "Enables request logging -- do NOT use in production"
-	LogDirDesc        = "Path to a directory for ie logs to be written to."
-	Icd9URLDesc       = "url for icd-9 code definition zip"
-	Icd10URLDesc      = "url for icd-10 code definition zip"
-	HuddleDesc        = "path to a huddle configuration file (separate multiple paths with a comma)"
+	LoadCodesDesc       = "flag to enable download of icd-9 and icd-10 code lookup"
+	SubscriptionsDesc   = "enables limited support for resource subscriptions"
+	ReqLogDesc          = "Enables request logging -- do NOT use in production"
+	LogDirDesc          = "Path to a directory for ie logs to be written to."
+	Icd9URLDesc         = "url for icd-9 code definition zip"
+	Icd10URLDesc        = "url for icd-10 code definition zip"
+	HuddleDesc          = "path to a huddle configuration file (separate multiple paths with a comma)"
+	RiskServicePathDesc = "path to list of risk services JSON configuration file"
 
 	Icd9URLDefault  = "https://www.cms.gov/Medicare/Coding/ICD9ProviderDiagnosticCodes/Downloads/ICD-9-CM-v32-master-descriptions.zip"
 	Icd10URLDefault = "https://www.cms.gov/Medicare/Coding/ICD10/Downloads/2016-Code-Descriptions-in-Tabular-Order.zip"
 
-	RiskServiceURLEnv = "IE_RISK_SERVICE_URL"
-	LogDirEnv         = "IE_LOG_DIR"
-	MongoURLEnv       = "IE_MONGO_URL"
-	HuddleEnv         = "IE_HUDDLE"
-	HostURLEnv        = "IE_HOST_URL"
+	LogDirEnv   = "IE_LOG_DIR"
+	MongoURLEnv = "IE_MONGO_URL"
+	HuddleEnv   = "IE_HUDDLE"
+	HostURLEnv  = "IE_HOST_URL"
 
-	RiskServiceURLDefault = "http://localhost:9000"
-	MongoURLDefault       = "mongodb://localhost:27017"
-	HostURLDefault        = "localhost:3001"
+	RiskServicePathDefault = "config/risk_services.json"
+	MongoURLDefault        = "mongodb://localhost:27017"
+	HostURLDefault         = "localhost:3001"
 )
 
 var flags *Config
@@ -58,7 +62,7 @@ func init() {
 	flag.StringVar(&flags.Icd9URL, "icd9-url", Icd9URLDefault, Icd9URLDesc)
 	flag.StringVar(&flags.Icd10URL, "icd10-url", Icd10URLDefault, Icd10URLDesc)
 	flag.StringVar(&flags.huddleString, "huddle", "", HuddleDesc)
-
+	flag.StringVar(&flags.RiskServicesPath, "RiskServicesPath", RiskServicePathDefault, RiskServicePathDesc)
 	setFlags = make(map[string]bool)
 }
 
@@ -69,9 +73,9 @@ func ConfigInit() *Config {
 		flags.MongoURL = MongoURLDefault
 	}
 	flags.LogDir = os.Getenv(LogDirEnv)
-	flags.RiskServiceURL = os.Getenv(RiskServiceURLEnv)
-	if flags.RiskServiceURL == "" {
-		flags.RiskServiceURL = RiskServiceURLDefault
+	flags.RiskServicesPath = RiskServicePathDefault
+	if flags.RiskServicesPath == "" {
+		flags.RiskServicesPath = RiskServicePathDefault
 	}
 	flags.HostURL = os.Getenv(HostURLEnv)
 	if flags.HostURL == "" {
@@ -96,6 +100,19 @@ func ConfigInit() *Config {
 
 func collectSetFlags(flag *flag.Flag) {
 	setFlags[flag.Name] = true
+}
+
+func loadRiskServicesJSON(path string) []*app.RiskService {
+	config, err := ioutil.ReadFile(path)
+	var services []*app.RiskService
+
+	if err != nil {
+		panic("Invalid JSON Configuration for Risk Services")
+	} else {
+		json.Unmarshal(config, &services)
+	}
+
+	return services
 }
 
 func setupLogFile(path string) {

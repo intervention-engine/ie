@@ -28,6 +28,16 @@ func withMongoService(session *mgo.Session) goa.Middleware {
 	}
 }
 
+func withRiskServices(path string) goa.Middleware {
+	riskServices := loadRiskServicesJSON(path)
+	return func(h goa.Handler) goa.Handler {
+		return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+			newctx := context.WithValue(ctx, "riskServices", riskServices)
+			return h(newctx, rw, req)
+		}
+	}
+}
+
 func GetServiceFactory(ctx context.Context) storage.ServiceFactory {
 	svc := ctx.Value("serviceFactory")
 	return svc.(storage.ServiceFactory)

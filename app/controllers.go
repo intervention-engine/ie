@@ -406,6 +406,59 @@ func handlePatientOrigin(h goa.Handler) goa.Handler {
 	}
 }
 
+// RiskServiceController is the controller interface for the RiskService actions.
+type RiskServiceController interface {
+	goa.Muxer
+	List(*ListRiskServiceContext) error
+}
+
+// MountRiskServiceController "mounts" a RiskService resource controller on the given service.
+func MountRiskServiceController(service *goa.Service, ctrl RiskServiceController) {
+	initService(service)
+	var h goa.Handler
+	service.Mux.Handle("OPTIONS", "/api/risk_services", ctrl.MuxHandler("preflight", handleRiskServiceOrigin(cors.HandlePreflight()), nil))
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewListRiskServiceContext(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.List(rctx)
+	}
+	h = handleRiskServiceOrigin(h)
+	service.Mux.Handle("GET", "/api/risk_services", ctrl.MuxHandler("list", h, nil))
+	service.LogInfo("mount", "ctrl", "RiskService", "action", "List", "route", "GET /api/risk_services")
+}
+
+// handleRiskServiceOrigin applies the CORS response headers corresponding to the origin.
+func handleRiskServiceOrigin(h goa.Handler) goa.Handler {
+
+	return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		origin := req.Header.Get("Origin")
+		if origin == "" {
+			// Not a CORS request
+			return h(ctx, rw, req)
+		}
+		if cors.MatchOrigin(origin, "*") {
+			ctx = goa.WithLogContext(ctx, "origin", origin)
+			rw.Header().Set("Access-Control-Allow-Origin", origin)
+			rw.Header().Set("Access-Control-Allow-Credentials", "false")
+			if acrm := req.Header.Get("Access-Control-Request-Method"); acrm != "" {
+				// We are handling a preflight request
+				rw.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
+			}
+			return h(ctx, rw, req)
+		}
+
+		return h(ctx, rw, req)
+	}
+}
+
 // SwaggerController is the controller interface for the Swagger actions.
 type SwaggerController interface {
 	goa.Muxer

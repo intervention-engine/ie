@@ -127,3 +127,30 @@ func (mt PatientCollection) Validate() (err error) {
 	}
 	return
 }
+
+// Service providing risk scores for patients (default view)
+//
+// Identifier: applicatoin/vnd.riskservice+json; view=default
+type RiskService struct {
+	ID   *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	URL  *string `form:"url,omitempty" json:"url,omitempty" xml:"url,omitempty"`
+}
+
+// Service providing risk scores for patients (list view)
+//
+// Identifier: applicatoin/vnd.riskservice+json; view=list
+type RiskServiceList struct {
+	ID   *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+}
+
+// RiskServiceCollection is the media type for an array of RiskService (default view)
+//
+// Identifier: applicatoin/vnd.riskservice+json; type=collection; view=default
+type RiskServiceCollection []*RiskService
+
+// RiskServiceCollection is the media type for an array of RiskService (list view)
+//
+// Identifier: applicatoin/vnd.riskservice+json; type=collection; view=list
+type RiskServiceListCollection []*RiskServiceList

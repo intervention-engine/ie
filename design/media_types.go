@@ -50,6 +50,26 @@ var PatientMedia = MediaType("application/vnd.patient+json", func() {
 	})
 })
 
+var RiskServiceMedia = MediaType("applicatoin/vnd.riskservice+json", func() {
+	TypeName("RiskService")
+	Description("Service providing risk scores for patients")
+	ContentType("application/json")
+	Attributes(func() {
+		Attribute("id")
+		Attribute("name")
+		Attribute("url")
+	})
+	View("default", func() {
+		Attribute("id")
+		Attribute("name")
+		Attribute("url")
+	})
+	View("list", func() {
+		Attribute("id")
+		Attribute("name")
+	})
+})
+
 var CareTeamMedia = MediaType("application/vnd.careteam+json", func() {
 	TypeName("CareTeam")
 	Description("A care team")

@@ -30,11 +30,28 @@ var _ = Resource("patient", func() {
 				Minimum(1)
 			})
 		})
+
 		Description("List all patients.")
 		Response(OK, func() {
 			Media(CollectionOf(PatientMedia, func() {
 				View("default")
 			}))
+		})
+	})
+})
+
+var _ = Resource("risk_service", func() {
+	DefaultMedia(RiskServiceMedia)
+	BasePath("/risk_services")
+	Response(OK)
+	Action("list", func() {
+		Description("List all risk services")
+		Routing(GET("/"))
+		Response(NotFound, ErrorMedia)
+		Response(BadRequest, ErrorMedia)
+		Response(InternalServerError, ErrorMedia)
+		Response(OK, func() {
+			Media(CollectionOf(RiskServiceMedia))
 		})
 	})
 })
