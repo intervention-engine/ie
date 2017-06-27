@@ -46,53 +46,53 @@ definitions:
     type: array
   CareTeamPayload:
     example:
-      createdAt: 1972-12-14T18:50:25-05:00
-      id: Dolor doloribus.
-      leader: Optio voluptatem aut esse commodi distinctio quam.
-      name: Maiores libero consequatur eos.
+      createdAt: 1999-04-22T06:14:51-04:00
+      id: Deserunt aut velit.
+      leader: Perspiciatis a quidem unde eligendi veritatis.
+      name: Ipsum est sunt aut cumque repudiandae.
     properties:
       createdAt:
         description: Timestamp for care team creation
-        example: 1972-12-14T18:50:25-05:00
+        example: 1999-04-22T06:14:51-04:00
         format: date-time
         type: string
       id:
         description: Unique care team ID
-        example: Dolor doloribus.
+        example: Deserunt aut velit.
         type: string
       leader:
         description: Care team leader
-        example: Optio voluptatem aut esse commodi distinctio quam.
+        example: Perspiciatis a quidem unde eligendi veritatis.
         type: string
       name:
         description: Care team name
-        example: Maiores libero consequatur eos.
+        example: Ipsum est sunt aut cumque repudiandae.
         type: string
     title: CareTeamPayload
     type: object
   CreateCareTeamPayload:
     example:
-      createdAt: 1972-12-14T18:50:25-05:00
-      id: Dolor doloribus.
-      leader: Optio voluptatem aut esse commodi distinctio quam.
-      name: Maiores libero consequatur eos.
+      createdAt: 1999-04-22T06:14:51-04:00
+      id: Deserunt aut velit.
+      leader: Perspiciatis a quidem unde eligendi veritatis.
+      name: Ipsum est sunt aut cumque repudiandae.
     properties:
       createdAt:
         description: Timestamp for care team creation
-        example: 1972-12-14T18:50:25-05:00
+        example: 1999-04-22T06:14:51-04:00
         format: date-time
         type: string
       id:
         description: Unique care team ID
-        example: Dolor doloribus.
+        example: Deserunt aut velit.
         type: string
       leader:
         description: Care team leader
-        example: Optio voluptatem aut esse commodi distinctio quam.
+        example: Perspiciatis a quidem unde eligendi veritatis.
         type: string
       name:
         description: Care team name
-        example: Maiores libero consequatur eos.
+        example: Ipsum est sunt aut cumque repudiandae.
         type: string
     required:
     - name
@@ -349,18 +349,51 @@ definitions:
         type: string
     title: PatientHuddle
     type: object
+  RiskService:
+    description: Service providing risk scores for patients (default view)
+    example:
+      id: Autem dolor.
+      name: Labore optio voluptatem aut esse.
+      url: Distinctio quam quisquam maiores libero.
+    properties:
+      id:
+        example: Autem dolor.
+        type: string
+      name:
+        example: Labore optio voluptatem aut esse.
+        type: string
+      url:
+        example: Distinctio quam quisquam maiores libero.
+        type: string
+    title: 'Mediatype identifier: applicatoin/vnd.riskservice+json; view=default'
+    type: object
+  RiskServiceCollection:
+    description: RiskServiceCollection is the media type for an array of RiskService
+      (default view)
+    example:
+    - id: Autem dolor.
+      name: Labore optio voluptatem aut esse.
+      url: Distinctio quam quisquam maiores libero.
+    - id: Autem dolor.
+      name: Labore optio voluptatem aut esse.
+      url: Distinctio quam quisquam maiores libero.
+    items:
+      $ref: '#/definitions/RiskService'
+    title: 'Mediatype identifier: applicatoin/vnd.riskservice+json; type=collection;
+      view=default'
+    type: array
   ScheduleCareTeamPayload:
     example:
-      date: Deserunt aut velit.
-      patient_id: Perspiciatis a quidem unde eligendi veritatis.
+      date: Voluptas assumenda occaecati in aut.
+      patient_id: Nam officia ut et.
     properties:
       date:
         description: Date in YYYY-MM-dd format to schedule huddle
-        example: Deserunt aut velit.
+        example: Voluptas assumenda occaecati in aut.
         type: string
       patient_id:
         description: Unique patient ID
-        example: Perspiciatis a quidem unde eligendi veritatis.
+        example: Nam officia ut et.
         type: string
     required:
     - patient_id
@@ -679,13 +712,21 @@ paths:
       description: List all huddles for this care team.
       operationId: care_team#huddles
       parameters:
+      - in: query
+        name: date
+        required: false
+        type: string
       - in: path
         name: id
         required: true
         type: string
+      - in: query
+        name: patient_id
+        required: false
+        type: string
       produces:
-      - application/vnd.huddle+json; type=collection
       - application/vnd.goa.error
+      - application/vnd.huddle+json; type=collection
       responses:
         "200":
           description: OK
@@ -764,8 +805,8 @@ paths:
         required: true
         type: string
       produces:
-      - application/vnd.careteam+json
       - application/vnd.goa.error
+      - application/vnd.careteam+json
       responses:
         "200":
           description: OK
@@ -934,6 +975,35 @@ paths:
       summary: show patient
       tags:
       - patient
+  /api/risk_services:
+    get:
+      description: List all risk services
+      operationId: risk_service#list
+      produces:
+      - applicatoin/vnd.riskservice+json; type=collection
+      - application/vnd.goa.error
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/RiskServiceCollection'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
+      schemes:
+      - http
+      summary: list risk_service
+      tags:
+      - risk_service
   /swagger-ui/{filepath}:
     get:
       operationId: swagger#/swagger-ui/*filepath

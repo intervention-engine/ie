@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/intervention-engine/ie/app"
+	"github.com/intervention-engine/ie/storage"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -18,31 +19,31 @@ type Huddle struct {
 	app.Huddle `bson:",inline"`
 }
 
-// Huddles lists all huddles.
-func (s *HuddleService) Huddles() ([]*app.Huddle, error) {
+// HuddlesFilterBy lists the huddles for that care team with the given filters.
+// If no filters are given, all huddles are returned for that CareTeam.
+func (s *HuddleService) HuddlesFilterBy(query storage.HuddleFilterQuery) ([]*app.Huddle, error) {
 	defer s.S.Close()
-	mhh := []Huddle{}
-	err := s.C.Find(nil).All(&mhh)
-	if err != nil {
-		return nil, err
-	}
-	hh := make([]*app.Huddle, len(mhh), len(mhh))
-	for i := range mhh {
-		hh[i] = &mhh[i].Huddle
-		hh[i].ID = &mhh[i].ID
-	}
-	return hh, nil
-}
-
-// HuddlesForCareTeam lists the huddles for that care team.
-func (s *HuddleService) HuddlesForCareTeam(id string) ([]*app.Huddle, error) {
-	defer s.S.Close()
-	if !bson.IsObjectIdHex(id) {
+	if !bson.IsObjectIdHex(query.CareTeamID) {
 		return nil, errors.New("bad care team id")
 	}
 	mhh := []Huddle{}
-	// Then work on filtering by date and by patient ID
-	err := s.C.Find(bson.M{"careteamid": id}).All(&mhh)
+	mongoQuery := bson.M{"careteamid": query.CareTeamID}
+	if query.PatientID != "" {
+		if !bson.IsObjectIdHex(query.PatientID) {
+			return nil, errors.New("bad patient id")
+		}
+		mongoQuery["patients.id"] = query.PatientID
+	}
+	if !query.Date.IsZero() {
+		mongoQuery["date"] = struct {
+			Gte time.Time `bson:"$gte"`
+			Lt  time.Time `bson:"$lt"`
+		}{
+			Gte: query.Date,
+			Lt:  query.Date.AddDate(0, 0, 1),
+		}
+	}
+	err := s.C.Find(mongoQuery).All(&mhh)
 	if err != nil {
 		return nil, err
 	}

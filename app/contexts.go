@@ -271,7 +271,9 @@ type HuddlesCareTeamContext struct {
 	context.Context
 	*goa.ResponseData
 	*goa.RequestData
-	ID string
+	Date      *string
+	ID        string
+	PatientID *string
 }
 
 // NewHuddlesCareTeamContext parses the incoming request URL and body, performs validations and creates the
@@ -283,10 +285,20 @@ func NewHuddlesCareTeamContext(ctx context.Context, r *http.Request, service *go
 	req := goa.ContextRequest(ctx)
 	req.Request = r
 	rctx := HuddlesCareTeamContext{Context: ctx, ResponseData: resp, RequestData: req}
+	paramDate := req.Params["date"]
+	if len(paramDate) > 0 {
+		rawDate := paramDate[0]
+		rctx.Date = &rawDate
+	}
 	paramID := req.Params["id"]
 	if len(paramID) > 0 {
 		rawID := paramID[0]
 		rctx.ID = rawID
+	}
+	paramPatientID := req.Params["patient_id"]
+	if len(paramPatientID) > 0 {
+		rawPatientID := paramPatientID[0]
+		rctx.PatientID = &rawPatientID
 	}
 	return &rctx, err
 }
