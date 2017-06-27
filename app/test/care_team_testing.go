@@ -1243,7 +1243,7 @@ func DeleteCareTeamOKLink(t goatest.TInterface, ctx context.Context, service *go
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func HuddlesCareTeamBadRequest(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string) (http.ResponseWriter, error) {
+func HuddlesCareTeamBadRequest(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string, date *string, patientID *string) (http.ResponseWriter, error) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -1263,8 +1263,18 @@ func HuddlesCareTeamBadRequest(t goatest.TInterface, ctx context.Context, servic
 
 	// Setup request context
 	rw := httptest.NewRecorder()
+	query := url.Values{}
+	if date != nil {
+		sliceVal := []string{*date}
+		query["date"] = sliceVal
+	}
+	if patientID != nil {
+		sliceVal := []string{*patientID}
+		query["patient_id"] = sliceVal
+	}
 	u := &url.URL{
-		Path: fmt.Sprintf("/api/care_teams/%v/huddles", id),
+		Path:     fmt.Sprintf("/api/care_teams/%v/huddles", id),
+		RawQuery: query.Encode(),
 	}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
@@ -1272,6 +1282,14 @@ func HuddlesCareTeamBadRequest(t goatest.TInterface, ctx context.Context, servic
 	}
 	prms := url.Values{}
 	prms["id"] = []string{fmt.Sprintf("%v", id)}
+	if date != nil {
+		sliceVal := []string{*date}
+		prms["date"] = sliceVal
+	}
+	if patientID != nil {
+		sliceVal := []string{*patientID}
+		prms["patient_id"] = sliceVal
+	}
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -1308,7 +1326,7 @@ func HuddlesCareTeamBadRequest(t goatest.TInterface, ctx context.Context, servic
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func HuddlesCareTeamInternalServerError(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string) (http.ResponseWriter, error) {
+func HuddlesCareTeamInternalServerError(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string, date *string, patientID *string) (http.ResponseWriter, error) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -1328,8 +1346,18 @@ func HuddlesCareTeamInternalServerError(t goatest.TInterface, ctx context.Contex
 
 	// Setup request context
 	rw := httptest.NewRecorder()
+	query := url.Values{}
+	if date != nil {
+		sliceVal := []string{*date}
+		query["date"] = sliceVal
+	}
+	if patientID != nil {
+		sliceVal := []string{*patientID}
+		query["patient_id"] = sliceVal
+	}
 	u := &url.URL{
-		Path: fmt.Sprintf("/api/care_teams/%v/huddles", id),
+		Path:     fmt.Sprintf("/api/care_teams/%v/huddles", id),
+		RawQuery: query.Encode(),
 	}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
@@ -1337,6 +1365,14 @@ func HuddlesCareTeamInternalServerError(t goatest.TInterface, ctx context.Contex
 	}
 	prms := url.Values{}
 	prms["id"] = []string{fmt.Sprintf("%v", id)}
+	if date != nil {
+		sliceVal := []string{*date}
+		prms["date"] = sliceVal
+	}
+	if patientID != nil {
+		sliceVal := []string{*patientID}
+		prms["patient_id"] = sliceVal
+	}
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -1373,7 +1409,7 @@ func HuddlesCareTeamInternalServerError(t goatest.TInterface, ctx context.Contex
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func HuddlesCareTeamNotFound(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string) (http.ResponseWriter, error) {
+func HuddlesCareTeamNotFound(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string, date *string, patientID *string) (http.ResponseWriter, error) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -1393,8 +1429,18 @@ func HuddlesCareTeamNotFound(t goatest.TInterface, ctx context.Context, service 
 
 	// Setup request context
 	rw := httptest.NewRecorder()
+	query := url.Values{}
+	if date != nil {
+		sliceVal := []string{*date}
+		query["date"] = sliceVal
+	}
+	if patientID != nil {
+		sliceVal := []string{*patientID}
+		query["patient_id"] = sliceVal
+	}
 	u := &url.URL{
-		Path: fmt.Sprintf("/api/care_teams/%v/huddles", id),
+		Path:     fmt.Sprintf("/api/care_teams/%v/huddles", id),
+		RawQuery: query.Encode(),
 	}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
@@ -1402,6 +1448,14 @@ func HuddlesCareTeamNotFound(t goatest.TInterface, ctx context.Context, service 
 	}
 	prms := url.Values{}
 	prms["id"] = []string{fmt.Sprintf("%v", id)}
+	if date != nil {
+		sliceVal := []string{*date}
+		prms["date"] = sliceVal
+	}
+	if patientID != nil {
+		sliceVal := []string{*patientID}
+		prms["patient_id"] = sliceVal
+	}
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -1438,7 +1492,7 @@ func HuddlesCareTeamNotFound(t goatest.TInterface, ctx context.Context, service 
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func HuddlesCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string) (http.ResponseWriter, app.HuddleCollection) {
+func HuddlesCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.CareTeamController, id string, date *string, patientID *string) (http.ResponseWriter, app.HuddleCollection) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -1458,8 +1512,18 @@ func HuddlesCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.S
 
 	// Setup request context
 	rw := httptest.NewRecorder()
+	query := url.Values{}
+	if date != nil {
+		sliceVal := []string{*date}
+		query["date"] = sliceVal
+	}
+	if patientID != nil {
+		sliceVal := []string{*patientID}
+		query["patient_id"] = sliceVal
+	}
 	u := &url.URL{
-		Path: fmt.Sprintf("/api/care_teams/%v/huddles", id),
+		Path:     fmt.Sprintf("/api/care_teams/%v/huddles", id),
+		RawQuery: query.Encode(),
 	}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
@@ -1467,6 +1531,14 @@ func HuddlesCareTeamOK(t goatest.TInterface, ctx context.Context, service *goa.S
 	}
 	prms := url.Values{}
 	prms["id"] = []string{fmt.Sprintf("%v", id)}
+	if date != nil {
+		sliceVal := []string{*date}
+		prms["date"] = sliceVal
+	}
+	if patientID != nil {
+		sliceVal := []string{*patientID}
+		prms["patient_id"] = sliceVal
+	}
 	if ctx == nil {
 		ctx = context.Background()
 	}

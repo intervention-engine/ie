@@ -113,6 +113,10 @@ var _ = Resource("care_team", func() {
 	Action("huddles", func() {
 		Routing(GET("/:id/huddles"))
 		Description("List all huddles for this care team.")
+		Params(func() {
+			Param("patient_id", String)
+			Param("date", String)
+		})
 		Response(OK, func() {
 			Media(CollectionOf(HuddleMedia, func() {
 				View("default") // This should be like a "careteam" view

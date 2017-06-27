@@ -6,6 +6,7 @@ import (
 
 	"github.com/goadesign/goa"
 	"github.com/intervention-engine/ie/app"
+	"github.com/intervention-engine/ie/storage"
 )
 
 // CareTeamController implements the care_team resource.
@@ -153,9 +154,26 @@ func (c *CareTeamController) RemovePatient(ctx *app.RemovePatientCareTeamContext
 func (c *CareTeamController) Huddles(ctx *app.HuddlesCareTeamContext) error {
 	s := GetServiceFactory(ctx.Context)
 	hs := s.NewHuddleService()
-	hh, err := hs.HuddlesForCareTeam(ctx.ID)
+	var query storage.HuddleFilterQuery
+	if ctx.PatientID != nil {
+		query.PatientID = *ctx.PatientID
+	}
+	if ctx.Date != nil {
+		// validate that date fits our format
+		date, err := time.Parse("2006-01-02", *ctx.Date)
+		if err != nil {
+			return ctx.BadRequest(goa.ErrBadRequest(err.Error()))
+		}
+		query.Date = date
+	}
+	var hh []*app.Huddle
+	query.CareTeamID = ctx.ID
+	hh, err := hs.HuddlesFilterBy(query)
 	if err != nil {
 		if err.Error() == "bad care team id" {
+			return ctx.BadRequest(goa.ErrBadRequest(err))
+		}
+		if err.Error() == "bad patient id" {
 			return ctx.BadRequest(goa.ErrBadRequest(err))
 		}
 		if err.Error() == "not found" {

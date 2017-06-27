@@ -35,29 +35,28 @@ type PatientService interface {
 
 // HuddleService describes the interface for storing a huddle.
 type HuddleService interface {
-	Huddles() ([]*app.Huddle, error)
-	HuddlesForCareTeam(id string) ([]*app.Huddle, error)
+	HuddlesFilterBy(query HuddleFilterQuery) ([]*app.Huddle, error)
 	ScheduleHuddle(careTeamID string, patientID string, date time.Time) (*app.Huddle, bool, error)
 	DeletePatient(huddleID string, patientID string) (*app.Huddle, error)
 }
 
 var AcceptedQueryFields = []string{
-	//"+name",
 	"name",
 	"-name",
-	//"+birthdate",
 	"birthdate",
 	"-birthdate",
-	//"+gender",
 	"gender",
 	"-gender",
-	//"+address",
 	"address",
 	"-address",
-	//"+riskScore",
 	//"riskScore",
 	//"-riskScore",
-	//"+notifications",
 	//"notifications",
 	//"-notifications",
+}
+
+type HuddleFilterQuery struct {
+	CareTeamID string
+	PatientID  string
+	Date       time.Time
 }
