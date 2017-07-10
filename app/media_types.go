@@ -15,6 +15,25 @@ import (
 	"time"
 )
 
+// A component score of an overall risk asessment (default view)
+//
+// Identifier: applicaiton/vnd.riskassessment+json; view=default
+type RiskCategory struct {
+	// Maximum possible value
+	MaxValue *int `form:"maxValue,omitempty" json:"maxValue,omitempty" xml:"maxValue,omitempty"`
+	// Risk Category Name
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Risk Category Value
+	Value *int `form:"value,omitempty" json:"value,omitempty" xml:"value,omitempty"`
+	// Weight On Overall Risk Value
+	Weight *int `form:"weight,omitempty" json:"weight,omitempty" xml:"weight,omitempty"`
+}
+
+// RiskCategoryCollection is the media type for an array of RiskCategory (default view)
+//
+// Identifier: applicaiton/vnd.riskassessment+json; type=collection; view=default
+type RiskCategoryCollection []*RiskCategory
+
 // A care team (default view)
 //
 // Identifier: application/vnd.careteam+json; view=default
@@ -127,6 +146,25 @@ func (mt PatientCollection) Validate() (err error) {
 	}
 	return
 }
+
+// An single overall assessment score of a patient's risk for a risk service (default view)
+//
+// Identifier: application/vnd.riskassessment+json; view=default
+type RiskAssessment struct {
+	// Date assessment was created
+	Date *time.Time `form:"date,omitempty" json:"date,omitempty" xml:"date,omitempty"`
+	// Unique assessment identifier
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Identifier for risk service that produced the assessment
+	RiskServiceID *string `form:"risk_service_id,omitempty" json:"risk_service_id,omitempty" xml:"risk_service_id,omitempty"`
+	// Risk Score
+	Value *float64 `form:"value,omitempty" json:"value,omitempty" xml:"value,omitempty"`
+}
+
+// RiskAssessmentCollection is the media type for an array of RiskAssessment (default view)
+//
+// Identifier: application/vnd.riskassessment+json; type=collection; view=default
+type RiskAssessmentCollection []*RiskAssessment
 
 // Service providing risk scores for patients (default view)
 //

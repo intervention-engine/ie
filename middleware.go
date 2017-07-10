@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/goadesign/goa"
+	"github.com/intervention-engine/ie/app"
 	"github.com/intervention-engine/ie/mongo"
 	"github.com/intervention-engine/ie/storage"
 	mgo "gopkg.in/mgo.v2"
@@ -41,4 +42,16 @@ func withRiskServices(path string) goa.Middleware {
 func GetServiceFactory(ctx context.Context) storage.ServiceFactory {
 	svc := ctx.Value("serviceFactory")
 	return svc.(storage.ServiceFactory)
+}
+
+func GetRiskService(ctx context.Context, rsID string) *app.RiskService {
+	rsv := ctx.Value("riskServices")
+	rs := rsv.([]*app.RiskService)
+
+	for _, r := range rs {
+		if r.ID == &rsID {
+			return r
+		}
+	}
+	return nil
 }

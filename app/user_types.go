@@ -234,44 +234,68 @@ type Name struct {
 	MiddleInitial *string `form:"middleInitial,omitempty" json:"middleInitial,omitempty" xml:"middleInitial,omitempty"`
 }
 
-// riskAssessment user type.
-type riskAssessment struct {
-	// Date
-	Date *time.Time `form:"date,omitempty" json:"date,omitempty" xml:"date,omitempty"`
-	// Risk Assessment Group ID
-	GroupID *string `form:"groupId,omitempty" json:"groupId,omitempty" xml:"groupId,omitempty"`
-	// Risk Assessment ID
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Value
-	Value *int `form:"value,omitempty" json:"value,omitempty" xml:"value,omitempty"`
+// pie user type.
+type pie struct {
+	// Individual Pie sli
+	Slices []*pieSlice `form:"slices,omitempty" json:"slices,omitempty" xml:"slices,omitempty"`
 }
 
-// Publicize creates RiskAssessment from riskAssessment
-func (ut *riskAssessment) Publicize() *RiskAssessment {
-	var pub RiskAssessment
-	if ut.Date != nil {
-		pub.Date = ut.Date
-	}
-	if ut.GroupID != nil {
-		pub.GroupID = ut.GroupID
-	}
-	if ut.ID != nil {
-		pub.ID = ut.ID
-	}
-	if ut.Value != nil {
-		pub.Value = ut.Value
+// Publicize creates Pie from pie
+func (ut *pie) Publicize() *Pie {
+	var pub Pie
+	if ut.Slices != nil {
+		pub.Slices = make([]*PieSlice, len(ut.Slices))
+		for i2, elem2 := range ut.Slices {
+			pub.Slices[i2] = elem2.Publicize()
+		}
 	}
 	return &pub
 }
 
-// RiskAssessment user type.
-type RiskAssessment struct {
-	// Date
-	Date *time.Time `form:"date,omitempty" json:"date,omitempty" xml:"date,omitempty"`
-	// Risk Assessment Group ID
-	GroupID *string `form:"groupId,omitempty" json:"groupId,omitempty" xml:"groupId,omitempty"`
-	// Risk Assessment ID
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Value
+// Pie user type.
+type Pie struct {
+	// Individual Pie sli
+	Slices []*PieSlice `form:"slices,omitempty" json:"slices,omitempty" xml:"slices,omitempty"`
+}
+
+// pieSlice user type.
+type pieSlice struct {
+	// Maximum possible value
+	MaxValue *int `form:"maxValue,omitempty" json:"maxValue,omitempty" xml:"maxValue,omitempty"`
+	// Risk Category Name
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Risk Category Value
 	Value *int `form:"value,omitempty" json:"value,omitempty" xml:"value,omitempty"`
+	// Weight On Overall Risk Value
+	Weight *int `form:"weight,omitempty" json:"weight,omitempty" xml:"weight,omitempty"`
+}
+
+// Publicize creates PieSlice from pieSlice
+func (ut *pieSlice) Publicize() *PieSlice {
+	var pub PieSlice
+	if ut.MaxValue != nil {
+		pub.MaxValue = ut.MaxValue
+	}
+	if ut.Name != nil {
+		pub.Name = ut.Name
+	}
+	if ut.Value != nil {
+		pub.Value = ut.Value
+	}
+	if ut.Weight != nil {
+		pub.Weight = ut.Weight
+	}
+	return &pub
+}
+
+// PieSlice user type.
+type PieSlice struct {
+	// Maximum possible value
+	MaxValue *int `form:"maxValue,omitempty" json:"maxValue,omitempty" xml:"maxValue,omitempty"`
+	// Risk Category Name
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Risk Category Value
+	Value *int `form:"value,omitempty" json:"value,omitempty" xml:"value,omitempty"`
+	// Weight On Overall Risk Value
+	Weight *int `form:"weight,omitempty" json:"weight,omitempty" xml:"weight,omitempty"`
 }

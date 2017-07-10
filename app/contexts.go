@@ -868,6 +868,128 @@ func (ctx *ShowPatientContext) InternalServerError() error {
 	return nil
 }
 
+// ListRiskAssessmentContext provides the risk_assessment list action context.
+type ListRiskAssessmentContext struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+	EndDate       *time.Time
+	ID            string
+	RiskServiceID string
+	StartDate     *time.Time
+}
+
+// NewListRiskAssessmentContext parses the incoming request URL and body, performs validations and creates the
+// context used by the risk_assessment controller list action.
+func NewListRiskAssessmentContext(ctx context.Context, r *http.Request, service *goa.Service) (*ListRiskAssessmentContext, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := ListRiskAssessmentContext{Context: ctx, ResponseData: resp, RequestData: req}
+	paramEndDate := req.Params["end_date"]
+	if len(paramEndDate) > 0 {
+		rawEndDate := paramEndDate[0]
+		if endDate, err2 := time.Parse(time.RFC3339, rawEndDate); err2 == nil {
+			tmp5 := &endDate
+			rctx.EndDate = tmp5
+		} else {
+			err = goa.MergeErrors(err, goa.InvalidParamTypeError("end_date", rawEndDate, "datetime"))
+		}
+	}
+	paramID := req.Params["id"]
+	if len(paramID) > 0 {
+		rawID := paramID[0]
+		rctx.ID = rawID
+	}
+	paramRiskServiceID := req.Params["risk_service_id"]
+	if len(paramRiskServiceID) == 0 {
+		err = goa.MergeErrors(err, goa.MissingParamError("risk_service_id"))
+	} else {
+		rawRiskServiceID := paramRiskServiceID[0]
+		rctx.RiskServiceID = rawRiskServiceID
+	}
+	paramStartDate := req.Params["start_date"]
+	if len(paramStartDate) > 0 {
+		rawStartDate := paramStartDate[0]
+		if startDate, err2 := time.Parse(time.RFC3339, rawStartDate); err2 == nil {
+			tmp6 := &startDate
+			rctx.StartDate = tmp6
+		} else {
+			err = goa.MergeErrors(err, goa.InvalidParamTypeError("start_date", rawStartDate, "datetime"))
+		}
+	}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *ListRiskAssessmentContext) OK(r RiskAssessmentCollection) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.riskassessment+json; type=collection")
+	if r == nil {
+		r = RiskAssessmentCollection{}
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// BadRequest sends a HTTP response with status code 400.
+func (ctx *ListRiskAssessmentContext) BadRequest(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *ListRiskAssessmentContext) InternalServerError(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
+}
+
+// ListRiskCategoriesContext provides the risk_categories list action context.
+type ListRiskCategoriesContext struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+	ID string
+}
+
+// NewListRiskCategoriesContext parses the incoming request URL and body, performs validations and creates the
+// context used by the risk_categories controller list action.
+func NewListRiskCategoriesContext(ctx context.Context, r *http.Request, service *goa.Service) (*ListRiskCategoriesContext, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := ListRiskCategoriesContext{Context: ctx, ResponseData: resp, RequestData: req}
+	paramID := req.Params["id"]
+	if len(paramID) > 0 {
+		rawID := paramID[0]
+		rctx.ID = rawID
+	}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *ListRiskCategoriesContext) OK(r RiskCategoryCollection) error {
+	ctx.ResponseData.Header().Set("Content-Type", "applicaiton/vnd.riskassessment+json; type=collection")
+	if r == nil {
+		r = RiskCategoryCollection{}
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// BadRequest sends a HTTP response with status code 400.
+func (ctx *ListRiskCategoriesContext) BadRequest(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *ListRiskCategoriesContext) InternalServerError(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
+}
+
 // ListRiskServiceContext provides the risk_service list action context.
 type ListRiskServiceContext struct {
 	context.Context

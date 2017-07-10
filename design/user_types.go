@@ -5,17 +5,15 @@ import (
 	. "github.com/goadesign/goa/design/apidsl"
 )
 
-// var RiskServicePayload = Type("riskServicePayload", func() {
-// 	Attribute("id", String, "Risk Service ID")
-// 	Attribute("name", String, "Name of the Risk Service. Corresponds to method attribute of FHIR RiskAssessment resources")
-// 	Attribute("url", String, "Address of the risk service endpoint")
-// })
+var RiskPie = Type("pie", func() {
+	Attribute("slices", ArrayOf(RiskPieSlice), "Individual Pie sli")
+})
 
-var RiskAssessment = Type("riskAssessment", func() {
-	Attribute("id", String, "Risk Assessment ID")
-	Attribute("groupId", String, "Risk Assessment Group ID")
-	Attribute("date", DateTime, "Date")
-	Attribute("value", Integer, "Value")
+var RiskPieSlice = Type("pieSlice", func() {
+	Attribute("name", String, "Risk Category Name")
+	Attribute("value", Integer, "Risk Category Value")
+	Attribute("weight", Integer, "Weight On Overall Risk Value")
+	Attribute("maxValue", Integer, "Maximum possible value")
 })
 
 var PatientName = Type("name", func() {

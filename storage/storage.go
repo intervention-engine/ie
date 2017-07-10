@@ -13,6 +13,7 @@ type ServiceFactory interface {
 	NewCareTeamService() CareTeamService
 	NewPatientService() PatientService
 	NewHuddleService() HuddleService
+	NewRiskAssessmentService() RiskAssessmentService
 }
 
 // CareTeamService describes the interface for storing a CareTeam
@@ -24,6 +25,12 @@ type CareTeamService interface {
 	DeleteCareTeam(id string) error
 	AddPatient(careTeamID string, patientID string) error
 	RemovePatient(careTeamID string, patientID string) error
+}
+
+// RiskAssessmentService List Risk assessments for a patient and risk service. Optionally query on a time period
+type RiskAssessmentService interface {
+	RiskAssessment(id string) (*app.RiskAssessment, error)
+	RiskAssessments(patientID string, serviceID string, start time.Time, end time.Time) ([]*app.RiskAssessment, error)
 }
 
 // PatientService describes the interface for storing a Patient
