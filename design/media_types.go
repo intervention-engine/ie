@@ -21,6 +21,42 @@ var HuddleMedia = MediaType("application/vnd.huddle+json", func() {
 	})
 })
 
+var RiskAssessmentMedia = MediaType("application/vnd.riskassessment+json", func() {
+	TypeName("RiskAssessment")
+	Description("An single overall assessment score of a patient's risk for a risk service")
+	ContentType("application/json")
+	Attributes(func() {
+		Attribute("id", String, "Unique assessment identifier")
+		Attribute("risk_service_id", String, "Identifier for risk service that produced the assessment")
+		Attribute("date", DateTime, "Date assessment was created")
+		Attribute("value", Number, "Risk Score")
+	})
+	View("default", func() {
+		Attribute("id", String, "Unique assessment identifier")
+		Attribute("risk_service_id", String, "Identifier for risk service that produced the assessment")
+		Attribute("date", DateTime, "Date assessment was created")
+		Attribute("value", Integer, "Risk Score")
+	})
+})
+
+var RiskCategoryMedia = MediaType("applicaiton/vnd.riskassessment+json", func() {
+	TypeName("RiskCategory")
+	Description("A component score of an overall risk asessment")
+	ContentType("application/json")
+	Attributes(func() {
+		Attribute("name", String, "Risk Category Name")
+		Attribute("value", Integer, "Risk Category Value")
+		Attribute("weight", Integer, "Weight On Overall Risk Value")
+		Attribute("maxValue", Integer, "Maximum possible value")
+	})
+	View("default", func() {
+		Attribute("name", String, "Risk Category Name")
+		Attribute("value", Integer, "Risk Category Value")
+		Attribute("weight", Integer, "Weight On Overall Risk Value")
+		Attribute("maxValue", Integer, "Maximum possible value")
+	})
+})
+
 var PatientMedia = MediaType("application/vnd.patient+json", func() {
 	TypeName("Patient")
 	Description("A patient")
@@ -29,7 +65,7 @@ var PatientMedia = MediaType("application/vnd.patient+json", func() {
 		Attribute("id", String, "Unique patient ID")
 		Attribute("name", PatientName)
 		Attribute("address", Address)
-		Attribute("riskAssessments", ArrayOf(RiskAssessment))
+		Attribute("riskAssessments", ArrayOf(RiskAssessmentMedia))
 		Attribute("age", Integer, "Age of Patient")
 		Attribute("gender", String, "Gender of Patient")
 		Attribute("birthDate", DateTime, "Birth Date of Patient")

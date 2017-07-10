@@ -406,6 +406,112 @@ func handlePatientOrigin(h goa.Handler) goa.Handler {
 	}
 }
 
+// RiskAssessmentController is the controller interface for the RiskAssessment actions.
+type RiskAssessmentController interface {
+	goa.Muxer
+	List(*ListRiskAssessmentContext) error
+}
+
+// MountRiskAssessmentController "mounts" a RiskAssessment resource controller on the given service.
+func MountRiskAssessmentController(service *goa.Service, ctrl RiskAssessmentController) {
+	initService(service)
+	var h goa.Handler
+	service.Mux.Handle("OPTIONS", "/api/patients/:id/risk_assessments", ctrl.MuxHandler("preflight", handleRiskAssessmentOrigin(cors.HandlePreflight()), nil))
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewListRiskAssessmentContext(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.List(rctx)
+	}
+	h = handleRiskAssessmentOrigin(h)
+	service.Mux.Handle("GET", "/api/patients/:id/risk_assessments", ctrl.MuxHandler("list", h, nil))
+	service.LogInfo("mount", "ctrl", "RiskAssessment", "action", "List", "route", "GET /api/patients/:id/risk_assessments")
+}
+
+// handleRiskAssessmentOrigin applies the CORS response headers corresponding to the origin.
+func handleRiskAssessmentOrigin(h goa.Handler) goa.Handler {
+
+	return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		origin := req.Header.Get("Origin")
+		if origin == "" {
+			// Not a CORS request
+			return h(ctx, rw, req)
+		}
+		if cors.MatchOrigin(origin, "*") {
+			ctx = goa.WithLogContext(ctx, "origin", origin)
+			rw.Header().Set("Access-Control-Allow-Origin", origin)
+			rw.Header().Set("Access-Control-Allow-Credentials", "false")
+			if acrm := req.Header.Get("Access-Control-Request-Method"); acrm != "" {
+				// We are handling a preflight request
+				rw.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
+			}
+			return h(ctx, rw, req)
+		}
+
+		return h(ctx, rw, req)
+	}
+}
+
+// RiskCategoriesController is the controller interface for the RiskCategories actions.
+type RiskCategoriesController interface {
+	goa.Muxer
+	List(*ListRiskCategoriesContext) error
+}
+
+// MountRiskCategoriesController "mounts" a RiskCategories resource controller on the given service.
+func MountRiskCategoriesController(service *goa.Service, ctrl RiskCategoriesController) {
+	initService(service)
+	var h goa.Handler
+	service.Mux.Handle("OPTIONS", "/api/risk_assessments/:id/breakdown", ctrl.MuxHandler("preflight", handleRiskCategoriesOrigin(cors.HandlePreflight()), nil))
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewListRiskCategoriesContext(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.List(rctx)
+	}
+	h = handleRiskCategoriesOrigin(h)
+	service.Mux.Handle("GET", "/api/risk_assessments/:id/breakdown", ctrl.MuxHandler("list", h, nil))
+	service.LogInfo("mount", "ctrl", "RiskCategories", "action", "List", "route", "GET /api/risk_assessments/:id/breakdown")
+}
+
+// handleRiskCategoriesOrigin applies the CORS response headers corresponding to the origin.
+func handleRiskCategoriesOrigin(h goa.Handler) goa.Handler {
+
+	return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		origin := req.Header.Get("Origin")
+		if origin == "" {
+			// Not a CORS request
+			return h(ctx, rw, req)
+		}
+		if cors.MatchOrigin(origin, "*") {
+			ctx = goa.WithLogContext(ctx, "origin", origin)
+			rw.Header().Set("Access-Control-Allow-Origin", origin)
+			rw.Header().Set("Access-Control-Allow-Credentials", "false")
+			if acrm := req.Header.Get("Access-Control-Request-Method"); acrm != "" {
+				// We are handling a preflight request
+				rw.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
+			}
+			return h(ctx, rw, req)
+		}
+
+		return h(ctx, rw, req)
+	}
+}
+
 // RiskServiceController is the controller interface for the RiskService actions.
 type RiskServiceController interface {
 	goa.Muxer

@@ -16,6 +16,7 @@ const (
 	patientCollection         = "patients"
 	careTeamCollection        = "care_teams"
 	careTeamPatientCollection = "care_team_patient"
+	riskAssessmentCollection  = "riskassessments"
 )
 
 func init() {
@@ -44,6 +45,12 @@ func (sf *ServiceFactory) NewCareTeamService() storage.CareTeamService {
 	s := sf.Session.Copy()
 	c := s.DB(sf.Database).C(careTeamCollection)
 	return &CareTeamService{Service: Service{S: s, C: c, Database: sf.Database}}
+}
+
+func (sf *ServiceFactory) NewRiskAssessmentService() storage.RiskAssessmentService {
+	s := sf.Session.Copy()
+	c := s.DB(sf.Database).C(riskAssessmentCollection)
+	return &RiskAssessmentService{Service: Service{S: s, C: c, Database: sf.Database}}
 }
 
 func (sf *ServiceFactory) NewPatientService() storage.PatientService {

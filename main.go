@@ -45,6 +45,8 @@ func main() {
 	app.MountHuddleController(service, hc)
 	sc := NewSwaggerController(service)
 	app.MountSwaggerController(service, sc)
+	rac := NewRiskAssessmentController(service)
+	app.MountRiskAssessmentController(service, rac)
 
 	rsc := NewRiskServiceController(service)
 	app.MountRiskServiceController(service, rsc)

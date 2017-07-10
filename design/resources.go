@@ -56,6 +56,47 @@ var _ = Resource("risk_service", func() {
 	})
 })
 
+var _ = Resource("risk_assessment", func() {
+	DefaultMedia(RiskAssessmentMedia)
+	BasePath("/patients/:id/risk_assessments")
+	Action("list", func() {
+		Description("List of risk assessments for a patient")
+		Routing(GET("/"))
+		Params(func() {
+			Param("risk_service_id", String, "Scopes list to a single risk service")
+			Param("start_date", DateTime, "Include all risk assessments after this date")
+			Param("end_date", DateTime, "Include all risk assessments before this date")
+			Required("risk_service_id")
+		})
+		Response(OK, func() {
+			Media(CollectionOf(RiskAssessmentMedia, func() {
+				View("default")
+			}))
+		})
+		Response(BadRequest, ErrorMedia)
+		Response(InternalServerError, ErrorMedia)
+
+	})
+})
+
+var _ = Resource("risk_categories", func() {
+	DefaultMedia(RiskCategoryMedia)
+	BasePath("/risk_assessments/:id/breakdown")
+	Response(BadRequest, ErrorMedia)
+	Response(InternalServerError, ErrorMedia)
+	Action("list", func() {
+		Description("List of subcategories of risk score")
+		Routing(GET("/"))
+		Response(OK, func() {
+			Media(CollectionOf(RiskCategoryMedia, func() {
+				View("default")
+			}))
+		})
+		Response(BadRequest, ErrorMedia)
+		Response(InternalServerError, ErrorMedia)
+	})
+})
+
 var _ = Resource("care_team", func() {
 	DefaultMedia(CareTeamMedia)
 	BasePath("/care_teams")
