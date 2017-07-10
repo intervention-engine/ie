@@ -16,7 +16,7 @@ type RiskAssessmentService struct {
 
 // RiskAssessments List risk assessments for a patient
 func (ras *RiskAssessmentService) RiskAssessments(patientID string, serviceID string, start time.Time, end time.Time) ([]*app.RiskAssessment, error) {
-
+	defer ras.S.Close()
 	query := bson.M{"subject.referenceid": patientID, "method.coding.code": serviceID}
 
 	var fhirResults []*models.RiskAssessment
@@ -26,6 +26,7 @@ func (ras *RiskAssessmentService) RiskAssessments(patientID string, serviceID st
 
 // RiskAssessment Find a single risk assessment by ID
 func (ras *RiskAssessmentService) RiskAssessment(id string) (*app.RiskAssessment, error) {
+	defer ras.S.Close()
 	var fhirResult *models.RiskAssessment
 	err := ras.C.FindId(id).One(&fhirResult)
 
