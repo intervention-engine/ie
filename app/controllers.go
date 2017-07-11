@@ -338,6 +338,7 @@ func handleEventOrigin(h goa.Handler) goa.Handler {
 // HuddleController is the controller interface for the Huddle actions.
 type HuddleController interface {
 	goa.Muxer
+	BatchSchedule(*BatchScheduleHuddleContext) error
 	Cancel(*CancelHuddleContext) error
 }
 
@@ -345,7 +346,24 @@ type HuddleController interface {
 func MountHuddleController(service *goa.Service, ctrl HuddleController) {
 	initService(service)
 	var h goa.Handler
+	service.Mux.Handle("OPTIONS", "/api/huddles/batch_schedule", ctrl.MuxHandler("preflight", handleHuddleOrigin(cors.HandlePreflight()), nil))
 	service.Mux.Handle("OPTIONS", "/api/huddles/:id/patients/:patient_id", ctrl.MuxHandler("preflight", handleHuddleOrigin(cors.HandlePreflight()), nil))
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewBatchScheduleHuddleContext(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.BatchSchedule(rctx)
+	}
+	h = handleHuddleOrigin(h)
+	service.Mux.Handle("POST", "/api/huddles/batch_schedule", ctrl.MuxHandler("batch_schedule", h, nil))
+	service.LogInfo("mount", "ctrl", "Huddle", "action", "BatchSchedule", "route", "POST /api/huddles/batch_schedule")
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 		// Check if there was an error loading the request

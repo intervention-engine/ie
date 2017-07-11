@@ -68,7 +68,7 @@ func (s *HuddleService) ScheduleHuddle(careTeamID string, patientID string, hudd
 	reason := ""
 	reasonType := "MANUAL_ADDITION"
 	reviewed := false
-	p := &app.PatientHuddle{
+	p := &app.HuddlePatient{
 		ID:         &patientID,
 		Reason:     &reason,
 		ReasonType: &reasonType,

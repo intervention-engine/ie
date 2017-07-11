@@ -11,13 +11,13 @@ var HuddleMedia = MediaType("application/vnd.huddle+json", func() {
 		Attribute("id", String, "Unique Huddle ID")
 		Attribute("date", DateTime, "Creation timestamp")
 		Attribute("care_team_id", String, "ID of the care team associated with this Huddle")
-		Attribute("patients", ArrayOf(PatientHuddle), "List of patients scheduled for this huddle")
+		Attribute("patients", ArrayOf(HuddlePatient), "List of patients scheduled for this huddle")
 	})
 	View("default", func() {
 		Attribute("id", String, "Unique Huddle ID")
 		Attribute("date", DateTime, "Creation timestamp")
 		Attribute("care_team_id", String, "ID of the care team associated with this Huddle")
-		Attribute("patients", ArrayOf(PatientHuddle), "List of patients scheduled for this huddle")
+		Attribute("patients", ArrayOf(HuddlePatient), "List of patients scheduled for this huddle")
 	})
 })
 

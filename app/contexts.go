@@ -732,6 +732,58 @@ func (ctx *ListEventContext) InternalServerError(r error) error {
 	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
 }
 
+// BatchScheduleHuddleContext provides the huddle batch_schedule action context.
+type BatchScheduleHuddleContext struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+}
+
+// NewBatchScheduleHuddleContext parses the incoming request URL and body, performs validations and creates the
+// context used by the huddle controller batch_schedule action.
+func NewBatchScheduleHuddleContext(ctx context.Context, r *http.Request, service *goa.Service) (*BatchScheduleHuddleContext, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := BatchScheduleHuddleContext{Context: ctx, ResponseData: resp, RequestData: req}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *BatchScheduleHuddleContext) OK(r HuddleCollection) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.huddle+json; type=collection")
+	if r == nil {
+		r = HuddleCollection{}
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// NoContent sends a HTTP response with status code 204.
+func (ctx *BatchScheduleHuddleContext) NoContent() error {
+	ctx.ResponseData.WriteHeader(204)
+	return nil
+}
+
+// BadRequest sends a HTTP response with status code 400.
+func (ctx *BatchScheduleHuddleContext) BadRequest(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+}
+
+// NotFound sends a HTTP response with status code 404.
+func (ctx *BatchScheduleHuddleContext) NotFound(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *BatchScheduleHuddleContext) InternalServerError(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
+}
+
 // CancelHuddleContext provides the huddle cancel action context.
 type CancelHuddleContext struct {
 	context.Context

@@ -43,8 +43,8 @@ type CareTeamPayload struct {
 	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
 }
 
-// patientHuddle user type.
-type patientHuddle struct {
+// huddlePatient user type.
+type huddlePatient struct {
 	// patient id
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// reason for why patient is in this huddle
@@ -54,9 +54,9 @@ type patientHuddle struct {
 	ReviewedAt *time.Time `form:"reviewed_at,omitempty" json:"reviewed_at,omitempty" xml:"reviewed_at,omitempty"`
 }
 
-// Publicize creates PatientHuddle from patientHuddle
-func (ut *patientHuddle) Publicize() *PatientHuddle {
-	var pub PatientHuddle
+// Publicize creates HuddlePatient from huddlePatient
+func (ut *huddlePatient) Publicize() *HuddlePatient {
+	var pub HuddlePatient
 	if ut.ID != nil {
 		pub.ID = ut.ID
 	}
@@ -75,8 +75,8 @@ func (ut *patientHuddle) Publicize() *PatientHuddle {
 	return &pub
 }
 
-// PatientHuddle user type.
-type PatientHuddle struct {
+// HuddlePatient user type.
+type HuddlePatient struct {
 	// patient id
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// reason for why patient is in this huddle

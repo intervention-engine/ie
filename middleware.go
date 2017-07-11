@@ -39,6 +39,15 @@ func withRiskServices(path string) goa.Middleware {
 	}
 }
 
+func withHuddleConfig(files []string) goa.Middleware {
+	return func(h goa.Handler) goa.Handler {
+		return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+			newctx := context.WithValue(ctx, "configFiles", files)
+			return h(newctx, rw, req)
+		}
+	}
+}
+
 func GetServiceFactory(ctx context.Context) storage.ServiceFactory {
 	svc := ctx.Value("serviceFactory")
 	return svc.(storage.ServiceFactory)
@@ -54,4 +63,9 @@ func GetRiskService(ctx context.Context, rsID string) *app.RiskService {
 		}
 	}
 	return nil
+}
+
+func GetConfigFiles(ctx context.Context) []string {
+	files := ctx.Value("configFiles")
+	return files.([]string)
 }

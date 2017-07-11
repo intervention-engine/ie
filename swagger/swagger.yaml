@@ -185,7 +185,7 @@ definitions:
           reviewed: true
           reviewed_at: 2012-11-19T10:51:23-05:00
         items:
-          $ref: '#/definitions/PatientHuddle'
+          $ref: '#/definitions/HuddlePatient'
         type: array
     title: 'Mediatype identifier: application/vnd.huddle+json; view=default'
     type: object
@@ -215,6 +215,34 @@ definitions:
       $ref: '#/definitions/Huddle'
     title: 'Mediatype identifier: application/vnd.huddle+json; type=collection; view=default'
     type: array
+  HuddlePatient:
+    example:
+      id: Exercitationem ut ipsum quis.
+      reason: Minus cum.
+      reason_type: Tempora eum officiis qui et et dolor.
+      reviewed: true
+      reviewed_at: 2012-11-19T10:51:23-05:00
+    properties:
+      id:
+        description: patient id
+        example: Exercitationem ut ipsum quis.
+        type: string
+      reason:
+        description: reason for why patient is in this huddle
+        example: Minus cum.
+        type: string
+      reason_type:
+        example: Tempora eum officiis qui et et dolor.
+        type: string
+      reviewed:
+        example: true
+        type: boolean
+      reviewed_at:
+        example: 2012-11-19T10:51:23-05:00
+        format: date-time
+        type: string
+    title: HuddlePatient
+    type: object
   Patient:
     description: A patient (default view)
     example:
@@ -367,34 +395,6 @@ definitions:
       $ref: '#/definitions/Patient'
     title: 'Mediatype identifier: application/vnd.patient+json; type=collection; view=default'
     type: array
-  PatientHuddle:
-    example:
-      id: Exercitationem ut ipsum quis.
-      reason: Minus cum.
-      reason_type: Tempora eum officiis qui et et dolor.
-      reviewed: true
-      reviewed_at: 2012-11-19T10:51:23-05:00
-    properties:
-      id:
-        description: patient id
-        example: Exercitationem ut ipsum quis.
-        type: string
-      reason:
-        description: reason for why patient is in this huddle
-        example: Minus cum.
-        type: string
-      reason_type:
-        example: Tempora eum officiis qui et et dolor.
-        type: string
-      reviewed:
-        example: true
-        type: boolean
-      reviewed_at:
-        example: 2012-11-19T10:51:23-05:00
-        format: date-time
-        type: string
-    title: PatientHuddle
-    type: object
   RiskAssessment:
     description: An single overall assessment score of a patient's risk for a risk
       service (default view)
@@ -732,8 +732,8 @@ paths:
         schema:
           $ref: '#/definitions/CreateCareTeamPayload'
       produces:
-      - application/vnd.careteam+json
       - application/vnd.goa.error
+      - application/vnd.careteam+json
       responses:
         "200":
           description: OK
@@ -768,8 +768,8 @@ paths:
         required: true
         type: string
       produces:
-      - application/vnd.careteam+json
       - application/vnd.goa.error
+      - application/vnd.careteam+json
       responses:
         "200":
           description: OK
@@ -842,8 +842,8 @@ paths:
         schema:
           $ref: '#/definitions/CareTeamPayload'
       produces:
-      - application/vnd.careteam+json
       - application/vnd.goa.error
+      - application/vnd.careteam+json
       responses:
         "200":
           description: OK
@@ -924,8 +924,8 @@ paths:
         schema:
           $ref: '#/definitions/ScheduleCareTeamPayload'
       produces:
-      - application/vnd.goa.error
       - application/vnd.huddle+json
+      - application/vnd.goa.error
       responses:
         "200":
           description: OK
@@ -1065,6 +1065,37 @@ paths:
       schemes:
       - http
       summary: cancel huddle
+      tags:
+      - huddle
+  /api/huddles/batch_schedule:
+    post:
+      description: Manually trigger batch scheduling of huddles
+      operationId: huddle#batch_schedule
+      produces:
+      - application/vnd.goa.error
+      - application/vnd.huddle+json; type=collection
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/HuddleCollection'
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
+      schemes:
+      - http
+      summary: batch_schedule huddle
       tags:
       - huddle
   /api/patients:
@@ -1219,8 +1250,8 @@ paths:
         required: false
         type: string
       produces:
-      - application/vnd.goa.error
       - application/vnd.riskassessment+json; type=collection
+      - application/vnd.goa.error
       responses:
         "200":
           description: OK
@@ -1249,8 +1280,8 @@ paths:
         required: true
         type: string
       produces:
-      - applicaiton/vnd.riskassessment+json; type=collection
       - application/vnd.goa.error
+      - applicaiton/vnd.riskassessment+json; type=collection
       responses:
         "200":
           description: OK

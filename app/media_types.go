@@ -94,7 +94,7 @@ type Huddle struct {
 	// Unique Huddle ID
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// List of patients scheduled for this huddle
-	Patients []*PatientHuddle `form:"patients,omitempty" json:"patients,omitempty" xml:"patients,omitempty"`
+	Patients []*HuddlePatient `form:"patients,omitempty" json:"patients,omitempty" xml:"patients,omitempty"`
 }
 
 // HuddleCollection is the media type for an array of Huddle (default view)

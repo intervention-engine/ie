@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/goadesign/goa"
 	"github.com/intervention-engine/ie/app"
+	"github.com/intervention-engine/ie/appt"
 )
 
 // HuddleController implements the care_team resource.
@@ -32,4 +33,19 @@ func (c *HuddleController) Cancel(ctx *app.CancelHuddleContext) error {
 		return ctx.NoContent()
 	}
 	return ctx.OK(h)
+}
+
+func (c *HuddleController) BatchSchedule(ctx *app.BatchScheduleHuddleContext) error {
+	s := GetServiceFactory(ctx.Context)
+	files := GetConfigFiles(ctx.Context)
+	svc := s.NewSchedService()
+	hh, err := appt.ManualSchedule(svc, files)
+	if err != nil {
+		return ctx.InternalServerError(goa.ErrInternal("error scheduling huddles", "error", err))
+	}
+	if hh == nil {
+		// no huddles were scheduled
+		return ctx.NoContent()
+	}
+	return ctx.OK(hh)
 }

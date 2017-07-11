@@ -55,7 +55,7 @@ var SchedulePatientPayload = Type("SchedulePatientPayload", func() {
 	Required("patient_id", "huddle_id")
 })
 
-var PatientHuddle = Type("PatientHuddle", func() {
+var HuddlePatient = Type("HuddlePatient", func() {
 	Attribute("id", String, "patient id")
 	Attribute("reason", String, "reason for why patient is in this huddle")
 	Attribute("reason_type", String, "")

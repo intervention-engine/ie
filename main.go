@@ -9,25 +9,31 @@ import (
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/middleware"
 	"github.com/intervention-engine/ie/app"
+	"github.com/intervention-engine/ie/appt"
+	"github.com/intervention-engine/ie/mongo"
 	mgo "gopkg.in/mgo.v2"
 )
 
 func main() {
-
-	cfg := ConfigInit()
-	//setupLogFile(cfg.LogDir)
-	if cfg.PrintConfig {
+	cfg := ConfigurationInit()
+	if cfg.PrintConfiguration {
 		fmt.Printf("%#+v\n", cfg)
 		return
 	}
+	//setupLogFile(cfg.LogDir)
 
-	// Create service
-	service := goa.New("api")
+	// Connect database
 	session, err := mgo.Dial(cfg.MongoURL)
 	if err != nil {
 		log.Fatalln("dialing mongo failed for session at: ", cfg.MongoURL)
 	}
 	defer session.Close()
+
+	svcFactory := mongo.NewServiceFactory(session.Copy(), "fhir")
+	appt.Boot(svcFactory, cfg.HuddleConfigFiles)
+
+	// Create service
+	service := goa.New("api")
 
 	// Mount middleware
 	service.Use(middleware.RequestID())
@@ -37,6 +43,7 @@ func main() {
 	service.Use(exposeHeaderField("Link"))
 	service.Use(withMongoService(session))
 	service.Use(withRiskServices(cfg.RiskServicesPath))
+	service.Use(withHuddleConfig(cfg.HuddleConfigFiles))
 
 	// Mount "patient" controller
 	pc := NewPatientController(service)
@@ -56,6 +63,7 @@ func main() {
 
 	rsc := NewRiskServiceController(service)
 	app.MountRiskServiceController(service, rsc)
+
 	// Start service
 	log.Println("serving api at: ", cfg.HostURL)
 	if err := service.ListenAndServe(cfg.HostURL); err != nil {

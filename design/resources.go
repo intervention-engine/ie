@@ -216,6 +216,18 @@ var _ = Resource("huddle", func() {
 		Response(OK, HuddleMedia)
 		Response(NoContent)
 	})
+	Action("batch_schedule", func() {
+		Routing(POST("/batch_schedule"))
+		Description("Manually trigger batch scheduling of huddles")
+		Response(OK, func() {
+			Media(CollectionOf(HuddleMedia, func() {
+				View("default")
+			}))
+		})
+		Response(NoContent)
+		Response(BadRequest, ErrorMedia)
+		Response(InternalServerError, ErrorMedia)
+	})
 })
 
 var _ = Resource("event", func() {

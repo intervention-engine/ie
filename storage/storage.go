@@ -3,6 +3,7 @@ package storage
 import (
 	"time"
 
+	"github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/ie/app"
 )
 
@@ -15,6 +16,7 @@ type ServiceFactory interface {
 	NewHuddleService() HuddleService
 	NewRiskAssessmentService() RiskAssessmentService
 	NewEventService() EventService
+	NewSchedService() SchedService
 }
 
 // CareTeamService describes the interface for storing a CareTeam
@@ -24,14 +26,14 @@ type CareTeamService interface {
 	CreateCareTeam(c *app.CareTeam) error
 	UpdateCareTeam(c *app.CareTeam) error
 	DeleteCareTeam(id string) error
-	AddPatient(careTeamID string, patientID string) error
-	RemovePatient(careTeamID string, patientID string) error
+	AddPatient(careTeamID, patientID string) error
+	RemovePatient(careTeamID, patientID string) error
 }
 
 // RiskAssessmentService List Risk assessments for a patient and risk service. Optionally query on a time period
 type RiskAssessmentService interface {
 	RiskAssessment(id string) (*app.RiskAssessment, error)
-	RiskAssessments(patientID string, serviceID string, start time.Time, end time.Time) ([]*app.RiskAssessment, error)
+	RiskAssessments(patientID, serviceID string, start, end time.Time) ([]*app.RiskAssessment, error)
 }
 
 // PatientService describes the interface for storing a Patient
@@ -45,7 +47,16 @@ type PatientService interface {
 type HuddleService interface {
 	HuddlesFilterBy(query HuddleFilterQuery) ([]*app.Huddle, error)
 	ScheduleHuddle(careTeamID string, patientID string, huddleID string) (*app.Huddle, error)
-	DeletePatient(huddleID string, patientID string) (*app.Huddle, error)
+	DeletePatient(huddleID, patientID string) (*app.Huddle, error)
+}
+
+type SchedService interface {
+	CreateHuddles(huddles []*app.Huddle) error
+	FindCareTeamHuddleOnDate(careTeamID string, date time.Time) (*app.Huddle, error)
+	FindCareTeamHuddlesBefore(careTeamID string, date time.Time) ([]*app.Huddle, error)
+	RiskAssessmentsFilterBy(query RiskFilterQuery) ([]*app.RiskAssessment, error)
+	FindEncounters(typeCodes []string, earliestDate, latestDate time.Time) ([]EncounterForSched, error)
+	Close()
 }
 
 // Event Service describes the interface for accessing event information.
@@ -80,4 +91,13 @@ type EventFilterQuery struct {
 	Type          string
 	Start         time.Time
 	End           time.Time
+}
+
+type RiskFilterQuery map[string]interface{}
+
+type EncounterForSched struct {
+	PatientID string
+	Type      []models.CodeableConcept
+	Period    *models.Period
+	Huddles   []app.Huddle
 }
