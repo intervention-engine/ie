@@ -21,7 +21,7 @@ func (ras *RiskAssessmentService) RiskAssessments(patientID string, serviceID st
 
 	var fhirResults []*models.RiskAssessment
 	err := ras.C.Find(query).All(&fhirResults)
-	return ras.newAssessments(fhirResults), err
+	return newAssessments(fhirResults), err
 }
 
 // RiskAssessment Find a single risk assessment by ID
@@ -30,24 +30,32 @@ func (ras *RiskAssessmentService) RiskAssessment(id string) (*app.RiskAssessment
 	var fhirResult *models.RiskAssessment
 	err := ras.C.FindId(id).One(&fhirResult)
 
-	return ras.newAssessment(fhirResult), err
+	return newAssessment(fhirResult), err
 }
 
-func (ras *RiskAssessmentService) newAssessments(r []*models.RiskAssessment) []*app.RiskAssessment {
+func newAssessments(r []*models.RiskAssessment) []*app.RiskAssessment {
 	ra := make([]*app.RiskAssessment, len(r))
 
 	for i := 0; i < len(r); i++ {
-		ra[i] = ras.newAssessment(r[i])
+		ra[i] = newAssessment(r[i])
 	}
 
 	return ra
 }
 
-func (ras *RiskAssessmentService) newAssessment(r *models.RiskAssessment) *app.RiskAssessment {
-	return &app.RiskAssessment{
-		ID:            &r.Id,
-		Date:          &r.Date.Time,
-		RiskServiceID: &r.Method.Coding[0].Code,
-		Value:         r.Prediction[0].ProbabilityDecimal,
+func newAssessment(r *models.RiskAssessment) *app.RiskAssessment {
+	if r == nil {
+		return nil
 	}
+	ra := &app.RiskAssessment{Date: &r.Date.Time}
+	if r.Id != "" {
+		ra.ID = &r.Id
+	}
+	if (r.Method != nil) && (len(r.Method.Coding) > 0) {
+		ra.RiskServiceID = &r.Method.Coding[0].Code
+	}
+	if (r.Prediction != nil) && (len(r.Prediction) > 0) {
+		ra.Value = r.Prediction[0].ProbabilityDecimal
+	}
+	return ra
 }
