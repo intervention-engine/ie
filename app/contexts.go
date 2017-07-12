@@ -108,7 +108,7 @@ func NewCreateCareTeamContext(ctx context.Context, r *http.Request, service *goa
 // createCareTeamPayload is the care_team create action payload.
 type createCareTeamPayload struct {
 	// Timestamp for care team creation
-	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" xml:"createdAt,omitempty"`
+	CreatedAt *time.Time `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Unique care team ID
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Care team leader
@@ -149,7 +149,7 @@ func (payload *createCareTeamPayload) Publicize() *CreateCareTeamPayload {
 // CreateCareTeamPayload is the care_team create action payload.
 type CreateCareTeamPayload struct {
 	// Timestamp for care team creation
-	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" xml:"createdAt,omitempty"`
+	CreatedAt *time.Time `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Unique care team ID
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Care team leader

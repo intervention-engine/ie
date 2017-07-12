@@ -7,27 +7,27 @@ definitions:
   CareTeam:
     description: A care team (default view)
     example:
-      createdAt: 1976-09-25T22:49:04-04:00
-      id: Voluptatem ullam.
-      leader: Sit dolor neque nulla.
-      name: Nisi dolorum.
+      created_at: 1999-03-21T16:25:54-05:00
+      id: Fugiat nisi dolorum praesentium sunt.
+      leader: Aut blanditiis.
+      name: Molestiae et aut tempora et.
     properties:
-      createdAt:
+      created_at:
         description: Timestamp for care team creation
-        example: 1976-09-25T22:49:04-04:00
+        example: 1999-03-21T16:25:54-05:00
         format: date-time
         type: string
       id:
         description: Unique care team ID
-        example: Voluptatem ullam.
+        example: Fugiat nisi dolorum praesentium sunt.
         type: string
       leader:
         description: Care team leader
-        example: Sit dolor neque nulla.
+        example: Aut blanditiis.
         type: string
       name:
         description: Care team name
-        example: Nisi dolorum.
+        example: Molestiae et aut tempora et.
         type: string
     title: 'Mediatype identifier: application/vnd.careteam+json; view=default'
     type: object
@@ -35,10 +35,18 @@ definitions:
     description: CareTeamCollection is the media type for an array of CareTeam (default
       view)
     example:
-    - createdAt: 1976-09-25T22:49:04-04:00
-      id: Voluptatem ullam.
-      leader: Sit dolor neque nulla.
-      name: Nisi dolorum.
+    - created_at: 1999-03-21T16:25:54-05:00
+      id: Fugiat nisi dolorum praesentium sunt.
+      leader: Aut blanditiis.
+      name: Molestiae et aut tempora et.
+    - created_at: 1999-03-21T16:25:54-05:00
+      id: Fugiat nisi dolorum praesentium sunt.
+      leader: Aut blanditiis.
+      name: Molestiae et aut tempora et.
+    - created_at: 1999-03-21T16:25:54-05:00
+      id: Fugiat nisi dolorum praesentium sunt.
+      leader: Aut blanditiis.
+      name: Molestiae et aut tempora et.
     items:
       $ref: '#/definitions/CareTeam'
     title: 'Mediatype identifier: application/vnd.careteam+json; type=collection;
@@ -46,53 +54,53 @@ definitions:
     type: array
   CareTeamPayload:
     example:
-      createdAt: 1999-04-22T06:14:51-04:00
-      id: Deserunt aut velit.
-      leader: Perspiciatis a quidem unde eligendi veritatis.
-      name: Ipsum est sunt aut cumque repudiandae.
+      created_at: 2009-11-16T04:30:04-05:00
+      id: Architecto praesentium itaque doloribus.
+      leader: Et assumenda.
+      name: Accusamus temporibus aspernatur aut praesentium.
     properties:
-      createdAt:
+      created_at:
         description: Timestamp for care team creation
-        example: 1999-04-22T06:14:51-04:00
+        example: 2009-11-16T04:30:04-05:00
         format: date-time
         type: string
       id:
         description: Unique care team ID
-        example: Deserunt aut velit.
+        example: Architecto praesentium itaque doloribus.
         type: string
       leader:
         description: Care team leader
-        example: Perspiciatis a quidem unde eligendi veritatis.
+        example: Et assumenda.
         type: string
       name:
         description: Care team name
-        example: Ipsum est sunt aut cumque repudiandae.
+        example: Accusamus temporibus aspernatur aut praesentium.
         type: string
     title: CareTeamPayload
     type: object
   CreateCareTeamPayload:
     example:
-      createdAt: 1999-04-22T06:14:51-04:00
-      id: Deserunt aut velit.
-      leader: Perspiciatis a quidem unde eligendi veritatis.
-      name: Ipsum est sunt aut cumque repudiandae.
+      created_at: 2009-11-16T04:30:04-05:00
+      id: Architecto praesentium itaque doloribus.
+      leader: Et assumenda.
+      name: Accusamus temporibus aspernatur aut praesentium.
     properties:
-      createdAt:
+      created_at:
         description: Timestamp for care team creation
-        example: 1999-04-22T06:14:51-04:00
+        example: 2009-11-16T04:30:04-05:00
         format: date-time
         type: string
       id:
         description: Unique care team ID
-        example: Deserunt aut velit.
+        example: Architecto praesentium itaque doloribus.
         type: string
       leader:
         description: Care team leader
-        example: Perspiciatis a quidem unde eligendi veritatis.
+        example: Et assumenda.
         type: string
       name:
         description: Care team name
-        example: Ipsum est sunt aut cumque repudiandae.
+        example: Accusamus temporibus aspernatur aut praesentium.
         type: string
     required:
     - name
@@ -102,57 +110,47 @@ definitions:
   Huddle:
     description: A single gathering of a care team at a specific time (default view)
     example:
-      careTeamId: Cum aut blanditiis accusantium molestiae et.
-      date: 1995-11-09T03:25:18-05:00
-      id: Et beatae sapiente incidunt.
+      care_team_id: Incidunt quia quo alias aut quo aut.
+      date: 1974-05-05T18:48:53-04:00
+      id: Nesciunt omnis est.
       patients:
-      - id: Alias aut quo.
-        reason: Eveniet vel nesciunt omnis est ducimus est.
-        reason_type: Et veritatis non nostrum.
-        reviewed: false
-        reviewed_at: 1976-04-19T13:09:25-05:00
-      - id: Alias aut quo.
-        reason: Eveniet vel nesciunt omnis est ducimus est.
-        reason_type: Et veritatis non nostrum.
-        reviewed: false
-        reviewed_at: 1976-04-19T13:09:25-05:00
-      - id: Alias aut quo.
-        reason: Eveniet vel nesciunt omnis est ducimus est.
-        reason_type: Et veritatis non nostrum.
-        reviewed: false
-        reviewed_at: 1976-04-19T13:09:25-05:00
+      - id: Aut et veritatis non.
+        reason: Autem explicabo quas est minus.
+        reason_type: Aut mollitia illum quia.
+        reviewed: true
+        reviewed_at: 2012-04-04T12:41:48-04:00
+      - id: Aut et veritatis non.
+        reason: Autem explicabo quas est minus.
+        reason_type: Aut mollitia illum quia.
+        reviewed: true
+        reviewed_at: 2012-04-04T12:41:48-04:00
     properties:
-      careTeamId:
+      care_team_id:
         description: ID of the care team associated with this Huddle
-        example: Cum aut blanditiis accusantium molestiae et.
+        example: Incidunt quia quo alias aut quo aut.
         type: string
       date:
         description: Creation timestamp
-        example: 1995-11-09T03:25:18-05:00
+        example: 1974-05-05T18:48:53-04:00
         format: date-time
         type: string
       id:
         description: Unique Huddle ID
-        example: Et beatae sapiente incidunt.
+        example: Nesciunt omnis est.
         type: string
       patients:
         description: List of patients scheduled for this huddle
         example:
-        - id: Alias aut quo.
-          reason: Eveniet vel nesciunt omnis est ducimus est.
-          reason_type: Et veritatis non nostrum.
-          reviewed: false
-          reviewed_at: 1976-04-19T13:09:25-05:00
-        - id: Alias aut quo.
-          reason: Eveniet vel nesciunt omnis est ducimus est.
-          reason_type: Et veritatis non nostrum.
-          reviewed: false
-          reviewed_at: 1976-04-19T13:09:25-05:00
-        - id: Alias aut quo.
-          reason: Eveniet vel nesciunt omnis est ducimus est.
-          reason_type: Et veritatis non nostrum.
-          reviewed: false
-          reviewed_at: 1976-04-19T13:09:25-05:00
+        - id: Aut et veritatis non.
+          reason: Autem explicabo quas est minus.
+          reason_type: Aut mollitia illum quia.
+          reviewed: true
+          reviewed_at: 2012-04-04T12:41:48-04:00
+        - id: Aut et veritatis non.
+          reason: Autem explicabo quas est minus.
+          reason_type: Aut mollitia illum quia.
+          reviewed: true
+          reviewed_at: 2012-04-04T12:41:48-04:00
         items:
           $ref: '#/definitions/PatientHuddle'
         type: array
@@ -162,25 +160,34 @@ definitions:
     description: HuddleCollection is the media type for an array of Huddle (default
       view)
     example:
-    - careTeamId: Cum aut blanditiis accusantium molestiae et.
-      date: 1995-11-09T03:25:18-05:00
-      id: Et beatae sapiente incidunt.
+    - care_team_id: Incidunt quia quo alias aut quo aut.
+      date: 1974-05-05T18:48:53-04:00
+      id: Nesciunt omnis est.
       patients:
-      - id: Alias aut quo.
-        reason: Eveniet vel nesciunt omnis est ducimus est.
-        reason_type: Et veritatis non nostrum.
-        reviewed: false
-        reviewed_at: 1976-04-19T13:09:25-05:00
-      - id: Alias aut quo.
-        reason: Eveniet vel nesciunt omnis est ducimus est.
-        reason_type: Et veritatis non nostrum.
-        reviewed: false
-        reviewed_at: 1976-04-19T13:09:25-05:00
-      - id: Alias aut quo.
-        reason: Eveniet vel nesciunt omnis est ducimus est.
-        reason_type: Et veritatis non nostrum.
-        reviewed: false
-        reviewed_at: 1976-04-19T13:09:25-05:00
+      - id: Aut et veritatis non.
+        reason: Autem explicabo quas est minus.
+        reason_type: Aut mollitia illum quia.
+        reviewed: true
+        reviewed_at: 2012-04-04T12:41:48-04:00
+      - id: Aut et veritatis non.
+        reason: Autem explicabo quas est minus.
+        reason_type: Aut mollitia illum quia.
+        reviewed: true
+        reviewed_at: 2012-04-04T12:41:48-04:00
+    - care_team_id: Incidunt quia quo alias aut quo aut.
+      date: 1974-05-05T18:48:53-04:00
+      id: Nesciunt omnis est.
+      patients:
+      - id: Aut et veritatis non.
+        reason: Autem explicabo quas est minus.
+        reason_type: Aut mollitia illum quia.
+        reviewed: true
+        reviewed_at: 2012-04-04T12:41:48-04:00
+      - id: Aut et veritatis non.
+        reason: Autem explicabo quas est minus.
+        reason_type: Aut mollitia illum quia.
+        reviewed: true
+        reviewed_at: 2012-04-04T12:41:48-04:00
     items:
       $ref: '#/definitions/Huddle'
     title: 'Mediatype identifier: application/vnd.huddle+json; type=collection; view=default'
@@ -189,59 +196,51 @@ definitions:
     description: A patient (default view)
     example:
       address:
-        city: Minus in.
-        postalCode: Mollitia illum quia aperiam suscipit quis exercitationem.
-        state: Ipsum quis saepe.
+        city: Ut ipsum quis.
+        postal_code: Minus cum.
+        state: Tempora eum officiis qui et et dolor.
         street:
-        - Repellat tempora.
-        - Repellat tempora.
-        - Repellat tempora.
-      age: 8.854199e+18
-      birthDate: 1985-08-12T08:49:11-04:00
-      gender: Et et dolor fuga repudiandae et.
-      id: Deserunt voluptates.
+        - Et et deserunt voluptates doloribus est nihil.
+        - Et et deserunt voluptates doloribus est nihil.
+      age: 2.2130937e+17
+      birth_date: 1976-07-10T10:05:29-04:00
+      gender: Aut tenetur consequatur nisi quasi at.
+      id: Aut consequatur id eos cumque nostrum aut.
       name:
-        family: Est nihil.
-        full: Sit ut aut.
-        given: Consequatur nisi quasi at omnis.
-        middleInitial: Consequatur id eos cumque nostrum aut.
-      riskAssessments:
-      - date: 1993-06-19T22:48:02-04:00
-        groupId: Deleniti earum qui autem.
-        id: Temporibus non eius.
-        value: 3.3432515e+18
+        family: Quasi quis.
+        full: Earum qui autem rerum temporibus non eius.
+        given: Modi dolores autem dolor doloribus labore.
+        middle_initial: Voluptatem aut esse commodi.
+      recent_risk_assessment:
+        date: 1984-10-03T21:03:04-04:00
+        id: Quisquam maiores libero consequatur eos non deserunt.
+        risk_service_id: Velit sunt perspiciatis a quidem.
+        value: 0.56243396
     properties:
       address:
         $ref: '#/definitions/address'
       age:
         description: Age of Patient
-        example: 8.854199e+18
+        example: 2.2130937e+17
         format: int64
         type: integer
-      birthDate:
+      birth_date:
         description: Birth Date of Patient
-        example: 1985-08-12T08:49:11-04:00
+        example: 1976-07-10T10:05:29-04:00
         format: date-time
         type: string
       gender:
         description: Gender of Patient
-        example: Et et dolor fuga repudiandae et.
+        example: Aut tenetur consequatur nisi quasi at.
         type: string
       id:
         description: Unique patient ID
-        example: Deserunt voluptates.
+        example: Aut consequatur id eos cumque nostrum aut.
         type: string
       name:
         $ref: '#/definitions/name'
-      riskAssessments:
-        example:
-        - date: 1993-06-19T22:48:02-04:00
-          groupId: Deleniti earum qui autem.
-          id: Temporibus non eius.
-          value: 3.3432515e+18
-        items:
-          $ref: '#/definitions/riskAssessment'
-        type: array
+      recent_risk_assessment:
+        $ref: '#/definitions/RiskAssessment'
     required:
     - id
     - name
@@ -252,118 +251,178 @@ definitions:
       view)
     example:
     - address:
-        city: Minus in.
-        postalCode: Mollitia illum quia aperiam suscipit quis exercitationem.
-        state: Ipsum quis saepe.
+        city: Ut ipsum quis.
+        postal_code: Minus cum.
+        state: Tempora eum officiis qui et et dolor.
         street:
-        - Repellat tempora.
-        - Repellat tempora.
-        - Repellat tempora.
-      age: 8.854199e+18
-      birthDate: 1985-08-12T08:49:11-04:00
-      gender: Et et dolor fuga repudiandae et.
-      id: Deserunt voluptates.
+        - Et et deserunt voluptates doloribus est nihil.
+        - Et et deserunt voluptates doloribus est nihil.
+      age: 2.2130937e+17
+      birth_date: 1976-07-10T10:05:29-04:00
+      gender: Aut tenetur consequatur nisi quasi at.
+      id: Aut consequatur id eos cumque nostrum aut.
       name:
-        family: Est nihil.
-        full: Sit ut aut.
-        given: Consequatur nisi quasi at omnis.
-        middleInitial: Consequatur id eos cumque nostrum aut.
-      riskAssessments:
-      - date: 1993-06-19T22:48:02-04:00
-        groupId: Deleniti earum qui autem.
-        id: Temporibus non eius.
-        value: 3.3432515e+18
+        family: Quasi quis.
+        full: Earum qui autem rerum temporibus non eius.
+        given: Modi dolores autem dolor doloribus labore.
+        middle_initial: Voluptatem aut esse commodi.
+      recent_risk_assessment:
+        date: 1984-10-03T21:03:04-04:00
+        id: Quisquam maiores libero consequatur eos non deserunt.
+        risk_service_id: Velit sunt perspiciatis a quidem.
+        value: 0.56243396
     - address:
-        city: Minus in.
-        postalCode: Mollitia illum quia aperiam suscipit quis exercitationem.
-        state: Ipsum quis saepe.
+        city: Ut ipsum quis.
+        postal_code: Minus cum.
+        state: Tempora eum officiis qui et et dolor.
         street:
-        - Repellat tempora.
-        - Repellat tempora.
-        - Repellat tempora.
-      age: 8.854199e+18
-      birthDate: 1985-08-12T08:49:11-04:00
-      gender: Et et dolor fuga repudiandae et.
-      id: Deserunt voluptates.
+        - Et et deserunt voluptates doloribus est nihil.
+        - Et et deserunt voluptates doloribus est nihil.
+      age: 2.2130937e+17
+      birth_date: 1976-07-10T10:05:29-04:00
+      gender: Aut tenetur consequatur nisi quasi at.
+      id: Aut consequatur id eos cumque nostrum aut.
       name:
-        family: Est nihil.
-        full: Sit ut aut.
-        given: Consequatur nisi quasi at omnis.
-        middleInitial: Consequatur id eos cumque nostrum aut.
-      riskAssessments:
-      - date: 1993-06-19T22:48:02-04:00
-        groupId: Deleniti earum qui autem.
-        id: Temporibus non eius.
-        value: 3.3432515e+18
-    - address:
-        city: Minus in.
-        postalCode: Mollitia illum quia aperiam suscipit quis exercitationem.
-        state: Ipsum quis saepe.
-        street:
-        - Repellat tempora.
-        - Repellat tempora.
-        - Repellat tempora.
-      age: 8.854199e+18
-      birthDate: 1985-08-12T08:49:11-04:00
-      gender: Et et dolor fuga repudiandae et.
-      id: Deserunt voluptates.
-      name:
-        family: Est nihil.
-        full: Sit ut aut.
-        given: Consequatur nisi quasi at omnis.
-        middleInitial: Consequatur id eos cumque nostrum aut.
-      riskAssessments:
-      - date: 1993-06-19T22:48:02-04:00
-        groupId: Deleniti earum qui autem.
-        id: Temporibus non eius.
-        value: 3.3432515e+18
+        family: Quasi quis.
+        full: Earum qui autem rerum temporibus non eius.
+        given: Modi dolores autem dolor doloribus labore.
+        middle_initial: Voluptatem aut esse commodi.
+      recent_risk_assessment:
+        date: 1984-10-03T21:03:04-04:00
+        id: Quisquam maiores libero consequatur eos non deserunt.
+        risk_service_id: Velit sunt perspiciatis a quidem.
+        value: 0.56243396
     items:
       $ref: '#/definitions/Patient'
     title: 'Mediatype identifier: application/vnd.patient+json; type=collection; view=default'
     type: array
   PatientHuddle:
     example:
-      id: Alias aut quo.
-      reason: Eveniet vel nesciunt omnis est ducimus est.
-      reason_type: Et veritatis non nostrum.
-      reviewed: false
-      reviewed_at: 1976-04-19T13:09:25-05:00
+      id: Aut et veritatis non.
+      reason: Autem explicabo quas est minus.
+      reason_type: Aut mollitia illum quia.
+      reviewed: true
+      reviewed_at: 2012-04-04T12:41:48-04:00
     properties:
       id:
         description: patient id
-        example: Alias aut quo.
+        example: Aut et veritatis non.
         type: string
       reason:
         description: reason for why patient is in this huddle
-        example: Eveniet vel nesciunt omnis est ducimus est.
+        example: Autem explicabo quas est minus.
         type: string
       reason_type:
-        example: Et veritatis non nostrum.
+        example: Aut mollitia illum quia.
         type: string
       reviewed:
-        example: false
+        example: true
         type: boolean
       reviewed_at:
-        example: 1976-04-19T13:09:25-05:00
+        example: 2012-04-04T12:41:48-04:00
         format: date-time
         type: string
     title: PatientHuddle
     type: object
+  RiskAssessment:
+    description: An single overall assessment score of a patient's risk for a risk
+      service (default view)
+    example:
+      date: 1984-10-03T21:03:04-04:00
+      id: Quisquam maiores libero consequatur eos non deserunt.
+      risk_service_id: Velit sunt perspiciatis a quidem.
+      value: 0.56243396
+    properties:
+      date:
+        description: Date assessment was created
+        example: 1984-10-03T21:03:04-04:00
+        format: date-time
+        type: string
+      id:
+        description: Unique assessment identifier
+        example: Quisquam maiores libero consequatur eos non deserunt.
+        type: string
+      risk_service_id:
+        description: Identifier for risk service that produced the assessment
+        example: Velit sunt perspiciatis a quidem.
+        type: string
+      value:
+        description: Risk Score
+        example: 0.56243396
+        format: double
+        type: number
+    title: 'Mediatype identifier: application/vnd.riskassessment+json; view=default'
+    type: object
+  RiskAssessmentCollection:
+    description: RiskAssessmentCollection is the media type for an array of RiskAssessment
+      (default view)
+    example:
+    - date: 1984-10-03T21:03:04-04:00
+      id: Quisquam maiores libero consequatur eos non deserunt.
+      risk_service_id: Velit sunt perspiciatis a quidem.
+      value: 0.56243396
+    items:
+      $ref: '#/definitions/RiskAssessment'
+    title: 'Mediatype identifier: application/vnd.riskassessment+json; type=collection;
+      view=default'
+    type: array
+  RiskCategory:
+    description: A component score of an overall risk asessment (default view)
+    example:
+      max_value: 1.9709375e+17
+      name: Voluptatem ullam.
+      value: 7.9838695e+18
+      weight: 8.072661e+18
+    properties:
+      max_value:
+        description: Maximum possible value
+        example: 1.9709375e+17
+        format: int64
+        type: integer
+      name:
+        description: Risk Category Name
+        example: Voluptatem ullam.
+        type: string
+      value:
+        description: Risk Category Value
+        example: 7.9838695e+18
+        format: int64
+        type: integer
+      weight:
+        description: Weight On Overall Risk Value
+        example: 8.072661e+18
+        format: int64
+        type: integer
+    title: 'Mediatype identifier: applicaiton/vnd.riskassessment+json; view=default'
+    type: object
+  RiskCategoryCollection:
+    description: RiskCategoryCollection is the media type for an array of RiskCategory
+      (default view)
+    example:
+    - max_value: 1.9709375e+17
+      name: Voluptatem ullam.
+      value: 7.9838695e+18
+      weight: 8.072661e+18
+    items:
+      $ref: '#/definitions/RiskCategory'
+    title: 'Mediatype identifier: applicaiton/vnd.riskassessment+json; type=collection;
+      view=default'
+    type: array
   RiskService:
     description: Service providing risk scores for patients (default view)
     example:
-      id: Autem dolor.
-      name: Labore optio voluptatem aut esse.
-      url: Distinctio quam quisquam maiores libero.
+      id: Ut et quam dolores expedita accusantium iste.
+      name: Facilis ea voluptatem optio consequatur minima a.
+      url: Est consequatur veritatis.
     properties:
       id:
-        example: Autem dolor.
+        example: Ut et quam dolores expedita accusantium iste.
         type: string
       name:
-        example: Labore optio voluptatem aut esse.
+        example: Facilis ea voluptatem optio consequatur minima a.
         type: string
       url:
-        example: Distinctio quam quisquam maiores libero.
+        example: Est consequatur veritatis.
         type: string
     title: 'Mediatype identifier: applicatoin/vnd.riskservice+json; view=default'
     type: object
@@ -371,12 +430,12 @@ definitions:
     description: RiskServiceCollection is the media type for an array of RiskService
       (default view)
     example:
-    - id: Autem dolor.
-      name: Labore optio voluptatem aut esse.
-      url: Distinctio quam quisquam maiores libero.
-    - id: Autem dolor.
-      name: Labore optio voluptatem aut esse.
-      url: Distinctio quam quisquam maiores libero.
+    - id: Ut et quam dolores expedita accusantium iste.
+      name: Facilis ea voluptatem optio consequatur minima a.
+      url: Est consequatur veritatis.
+    - id: Ut et quam dolores expedita accusantium iste.
+      name: Facilis ea voluptatem optio consequatur minima a.
+      url: Est consequatur veritatis.
     items:
       $ref: '#/definitions/RiskService'
     title: 'Mediatype identifier: applicatoin/vnd.riskservice+json; type=collection;
@@ -384,16 +443,16 @@ definitions:
     type: array
   ScheduleCareTeamPayload:
     example:
-      date: Voluptas assumenda occaecati in aut.
-      patient_id: Nam officia ut et.
+      date: Rerum odit delectus reiciendis quas.
+      patient_id: Rerum facere laborum et nisi.
     properties:
       date:
         description: Date in YYYY-MM-dd format to schedule huddle
-        example: Voluptas assumenda occaecati in aut.
+        example: Rerum odit delectus reiciendis quas.
         type: string
       patient_id:
         description: Unique patient ID
-        example: Nam officia ut et.
+        example: Rerum facere laborum et nisi.
         type: string
     required:
     - patient_id
@@ -402,34 +461,32 @@ definitions:
     type: object
   address:
     example:
-      city: Minus in.
-      postalCode: Mollitia illum quia aperiam suscipit quis exercitationem.
-      state: Ipsum quis saepe.
+      city: Ut ipsum quis.
+      postal_code: Minus cum.
+      state: Tempora eum officiis qui et et dolor.
       street:
-      - Repellat tempora.
-      - Repellat tempora.
-      - Repellat tempora.
+      - Et et deserunt voluptates doloribus est nihil.
+      - Et et deserunt voluptates doloribus est nihil.
     properties:
       city:
         description: City Name
-        example: Minus in.
+        example: Ut ipsum quis.
         type: string
-      postalCode:
+      postal_code:
         description: Postal Code
-        example: Mollitia illum quia aperiam suscipit quis exercitationem.
+        example: Minus cum.
         type: string
       state:
         description: State Name
-        example: Ipsum quis saepe.
+        example: Tempora eum officiis qui et et dolor.
         type: string
       street:
         description: Street Name
         example:
-        - Repellat tempora.
-        - Repellat tempora.
-        - Repellat tempora.
+        - Et et deserunt voluptates doloribus est nihil.
+        - Et et deserunt voluptates doloribus est nihil.
         items:
-          example: Repellat tempora.
+          example: Et et deserunt voluptates doloribus est nihil.
           type: string
         type: array
     title: address
@@ -473,55 +530,28 @@ definitions:
     type: object
   name:
     example:
-      family: Est nihil.
-      full: Sit ut aut.
-      given: Consequatur nisi quasi at omnis.
-      middleInitial: Consequatur id eos cumque nostrum aut.
+      family: Quasi quis.
+      full: Earum qui autem rerum temporibus non eius.
+      given: Modi dolores autem dolor doloribus labore.
+      middle_initial: Voluptatem aut esse commodi.
     properties:
       family:
         description: Family Name
-        example: Est nihil.
+        example: Quasi quis.
         type: string
       full:
         description: Full Name
-        example: Sit ut aut.
+        example: Earum qui autem rerum temporibus non eius.
         type: string
       given:
         description: Given Name
-        example: Consequatur nisi quasi at omnis.
+        example: Modi dolores autem dolor doloribus labore.
         type: string
-      middleInitial:
+      middle_initial:
         description: Middle Initial
-        example: Consequatur id eos cumque nostrum aut.
+        example: Voluptatem aut esse commodi.
         type: string
     title: name
-    type: object
-  riskAssessment:
-    example:
-      date: 1993-06-19T22:48:02-04:00
-      groupId: Deleniti earum qui autem.
-      id: Temporibus non eius.
-      value: 3.3432515e+18
-    properties:
-      date:
-        description: Date
-        example: 1993-06-19T22:48:02-04:00
-        format: date-time
-        type: string
-      groupId:
-        description: Risk Assessment Group ID
-        example: Deleniti earum qui autem.
-        type: string
-      id:
-        description: Risk Assessment ID
-        example: Temporibus non eius.
-        type: string
-      value:
-        description: Value
-        example: 3.3432515e+18
-        format: int64
-        type: integer
-    title: riskAssessment
     type: object
 host: localhost:3001
 info:
@@ -975,13 +1005,88 @@ paths:
       summary: show patient
       tags:
       - patient
+  /api/patients/{id}/risk_assessments:
+    get:
+      description: List of risk assessments for a patient
+      operationId: risk_assessment#list
+      parameters:
+      - description: Include all risk assessments before this date
+        in: query
+        name: end_date
+        required: false
+        type: string
+      - in: path
+        name: id
+        required: true
+        type: string
+      - description: Scopes list to a single risk service
+        in: query
+        name: risk_service_id
+        required: true
+        type: string
+      - description: Include all risk assessments after this date
+        in: query
+        name: start_date
+        required: false
+        type: string
+      produces:
+      - application/vnd.goa.error
+      - application/vnd.riskassessment+json; type=collection
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/RiskAssessmentCollection'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
+      schemes:
+      - http
+      summary: list risk_assessment
+      tags:
+      - risk_assessment
+  /api/risk_assessments/{id}/breakdown:
+    get:
+      description: List of subcategories of risk score
+      operationId: risk_categories#list
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - applicaiton/vnd.riskassessment+json; type=collection
+      - application/vnd.goa.error
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/RiskCategoryCollection'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
+      schemes:
+      - http
+      summary: list risk_categories
+      tags:
+      - risk_categories
   /api/risk_services:
     get:
       description: List all risk services
       operationId: risk_service#list
       produces:
-      - applicatoin/vnd.riskservice+json; type=collection
       - application/vnd.goa.error
+      - applicatoin/vnd.riskservice+json; type=collection
       responses:
         "200":
           description: OK

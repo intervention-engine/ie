@@ -18,7 +18,7 @@ import (
 // careTeamPayload user type.
 type careTeamPayload struct {
 	// Timestamp for care team creation
-	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" xml:"createdAt,omitempty"`
+	CreatedAt *time.Time `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Unique care team ID
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Care team leader
@@ -48,7 +48,7 @@ func (ut *careTeamPayload) Publicize() *CareTeamPayload {
 // CareTeamPayload user type.
 type CareTeamPayload struct {
 	// Timestamp for care team creation
-	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" xml:"createdAt,omitempty"`
+	CreatedAt *time.Time `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Unique care team ID
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Care team leader
@@ -155,7 +155,7 @@ type address struct {
 	// City Name
 	City *string `form:"city,omitempty" json:"city,omitempty" xml:"city,omitempty"`
 	// Postal Code
-	PostalCode *string `form:"postalCode,omitempty" json:"postalCode,omitempty" xml:"postalCode,omitempty"`
+	PostalCode *string `form:"postal_code,omitempty" json:"postal_code,omitempty" xml:"postal_code,omitempty"`
 	// State Name
 	State *string `form:"state,omitempty" json:"state,omitempty" xml:"state,omitempty"`
 	// Street Name
@@ -185,7 +185,7 @@ type Address struct {
 	// City Name
 	City *string `form:"city,omitempty" json:"city,omitempty" xml:"city,omitempty"`
 	// Postal Code
-	PostalCode *string `form:"postalCode,omitempty" json:"postalCode,omitempty" xml:"postalCode,omitempty"`
+	PostalCode *string `form:"postal_code,omitempty" json:"postal_code,omitempty" xml:"postal_code,omitempty"`
 	// State Name
 	State *string `form:"state,omitempty" json:"state,omitempty" xml:"state,omitempty"`
 	// Street Name
@@ -201,7 +201,7 @@ type name struct {
 	// Given Name
 	Given *string `form:"given,omitempty" json:"given,omitempty" xml:"given,omitempty"`
 	// Middle Initial
-	MiddleInitial *string `form:"middleInitial,omitempty" json:"middleInitial,omitempty" xml:"middleInitial,omitempty"`
+	MiddleInitial *string `form:"middle_initial,omitempty" json:"middle_initial,omitempty" xml:"middle_initial,omitempty"`
 }
 
 // Publicize creates Name from name
@@ -231,7 +231,7 @@ type Name struct {
 	// Given Name
 	Given *string `form:"given,omitempty" json:"given,omitempty" xml:"given,omitempty"`
 	// Middle Initial
-	MiddleInitial *string `form:"middleInitial,omitempty" json:"middleInitial,omitempty" xml:"middleInitial,omitempty"`
+	MiddleInitial *string `form:"middle_initial,omitempty" json:"middle_initial,omitempty" xml:"middle_initial,omitempty"`
 }
 
 // pie user type.

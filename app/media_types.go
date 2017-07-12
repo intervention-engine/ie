@@ -20,7 +20,7 @@ import (
 // Identifier: applicaiton/vnd.riskassessment+json; view=default
 type RiskCategory struct {
 	// Maximum possible value
-	MaxValue *int `form:"maxValue,omitempty" json:"maxValue,omitempty" xml:"maxValue,omitempty"`
+	MaxValue *int `form:"max_value,omitempty" json:"max_value,omitempty" xml:"max_value,omitempty"`
 	// Risk Category Name
 	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
 	// Risk Category Value
@@ -39,7 +39,7 @@ type RiskCategoryCollection []*RiskCategory
 // Identifier: application/vnd.careteam+json; view=default
 type CareTeam struct {
 	// Timestamp for care team creation
-	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" xml:"createdAt,omitempty"`
+	CreatedAt *time.Time `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Unique care team ID
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Care team leader
@@ -68,7 +68,7 @@ type CareTeamCollection []*CareTeam
 // Identifier: application/vnd.huddle+json; view=default
 type Huddle struct {
 	// ID of the care team associated with this Huddle
-	CareTeamID *string `form:"careTeamId,omitempty" json:"careTeamId,omitempty" xml:"careTeamId,omitempty"`
+	CareTeamID *string `form:"care_team_id,omitempty" json:"care_team_id,omitempty" xml:"care_team_id,omitempty"`
 	// Creation timestamp
 	Date *time.Time `form:"date,omitempty" json:"date,omitempty" xml:"date,omitempty"`
 	// Unique Huddle ID
@@ -90,13 +90,13 @@ type Patient struct {
 	// Age of Patient
 	Age *int `form:"age,omitempty" json:"age,omitempty" xml:"age,omitempty"`
 	// Birth Date of Patient
-	BirthDate *time.Time `form:"birthDate,omitempty" json:"birthDate,omitempty" xml:"birthDate,omitempty"`
+	BirthDate *time.Time `form:"birth_date,omitempty" json:"birth_date,omitempty" xml:"birth_date,omitempty"`
 	// Gender of Patient
 	Gender *string `form:"gender,omitempty" json:"gender,omitempty" xml:"gender,omitempty"`
 	// Unique patient ID
-	ID              string            `form:"id" json:"id" xml:"id"`
-	Name            *Name             `form:"name" json:"name" xml:"name"`
-	RiskAssessments []*RiskAssessment `form:"riskAssessments,omitempty" json:"riskAssessments,omitempty" xml:"riskAssessments,omitempty"`
+	ID                   string          `form:"id" json:"id" xml:"id"`
+	Name                 *Name           `form:"name" json:"name" xml:"name"`
+	RecentRiskAssessment *RiskAssessment `form:"recent_risk_assessment,omitempty" json:"recent_risk_assessment,omitempty" xml:"recent_risk_assessment,omitempty"`
 }
 
 // Validate validates the Patient media type instance.

@@ -28,8 +28,15 @@ func (s *PatientService) Patient(id string) (*app.Patient, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	p := newPatient(data)
+	recentRisk, err := s.findRecentRiskAssessment(id)
+	if err != nil && err.Error() == "not found" {
+		return p, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	p.RecentRiskAssessment = newAssessment(&recentRisk)
 
 	return p, nil
 }
@@ -42,13 +49,9 @@ func (s *PatientService) Patients() ([]*app.Patient, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	pp := make([]*app.Patient, len(data), len(data))
-	for i, _ := range data {
-		pp[i] = newPatient(data[i])
-	}
-
-	return pp, nil
+	pp := newPatients(data)
+	err = s.addRecentRiskAssessments(pp)
+	return pp, err
 }
 
 // SortBy gets patients sorted by the fields given.
@@ -66,13 +69,38 @@ func (s *PatientService) PatientsSortBy(fields ...string) ([]*app.Patient, error
 		log.Println(err)
 		return nil, err
 	}
-	log.Println("data gotten is: ", data)
-	pp := make([]*app.Patient, len(data))
-	for i, patient := range data {
+	pp := newPatients(data)
+	err = s.addRecentRiskAssessments(pp)
+	return pp, err
+}
+
+func (s *PatientService) addRecentRiskAssessments(pp []*app.Patient) error {
+	for i, p := range pp {
+		recentRisk, err := s.findRecentRiskAssessment(p.ID)
+		if err != nil && err.Error() == "not found" {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		pp[i].RecentRiskAssessment = newAssessment(&recentRisk)
+	}
+	return nil
+}
+
+func (s *PatientService) findRecentRiskAssessment(id string) (models.RiskAssessment, error) {
+	var recentRisk models.RiskAssessment
+	rCol := s.S.DB(s.Database).C(riskAssessmentCollection)
+	err := rCol.Find(bson.M{"subject.referenceid": id}).Sort("date.time").One(&recentRisk)
+	return recentRisk, err
+}
+
+func newPatients(patients []models.Patient) []*app.Patient {
+	pp := make([]*app.Patient, len(patients))
+	for i, patient := range patients {
 		pp[i] = newPatient(patient)
 	}
-
-	return pp, nil
+	return pp
 }
 
 var conversions = map[string]string{

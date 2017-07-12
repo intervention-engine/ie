@@ -19,7 +19,7 @@ var RiskPieSlice = Type("pieSlice", func() {
 var PatientName = Type("name", func() {
 	Attribute("family", String, "Family Name")
 	Attribute("given", String, "Given Name")
-	Attribute("middleInitial", String, "Middle Initial")
+	Attribute("middle_initial", String, "Middle Initial")
 	Attribute("full", String, "Full Name")
 })
 
@@ -27,14 +27,14 @@ var Address = Type("address", func() {
 	Attribute("street", ArrayOf(String), "Street Name")
 	Attribute("city", String, "City Name")
 	Attribute("state", String, "State Name")
-	Attribute("postalCode", String, "Postal Code")
+	Attribute("postal_code", String, "Postal Code")
 })
 
 var CareTeamPayload = Type("CareTeamPayload", func() {
 	Attribute("id", String, "Unique care team ID")
 	Attribute("name", String, "Care team name")
 	Attribute("leader", String, "Care team leader")
-	Attribute("createdAt", DateTime, "Timestamp for care team creation")
+	Attribute("created_at", DateTime, "Timestamp for care team creation")
 })
 
 var SchedulePatientPayload = Type("SchedulePatientPayload", func() {
