@@ -13,12 +13,14 @@ import (
 )
 
 func main() {
+
 	cfg := ConfigInit()
 	//setupLogFile(cfg.LogDir)
 	if cfg.PrintConfig {
 		fmt.Printf("%#+v\n", cfg)
 		return
 	}
+
 	// Create service
 	service := goa.New("api")
 	session, err := mgo.Dial(cfg.MongoURL)

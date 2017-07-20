@@ -8,7 +8,9 @@ import (
 var _ = Resource("patient", func() {
 	DefaultMedia(PatientMedia)
 	BasePath("/patients")
-	Response(OK)
+	Response(OK, func() {
+		Media(PatientMedia)
+	})
 	Response(NotFound)
 	Response(BadRequest)
 	Response(InternalServerError)
@@ -35,6 +37,7 @@ var _ = Resource("patient", func() {
 		Response(OK, func() {
 			Media(CollectionOf(PatientMedia, func() {
 				View("default")
+				View("list")
 			}))
 		})
 	})

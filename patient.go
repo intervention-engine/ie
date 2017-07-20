@@ -21,6 +21,20 @@ func NewPatientController(service *goa.Service) *PatientController {
 	return &PatientController{Controller: service.NewController("PatientController")}
 }
 
+func (c *PatientController) allToList(ps []*app.Patient) []*app.PatientList {
+	p2 := make([]*app.PatientList, len(ps))
+	for i := range ps {
+		p2[i] = c.toList(ps[i])
+	}
+	return p2
+}
+
+func (c *PatientController) toList(p *app.Patient) *app.PatientList {
+	return &app.PatientList{Address: p.Address, Age: p.Age,
+		BirthDate: p.BirthDate, Gender: p.Gender, ID: p.ID, Name: p.Name,
+		RecentRiskAssessment: p.RecentRiskAssessment}
+}
+
 // Show runs the show action.
 func (c *PatientController) Show(ctx *app.ShowPatientContext) error {
 	s := GetServiceFactory(ctx.Context)
@@ -67,6 +81,7 @@ func (c *PatientController) List(ctx *app.ListPatientContext) error {
 			// "internal server error trying to list patients"
 			return ctx.InternalServerError()
 		}
+
 	}
 
 	if ctx.Page != nil {
@@ -85,10 +100,9 @@ func (c *PatientController) List(ctx *app.ListPatientContext) error {
 		links := linkInfo(pageinfo)
 		ctx.ResponseWriter.Header().Set("Link", links)
 
-		return ctx.OK(pp[pageinfo.dot:pageinfo.enddot])
+		return ctx.OKList(c.allToList(pp[pageinfo.dot:pageinfo.enddot]))
 	}
-
-	return ctx.OK(pp)
+	return ctx.OKList(c.allToList(pp))
 }
 
 func (c *PatientController) parseSortQuery(query string) ([]string, error) {

@@ -15,6 +15,10 @@ var RiskPieSlice = Type("pieSlice", func() {
 	Attribute("weight", Integer, "Weight On Overall Risk Value")
 	Attribute("maxValue", Integer, "Maximum possible value")
 })
+var ActivePatientData = Type("active_element", func() {
+	Attribute("name", String, "Name of the Condition/Medication/Allergy")
+	Attribute("start_date", DateTime, "Start Date of ")
+})
 
 var PatientName = Type("name", func() {
 	Attribute("family", String, "Family Name")
@@ -31,10 +35,8 @@ var Address = Type("address", func() {
 })
 
 var CareTeamPayload = Type("CareTeamPayload", func() {
-	Attribute("id", String, "Unique care team ID")
 	Attribute("name", String, "Care team name")
 	Attribute("leader", String, "Care team leader")
-	Attribute("created_at", DateTime, "Timestamp for care team creation")
 })
 
 var SchedulePatientPayload = Type("SchedulePatientPayload", func() {

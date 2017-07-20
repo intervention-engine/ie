@@ -17,10 +17,6 @@ import (
 
 // careTeamPayload user type.
 type careTeamPayload struct {
-	// Timestamp for care team creation
-	CreatedAt *time.Time `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
-	// Unique care team ID
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Care team leader
 	Leader *string `form:"leader,omitempty" json:"leader,omitempty" xml:"leader,omitempty"`
 	// Care team name
@@ -30,12 +26,6 @@ type careTeamPayload struct {
 // Publicize creates CareTeamPayload from careTeamPayload
 func (ut *careTeamPayload) Publicize() *CareTeamPayload {
 	var pub CareTeamPayload
-	if ut.CreatedAt != nil {
-		pub.CreatedAt = ut.CreatedAt
-	}
-	if ut.ID != nil {
-		pub.ID = ut.ID
-	}
 	if ut.Leader != nil {
 		pub.Leader = ut.Leader
 	}
@@ -47,10 +37,6 @@ func (ut *careTeamPayload) Publicize() *CareTeamPayload {
 
 // CareTeamPayload user type.
 type CareTeamPayload struct {
-	// Timestamp for care team creation
-	CreatedAt *time.Time `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
-	// Unique care team ID
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Care team leader
 	Leader *string `form:"leader,omitempty" json:"leader,omitempty" xml:"leader,omitempty"`
 	// Care team name
@@ -148,6 +134,34 @@ func (ut *SchedulePatientPayload) Validate() (err error) {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "date"))
 	}
 	return
+}
+
+// activeElement user type.
+type activeElement struct {
+	// Name of the Condition/Medication/Allergy
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Start Date of
+	StartDate *time.Time `form:"start_date,omitempty" json:"start_date,omitempty" xml:"start_date,omitempty"`
+}
+
+// Publicize creates ActiveElement from activeElement
+func (ut *activeElement) Publicize() *ActiveElement {
+	var pub ActiveElement
+	if ut.Name != nil {
+		pub.Name = ut.Name
+	}
+	if ut.StartDate != nil {
+		pub.StartDate = ut.StartDate
+	}
+	return &pub
+}
+
+// ActiveElement user type.
+type ActiveElement struct {
+	// Name of the Condition/Medication/Allergy
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Start Date of
+	StartDate *time.Time `form:"start_date,omitempty" json:"start_date,omitempty" xml:"start_date,omitempty"`
 }
 
 // address user type.

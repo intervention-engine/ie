@@ -365,6 +365,100 @@ func ListPatientOK(t goatest.TInterface, ctx context.Context, service *goa.Servi
 	return rw, mt
 }
 
+// ListPatientOKList runs the method List of the given controller with the given parameters.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func ListPatientOKList(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, page *int, perPage *int, sortBy *string) (http.ResponseWriter, app.PatientListCollection) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	query := url.Values{}
+	if page != nil {
+		sliceVal := []string{strconv.Itoa(*page)}
+		query["page"] = sliceVal
+	}
+	if perPage != nil {
+		sliceVal := []string{strconv.Itoa(*perPage)}
+		query["per_page"] = sliceVal
+	}
+	if sortBy != nil {
+		sliceVal := []string{*sortBy}
+		query["sort_by"] = sliceVal
+	}
+	u := &url.URL{
+		Path:     fmt.Sprintf("/api/patients"),
+		RawQuery: query.Encode(),
+	}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
+	}
+	prms := url.Values{}
+	if page != nil {
+		sliceVal := []string{strconv.Itoa(*page)}
+		prms["page"] = sliceVal
+	}
+	if perPage != nil {
+		sliceVal := []string{strconv.Itoa(*perPage)}
+		prms["per_page"] = sliceVal
+	}
+	if sortBy != nil {
+		sliceVal := []string{*sortBy}
+		prms["sort_by"] = sliceVal
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "PatientTest"), rw, req, prms)
+	listCtx, _err := app.NewListPatientContext(goaCtx, req, service)
+	if _err != nil {
+		panic("invalid test data " + _err.Error()) // bug
+	}
+
+	// Perform action
+	_err = ctrl.List(listCtx)
+
+	// Validate response
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
+	}
+	if rw.Code != 200 {
+		t.Errorf("invalid response status code: got %+v, expected 200", rw.Code)
+	}
+	var mt app.PatientListCollection
+	if resp != nil {
+		var ok bool
+		mt, ok = resp.(app.PatientListCollection)
+		if !ok {
+			t.Fatalf("invalid response media: got %+v, expected instance of app.PatientListCollection", resp)
+		}
+		_err = mt.Validate()
+		if _err != nil {
+			t.Errorf("invalid response media type: %s", _err)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
 // ShowPatientBadRequest runs the method Show of the given controller with the given parameters.
 // It returns the response writer so it's possible to inspect the response headers.
 // If ctx is nil then context.Background() is used.
@@ -663,6 +757,75 @@ func ShowPatientOKLink(t goatest.TInterface, ctx context.Context, service *goa.S
 		mt, ok = resp.(*app.PatientLink)
 		if !ok {
 			t.Fatalf("invalid response media: got %+v, expected instance of app.PatientLink", resp)
+		}
+		_err = mt.Validate()
+		if _err != nil {
+			t.Errorf("invalid response media type: %s", _err)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
+// ShowPatientOKList runs the method Show of the given controller with the given parameters.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func ShowPatientOKList(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, id string) (http.ResponseWriter, *app.PatientList) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	u := &url.URL{
+		Path: fmt.Sprintf("/api/patients/%v", id),
+	}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
+	}
+	prms := url.Values{}
+	prms["id"] = []string{fmt.Sprintf("%v", id)}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "PatientTest"), rw, req, prms)
+	showCtx, _err := app.NewShowPatientContext(goaCtx, req, service)
+	if _err != nil {
+		panic("invalid test data " + _err.Error()) // bug
+	}
+
+	// Perform action
+	_err = ctrl.Show(showCtx)
+
+	// Validate response
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
+	}
+	if rw.Code != 200 {
+		t.Errorf("invalid response status code: got %+v, expected 200", rw.Code)
+	}
+	var mt *app.PatientList
+	if resp != nil {
+		var ok bool
+		mt, ok = resp.(*app.PatientList)
+		if !ok {
+			t.Fatalf("invalid response media: got %+v, expected instance of app.PatientList", resp)
 		}
 		_err = mt.Validate()
 		if _err != nil {

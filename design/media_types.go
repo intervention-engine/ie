@@ -69,9 +69,24 @@ var PatientMedia = MediaType("application/vnd.patient+json", func() {
 		Attribute("age", Integer, "Age of Patient")
 		Attribute("gender", String, "Gender of Patient")
 		Attribute("birth_date", DateTime, "Birth Date of Patient")
+		Attribute("current_conditions", ArrayOf(ActivePatientData))
+		Attribute("current_medications", ArrayOf(ActivePatientData))
+		Attribute("current_allergies", ArrayOf(ActivePatientData))
 		Required("id", "name")
 	})
 	View("default", func() {
+		Attribute("id")
+		Attribute("name")
+		Attribute("address")
+		Attribute("recent_risk_assessment")
+		Attribute("age")
+		Attribute("gender")
+		Attribute("birth_date")
+		Attribute("current_conditions")
+		Attribute("current_medications")
+		Attribute("current_allergies")
+	})
+	View("list", func() {
 		Attribute("id")
 		Attribute("name")
 		Attribute("address")
@@ -113,10 +128,10 @@ var CareTeamMedia = MediaType("application/vnd.careteam+json", func() {
 	ContentType("application/json")
 	Attributes(func() {
 		// Inherit from CareTeamPayload
-		Attribute("id")
+		Attribute("id", String, "Unique care team ID")
 		Attribute("name")
 		Attribute("leader")
-		Attribute("created_at")
+		Attribute("created_at", DateTime, "Timestamp for care team creation")
 	})
 	View("default", func() {
 		Attribute("id")

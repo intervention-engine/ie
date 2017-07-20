@@ -54,53 +54,31 @@ definitions:
     type: array
   CareTeamPayload:
     example:
-      created_at: 2009-11-16T04:30:04-05:00
-      id: Architecto praesentium itaque doloribus.
-      leader: Et assumenda.
-      name: Accusamus temporibus aspernatur aut praesentium.
+      leader: Et architecto praesentium itaque doloribus aut.
+      name: Assumenda et accusamus temporibus aspernatur aut praesentium.
     properties:
-      created_at:
-        description: Timestamp for care team creation
-        example: 2009-11-16T04:30:04-05:00
-        format: date-time
-        type: string
-      id:
-        description: Unique care team ID
-        example: Architecto praesentium itaque doloribus.
-        type: string
       leader:
         description: Care team leader
-        example: Et assumenda.
+        example: Et architecto praesentium itaque doloribus aut.
         type: string
       name:
         description: Care team name
-        example: Accusamus temporibus aspernatur aut praesentium.
+        example: Assumenda et accusamus temporibus aspernatur aut praesentium.
         type: string
     title: CareTeamPayload
     type: object
   CreateCareTeamPayload:
     example:
-      created_at: 2009-11-16T04:30:04-05:00
-      id: Architecto praesentium itaque doloribus.
-      leader: Et assumenda.
-      name: Accusamus temporibus aspernatur aut praesentium.
+      leader: Et architecto praesentium itaque doloribus aut.
+      name: Assumenda et accusamus temporibus aspernatur aut praesentium.
     properties:
-      created_at:
-        description: Timestamp for care team creation
-        example: 2009-11-16T04:30:04-05:00
-        format: date-time
-        type: string
-      id:
-        description: Unique care team ID
-        example: Architecto praesentium itaque doloribus.
-        type: string
       leader:
         description: Care team leader
-        example: Et assumenda.
+        example: Et architecto praesentium itaque doloribus aut.
         type: string
       name:
         description: Care team name
-        example: Accusamus temporibus aspernatur aut praesentium.
+        example: Assumenda et accusamus temporibus aspernatur aut praesentium.
         type: string
     required:
     - name
@@ -203,12 +181,29 @@ definitions:
         - Et et deserunt voluptates doloribus est nihil.
         - Et et deserunt voluptates doloribus est nihil.
       age: 2.2130937e+17
-      birth_date: 1976-07-10T10:05:29-04:00
-      gender: Aut tenetur consequatur nisi quasi at.
-      id: Aut consequatur id eos cumque nostrum aut.
+      allergies:
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
+      birth_date: 1996-04-02T00:30:16-05:00
+      conditions:
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
+      gender: Eos cumque.
+      id: Aut occaecati.
+      medications:
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
       name:
-        family: Quasi quis.
-        full: Earum qui autem rerum temporibus non eius.
+        family: Deleniti earum qui autem.
+        full: Temporibus non eius.
         given: Modi dolores autem dolor doloribus labore.
         middle_initial: Voluptatem aut esse commodi.
       recent_risk_assessment:
@@ -224,19 +219,48 @@ definitions:
         example: 2.2130937e+17
         format: int64
         type: integer
+      allergies:
+        example:
+        - name: Aut tenetur consequatur nisi quasi at.
+          start_date: 2013-09-01T08:24:13-04:00
+        - name: Aut tenetur consequatur nisi quasi at.
+          start_date: 2013-09-01T08:24:13-04:00
+        - name: Aut tenetur consequatur nisi quasi at.
+          start_date: 2013-09-01T08:24:13-04:00
+        items:
+          $ref: '#/definitions/active_element'
+        type: array
       birth_date:
         description: Birth Date of Patient
-        example: 1976-07-10T10:05:29-04:00
+        example: 1996-04-02T00:30:16-05:00
         format: date-time
         type: string
+      conditions:
+        example:
+        - name: Aut tenetur consequatur nisi quasi at.
+          start_date: 2013-09-01T08:24:13-04:00
+        items:
+          $ref: '#/definitions/active_element'
+        type: array
       gender:
         description: Gender of Patient
-        example: Aut tenetur consequatur nisi quasi at.
+        example: Eos cumque.
         type: string
       id:
         description: Unique patient ID
-        example: Aut consequatur id eos cumque nostrum aut.
+        example: Aut occaecati.
         type: string
+      medications:
+        example:
+        - name: Aut tenetur consequatur nisi quasi at.
+          start_date: 2013-09-01T08:24:13-04:00
+        - name: Aut tenetur consequatur nisi quasi at.
+          start_date: 2013-09-01T08:24:13-04:00
+        - name: Aut tenetur consequatur nisi quasi at.
+          start_date: 2013-09-01T08:24:13-04:00
+        items:
+          $ref: '#/definitions/active_element'
+        type: array
       name:
         $ref: '#/definitions/name'
       recent_risk_assessment:
@@ -258,12 +282,29 @@ definitions:
         - Et et deserunt voluptates doloribus est nihil.
         - Et et deserunt voluptates doloribus est nihil.
       age: 2.2130937e+17
-      birth_date: 1976-07-10T10:05:29-04:00
-      gender: Aut tenetur consequatur nisi quasi at.
-      id: Aut consequatur id eos cumque nostrum aut.
+      allergies:
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
+      birth_date: 1996-04-02T00:30:16-05:00
+      conditions:
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
+      gender: Eos cumque.
+      id: Aut occaecati.
+      medications:
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
       name:
-        family: Quasi quis.
-        full: Earum qui autem rerum temporibus non eius.
+        family: Deleniti earum qui autem.
+        full: Temporibus non eius.
         given: Modi dolores autem dolor doloribus labore.
         middle_initial: Voluptatem aut esse commodi.
       recent_risk_assessment:
@@ -279,12 +320,29 @@ definitions:
         - Et et deserunt voluptates doloribus est nihil.
         - Et et deserunt voluptates doloribus est nihil.
       age: 2.2130937e+17
-      birth_date: 1976-07-10T10:05:29-04:00
-      gender: Aut tenetur consequatur nisi quasi at.
-      id: Aut consequatur id eos cumque nostrum aut.
+      allergies:
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
+      birth_date: 1996-04-02T00:30:16-05:00
+      conditions:
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
+      gender: Eos cumque.
+      id: Aut occaecati.
+      medications:
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
+      - name: Aut tenetur consequatur nisi quasi at.
+        start_date: 2013-09-01T08:24:13-04:00
       name:
-        family: Quasi quis.
-        full: Earum qui autem rerum temporibus non eius.
+        family: Deleniti earum qui autem.
+        full: Temporibus non eius.
         given: Modi dolores autem dolor doloribus labore.
         middle_initial: Voluptatem aut esse commodi.
       recent_risk_assessment:
@@ -459,6 +517,22 @@ definitions:
     - date
     title: ScheduleCareTeamPayload
     type: object
+  active_element:
+    example:
+      name: Aut tenetur consequatur nisi quasi at.
+      start_date: 2013-09-01T08:24:13-04:00
+    properties:
+      name:
+        description: Name of the Condition/Medication/Allergy
+        example: Aut tenetur consequatur nisi quasi at.
+        type: string
+      start_date:
+        description: 'Start Date of '
+        example: 2013-09-01T08:24:13-04:00
+        format: date-time
+        type: string
+    title: active_element
+    type: object
   address:
     example:
       city: Ut ipsum quis.
@@ -530,18 +604,18 @@ definitions:
     type: object
   name:
     example:
-      family: Quasi quis.
-      full: Earum qui autem rerum temporibus non eius.
+      family: Deleniti earum qui autem.
+      full: Temporibus non eius.
       given: Modi dolores autem dolor doloribus labore.
       middle_initial: Voluptatem aut esse commodi.
     properties:
       family:
         description: Family Name
-        example: Quasi quis.
+        example: Deleniti earum qui autem.
         type: string
       full:
         description: Full Name
-        example: Earum qui autem rerum temporibus non eius.
+        example: Temporibus non eius.
         type: string
       given:
         description: Given Name
@@ -711,8 +785,8 @@ paths:
         schema:
           $ref: '#/definitions/CareTeamPayload'
       produces:
-      - application/vnd.goa.error
       - application/vnd.careteam+json
+      - application/vnd.goa.error
       responses:
         "200":
           description: OK
@@ -874,8 +948,8 @@ paths:
         required: true
         type: string
       produces:
-      - application/vnd.goa.error
       - application/vnd.careteam+json
+      - application/vnd.goa.error
       responses:
         "200":
           description: OK
@@ -1030,8 +1104,8 @@ paths:
         required: false
         type: string
       produces:
-      - application/vnd.goa.error
       - application/vnd.riskassessment+json; type=collection
+      - application/vnd.goa.error
       responses:
         "200":
           description: OK
@@ -1060,8 +1134,8 @@ paths:
         required: true
         type: string
       produces:
-      - applicaiton/vnd.riskassessment+json; type=collection
       - application/vnd.goa.error
+      - applicaiton/vnd.riskassessment+json; type=collection
       responses:
         "200":
           description: OK
