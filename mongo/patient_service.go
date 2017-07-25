@@ -91,7 +91,7 @@ func (s *PatientService) addRecentRiskAssessments(pp []*app.Patient) error {
 func (s *PatientService) findRecentRiskAssessment(id string) (models.RiskAssessment, error) {
 	var recentRisk models.RiskAssessment
 	rCol := s.S.DB(s.Database).C(riskAssessmentCollection)
-	err := rCol.Find(bson.M{"subject.referenceid": id}).Sort("date.time").One(&recentRisk)
+	err := rCol.Find(bson.M{"subject.referenceid": id}).Sort("-date.time").One(&recentRisk)
 	return recentRisk, err
 }
 
