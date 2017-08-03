@@ -28,7 +28,8 @@ func (s *PatientService) Patient(id string) (*app.Patient, error) {
 	if err != nil {
 		return nil, err
 	}
-	p := newPatient(data)
+	current := getActiveForPatient(s.C.Database, id)
+	p := newPatient(data, &current)
 	recentRisk, err := s.findRecentRiskAssessment(id)
 	if err != nil && err.Error() == "not found" {
 		return p, nil
@@ -98,7 +99,7 @@ func (s *PatientService) findRecentRiskAssessment(id string) (models.RiskAssessm
 func newPatients(patients []models.Patient) []*app.Patient {
 	pp := make([]*app.Patient, len(patients))
 	for i, patient := range patients {
-		pp[i] = newPatient(patient)
+		pp[i] = newPatient(patient, nil)
 	}
 	return pp
 }
@@ -134,7 +135,7 @@ func convertQuery(fields ...string) ([]string, error) {
 	return query, nil
 }
 
-func newPatient(fhirPatient models.Patient) *app.Patient {
+func newPatient(fhirPatient models.Patient, current *CurrentActiveElements) *app.Patient {
 	p := app.Patient{}
 	p.ID = fhirPatient.Id
 	if len(fhirPatient.Address) > 0 {
@@ -149,6 +150,13 @@ func newPatient(fhirPatient models.Patient) *app.Patient {
 	if len(fhirPatient.Name) > 0 {
 		p.Name = newName(fhirPatient.Name[0])
 	}
+
+	if current != nil {
+		p.CurrentAllergies = current.Allergies
+		p.CurrentConditions = current.Conditions
+		p.CurrentMedications = current.Medications
+	}
+
 	// p.NextHuddleID = &fhirPatient.NextHuddleID
 	// p.RecentRiskAssessments = fhirPatient.RiskAssessments
 	return &p

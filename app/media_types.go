@@ -90,7 +90,10 @@ type Patient struct {
 	// Age of Patient
 	Age *int `form:"age,omitempty" json:"age,omitempty" xml:"age,omitempty"`
 	// Birth Date of Patient
-	BirthDate *time.Time `form:"birth_date,omitempty" json:"birth_date,omitempty" xml:"birth_date,omitempty"`
+	BirthDate          *time.Time       `form:"birth_date,omitempty" json:"birth_date,omitempty" xml:"birth_date,omitempty"`
+	CurrentAllergies   []*ActiveElement `form:"current_allergies,omitempty" json:"current_allergies,omitempty" xml:"current_allergies,omitempty"`
+	CurrentConditions  []*ActiveElement `form:"current_conditions," json:"current_conditions," xml:"current_conditions,"`
+	CurrentMedications []*ActiveElement `form:"current_medications,omitempty" json:"current_medications,omitempty" xml:"current_medications,omitempty"`
 	// Gender of Patient
 	Gender *string `form:"gender,omitempty" json:"gender,omitempty" xml:"gender,omitempty"`
 	// Unique patient ID
@@ -130,6 +133,34 @@ func (mt *PatientLink) Validate() (err error) {
 	return
 }
 
+// A patient (list view)
+//
+// Identifier: application/vnd.patient+json; view=list
+type PatientList struct {
+	Address *Address `form:"address,omitempty" json:"address,omitempty" xml:"address,omitempty"`
+	// Age of Patient
+	Age *int `form:"age,omitempty" json:"age,omitempty" xml:"age,omitempty"`
+	// Birth Date of Patient
+	BirthDate *time.Time `form:"birth_date,omitempty" json:"birth_date,omitempty" xml:"birth_date,omitempty"`
+	// Gender of Patient
+	Gender *string `form:"gender,omitempty" json:"gender,omitempty" xml:"gender,omitempty"`
+	// Unique patient ID
+	ID                   string          `form:"id" json:"id" xml:"id"`
+	Name                 *Name           `form:"name" json:"name" xml:"name"`
+	RecentRiskAssessment *RiskAssessment `form:"recent_risk_assessment,omitempty" json:"recent_risk_assessment,omitempty" xml:"recent_risk_assessment,omitempty"`
+}
+
+// Validate validates the PatientList media type instance.
+func (mt *PatientList) Validate() (err error) {
+	if mt.ID == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "id"))
+	}
+	if mt.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "name"))
+	}
+	return
+}
+
 // PatientCollection is the media type for an array of Patient (default view)
 //
 // Identifier: application/vnd.patient+json; type=collection; view=default
@@ -137,6 +168,23 @@ type PatientCollection []*Patient
 
 // Validate validates the PatientCollection media type instance.
 func (mt PatientCollection) Validate() (err error) {
+	for _, e := range mt {
+		if e != nil {
+			if err2 := e.Validate(); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	return
+}
+
+// PatientCollection is the media type for an array of Patient (list view)
+//
+// Identifier: application/vnd.patient+json; type=collection; view=list
+type PatientListCollection []*PatientList
+
+// Validate validates the PatientListCollection media type instance.
+func (mt PatientListCollection) Validate() (err error) {
 	for _, e := range mt {
 		if e != nil {
 			if err2 := e.Validate(); err2 != nil {

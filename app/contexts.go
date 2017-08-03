@@ -107,10 +107,6 @@ func NewCreateCareTeamContext(ctx context.Context, r *http.Request, service *goa
 
 // createCareTeamPayload is the care_team create action payload.
 type createCareTeamPayload struct {
-	// Timestamp for care team creation
-	CreatedAt *time.Time `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
-	// Unique care team ID
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Care team leader
 	Leader *string `form:"leader,omitempty" json:"leader,omitempty" xml:"leader,omitempty"`
 	// Care team name
@@ -131,12 +127,6 @@ func (payload *createCareTeamPayload) Validate() (err error) {
 // Publicize creates CreateCareTeamPayload from createCareTeamPayload
 func (payload *createCareTeamPayload) Publicize() *CreateCareTeamPayload {
 	var pub CreateCareTeamPayload
-	if payload.CreatedAt != nil {
-		pub.CreatedAt = payload.CreatedAt
-	}
-	if payload.ID != nil {
-		pub.ID = payload.ID
-	}
 	if payload.Leader != nil {
 		pub.Leader = *payload.Leader
 	}
@@ -148,10 +138,6 @@ func (payload *createCareTeamPayload) Publicize() *CreateCareTeamPayload {
 
 // CreateCareTeamPayload is the care_team create action payload.
 type CreateCareTeamPayload struct {
-	// Timestamp for care team creation
-	CreatedAt *time.Time `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
-	// Unique care team ID
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Care team leader
 	Leader string `form:"leader" json:"leader" xml:"leader"`
 	// Care team name
@@ -795,6 +781,15 @@ func (ctx *ListPatientContext) OK(r PatientCollection) error {
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
 }
 
+// OKList sends a HTTP response with status code 200.
+func (ctx *ListPatientContext) OKList(r PatientListCollection) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.patient+json; type=collection")
+	if r == nil {
+		r = PatientListCollection{}
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
 // BadRequest sends a HTTP response with status code 400.
 func (ctx *ListPatientContext) BadRequest() error {
 	ctx.ResponseData.WriteHeader(400)
@@ -846,6 +841,12 @@ func (ctx *ShowPatientContext) OK(r *Patient) error {
 
 // OKLink sends a HTTP response with status code 200.
 func (ctx *ShowPatientContext) OKLink(r *PatientLink) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/json")
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// OKList sends a HTTP response with status code 200.
+func (ctx *ShowPatientContext) OKList(r *PatientList) error {
 	ctx.ResponseData.Header().Set("Content-Type", "application/json")
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
 }

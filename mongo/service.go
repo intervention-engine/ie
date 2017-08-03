@@ -65,20 +65,20 @@ func (sf *ServiceFactory) NewHuddleService() storage.HuddleService {
 	return &HuddleService{Service: Service{S: s, C: c, Database: sf.Database}}
 }
 
-func (s *Service) validateCareTeamMembership(id string, patientID string) (bool, error) {
+func (svc *Service) validateCareTeamMembership(id string, patientID string) (bool, error) {
 	if !bson.IsObjectIdHex(id) {
 		return false, errors.New("bad care team id")
 	}
 	if !bson.IsObjectIdHex(patientID) {
 		return false, errors.New("bad patient id")
 	}
-	if !s.careTeamExists(id) {
+	if !svc.careTeamExists(id) {
 		return false, errors.New("care team not found")
 	}
-	if !s.patientExists(patientID) {
+	if !svc.patientExists(patientID) {
 		return false, errors.New("patient not found")
 	}
-	if !s.membershipExists(id, patientID) {
+	if !svc.membershipExists(id, patientID) {
 		return false, nil
 	}
 	return true, nil
@@ -104,8 +104,8 @@ func (svc *Service) careTeamExists(id string) bool {
 	return true
 }
 
-func (s *Service) membershipExists(careTeamID string, patientID string) bool {
-	c := s.S.DB(s.Database).C(careTeamPatientCollection)
+func (svc *Service) membershipExists(careTeamID string, patientID string) bool {
+	c := svc.S.DB(svc.Database).C(careTeamPatientCollection)
 	var mem CareTeamMembership
 	err := c.Find(bson.M{"care_team_id": careTeamID, "patient_id": patientID}).One(&mem)
 	if err != nil {
@@ -114,7 +114,7 @@ func (s *Service) membershipExists(careTeamID string, patientID string) bool {
 	return true
 }
 
-func (s *Service) removePatientFromHuddle(data []*app.PatientHuddle, id string) ([]*app.PatientHuddle, error) {
+func (svc *Service) removePatientFromHuddle(data []*app.PatientHuddle, id string) ([]*app.PatientHuddle, error) {
 	pos := -1
 	for i, p := range data {
 		if p.ID == nil {
@@ -134,8 +134,8 @@ func (s *Service) removePatientFromHuddle(data []*app.PatientHuddle, id string) 
 	return append(data[:pos], data[pos+1:]...), nil
 }
 
-func (s *Service) updateHuddlePatientsOrDeleteHuddle(huddle Huddle, patients []*app.PatientHuddle) (*Huddle, error) {
-	hCol := s.S.DB(s.Database).C(huddleCollection)
+func (svc *Service) updateHuddlePatientsOrDeleteHuddle(huddle Huddle, patients []*app.PatientHuddle) (*Huddle, error) {
+	hCol := svc.S.DB(svc.Database).C(huddleCollection)
 	if len(patients) == 0 {
 		err := hCol.RemoveId(huddle.ID)
 		if err != nil {
