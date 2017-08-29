@@ -46,10 +46,10 @@ func GetServiceFactory(ctx context.Context) storage.ServiceFactory {
 
 func GetRiskService(ctx context.Context, rsID string) *app.RiskService {
 	rsv := ctx.Value("riskServices")
-	rs := rsv.([]*app.RiskService)
 
+	rs := rsv.([]*app.RiskService)
 	for _, r := range rs {
-		if r.ID == &rsID {
+		if *r.ID == rsID {
 			return r
 		}
 	}

@@ -49,6 +49,8 @@ func main() {
 	app.MountSwaggerController(service, sc)
 	rac := NewRiskAssessmentController(service)
 	app.MountRiskAssessmentController(service, rac)
+	rcc := NewRiskCategoriesController(service)
+	app.MountRiskCategoriesController(service, rcc)
 
 	rsc := NewRiskServiceController(service)
 	app.MountRiskServiceController(service, rsc)

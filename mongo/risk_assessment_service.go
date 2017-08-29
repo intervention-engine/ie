@@ -57,5 +57,9 @@ func newAssessment(r *models.RiskAssessment) *app.RiskAssessment {
 	if (r.Prediction != nil) && (len(r.Prediction) > 0) {
 		ra.Value = r.Prediction[0].ProbabilityDecimal
 	}
+
+	if (r.Basis != nil) && (len(r.Basis) > 0) {
+		ra.PieID = &r.Basis[0].ReferencedID
+	}
 	return ra
 }
