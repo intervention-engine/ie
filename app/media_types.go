@@ -92,7 +92,7 @@ type Patient struct {
 	// Birth Date of Patient
 	BirthDate          *time.Time       `form:"birth_date,omitempty" json:"birth_date,omitempty" xml:"birth_date,omitempty"`
 	CurrentAllergies   []*ActiveElement `form:"current_allergies,omitempty" json:"current_allergies,omitempty" xml:"current_allergies,omitempty"`
-	CurrentConditions  []*ActiveElement `form:"current_conditions," json:"current_conditions," xml:"current_conditions,"`
+	CurrentConditions  []*ActiveElement `form:"current_conditions,omitempty" json:"current_conditions,omitempty" xml:"current_conditions,omitempty"`
 	CurrentMedications []*ActiveElement `form:"current_medications,omitempty" json:"current_medications,omitempty" xml:"current_medications,omitempty"`
 	// Gender of Patient
 	Gender *string `form:"gender,omitempty" json:"gender,omitempty" xml:"gender,omitempty"`
@@ -203,6 +203,22 @@ type RiskAssessment struct {
 	Date *time.Time `form:"date,omitempty" json:"date,omitempty" xml:"date,omitempty"`
 	// Unique assessment identifier
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// ID for the associated Risk breakdown the score is based on
+	PieID *string `form:"pie_id,omitempty" json:"pie_id,omitempty" xml:"pie_id,omitempty"`
+	// Identifier for risk service that produced the assessment
+	RiskServiceID *string `form:"risk_service_id,omitempty" json:"risk_service_id,omitempty" xml:"risk_service_id,omitempty"`
+	// Risk Score
+	Value *float64 `form:"value,omitempty" json:"value,omitempty" xml:"value,omitempty"`
+}
+
+// An single overall assessment score of a patient's risk for a risk service (list view)
+//
+// Identifier: application/vnd.riskassessment+json; view=list
+type RiskAssessmentList struct {
+	// Date assessment was created
+	Date *time.Time `form:"date,omitempty" json:"date,omitempty" xml:"date,omitempty"`
+	// Unique assessment identifier
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Identifier for risk service that produced the assessment
 	RiskServiceID *string `form:"risk_service_id,omitempty" json:"risk_service_id,omitempty" xml:"risk_service_id,omitempty"`
 	// Risk Score
@@ -213,6 +229,11 @@ type RiskAssessment struct {
 //
 // Identifier: application/vnd.riskassessment+json; type=collection; view=default
 type RiskAssessmentCollection []*RiskAssessment
+
+// RiskAssessmentCollection is the media type for an array of RiskAssessment (list view)
+//
+// Identifier: application/vnd.riskassessment+json; type=collection; view=list
+type RiskAssessmentListCollection []*RiskAssessmentList
 
 // Service providing risk scores for patients (default view)
 //

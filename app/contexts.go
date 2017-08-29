@@ -933,6 +933,15 @@ func (ctx *ListRiskAssessmentContext) OK(r RiskAssessmentCollection) error {
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
 }
 
+// OKList sends a HTTP response with status code 200.
+func (ctx *ListRiskAssessmentContext) OKList(r RiskAssessmentListCollection) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.riskassessment+json; type=collection")
+	if r == nil {
+		r = RiskAssessmentListCollection{}
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
 // BadRequest sends a HTTP response with status code 400.
 func (ctx *ListRiskAssessmentContext) BadRequest(r error) error {
 	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")

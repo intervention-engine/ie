@@ -30,20 +30,23 @@ func (c *RiskCategoriesController) List(ctx *app.ListRiskCategoriesContext) erro
 	ra, err := ras.RiskAssessment(ctx.ID)
 
 	if err != nil {
-		ctx.InternalServerError(err)
+		return ctx.InternalServerError(err)
 	}
 
 	if ra == nil {
-		ctx.BadRequest(errors.New("Invalid Risk Assessment ID"))
+		return ctx.BadRequest(errors.New("Invalid Risk Assessment ID"))
 	}
 
 	rs := GetRiskService(ctx, *ra.RiskServiceID)
 
-	// Put your logic here
-	pieURL, err := url.Parse("pies/" + ctx.ID)
+	pieURL, err := url.Parse("pies/" + *ra.PieID)
 
 	if err != nil {
-		ctx.BadRequest(err)
+		return ctx.BadRequest(err)
+	}
+
+	if rs == nil {
+		return ctx.InternalServerError(errors.New("Unable to Locate Risk Service for Risk Assessment"))
 	}
 
 	rsURL, err := url.Parse(*rs.URL)
@@ -53,7 +56,12 @@ func (c *RiskCategoriesController) List(ctx *app.ListRiskCategoriesContext) erro
 	}
 
 	endpoint := rsURL.ResolveReference(pieURL)
+
 	resp, err := http.Get(endpoint.String())
+
+	if resp.StatusCode == 404 {
+		return goa.NewErrorClass("bad_gateway", 502)("Unable to Reach Risk Server")
+	}
 
 	if err != nil {
 		return ctx.InternalServerError(err)
@@ -68,8 +76,6 @@ func (c *RiskCategoriesController) List(ctx *app.ListRiskCategoriesContext) erro
 	}
 
 	json.Unmarshal(pieJSON, &pie)
-
-	// RiskBreakdownController_List: end_implement
 
 	rc := pieToBreakdown(pie)
 

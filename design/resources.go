@@ -74,6 +74,7 @@ var _ = Resource("risk_assessment", func() {
 		Response(OK, func() {
 			Media(CollectionOf(RiskAssessmentMedia, func() {
 				View("default")
+				View("list")
 			}))
 		})
 		Response(BadRequest, ErrorMedia)

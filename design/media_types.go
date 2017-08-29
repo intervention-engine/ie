@@ -30,8 +30,16 @@ var RiskAssessmentMedia = MediaType("application/vnd.riskassessment+json", func(
 		Attribute("risk_service_id", String, "Identifier for risk service that produced the assessment")
 		Attribute("date", DateTime, "Date assessment was created")
 		Attribute("value", Number, "Risk Score")
+		Attribute("pie_id", String, "ID for the associated Risk breakdown the score is based on")
 	})
 	View("default", func() {
+		Attribute("id", String, "Unique assessment identifier")
+		Attribute("risk_service_id", String, "Identifier for risk service that produced the assessment")
+		Attribute("date", DateTime, "Date assessment was created")
+		Attribute("value", Integer, "Risk Score")
+		Attribute("pie_id", String, "ID for the associated Risk breakdown the score is based on")
+	})
+	View("list", func() {
 		Attribute("id", String, "Unique assessment identifier")
 		Attribute("risk_service_id", String, "Identifier for risk service that produced the assessment")
 		Attribute("date", DateTime, "Date assessment was created")
