@@ -14,6 +14,7 @@ type ServiceFactory interface {
 	NewPatientService() PatientService
 	NewHuddleService() HuddleService
 	NewRiskAssessmentService() RiskAssessmentService
+	NewEventService() EventService
 }
 
 // CareTeamService describes the interface for storing a CareTeam
@@ -47,6 +48,11 @@ type HuddleService interface {
 	DeletePatient(huddleID string, patientID string) (*app.Huddle, error)
 }
 
+// Event Service describes the interface for accessing event information.
+type EventService interface {
+	EventsFilterBy(query EventFilterQuery) ([]*app.Event, error)
+}
+
 var AcceptedQueryFields = []string{
 	"name",
 	"-name",
@@ -66,4 +72,12 @@ type HuddleFilterQuery struct {
 	CareTeamID string
 	PatientID  string
 	Date       time.Time
+}
+
+type EventFilterQuery struct {
+	PatientID     string
+	RiskServiceID string
+	Type          string
+	Start         time.Time
+	End           time.Time
 }

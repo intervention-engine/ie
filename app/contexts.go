@@ -652,6 +652,92 @@ func (ctx *UpdateCareTeamContext) InternalServerError(r error) error {
 	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
 }
 
+// ListEventContext provides the event list action context.
+type ListEventContext struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+	EndTime       *time.Time
+	ID            string
+	RiskServiceID *string
+	StartTime     *time.Time
+	Type          *string
+}
+
+// NewListEventContext parses the incoming request URL and body, performs validations and creates the
+// context used by the event controller list action.
+func NewListEventContext(ctx context.Context, r *http.Request, service *goa.Service) (*ListEventContext, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := ListEventContext{Context: ctx, ResponseData: resp, RequestData: req}
+	paramEndTime := req.Params["end_time"]
+	if len(paramEndTime) > 0 {
+		rawEndTime := paramEndTime[0]
+		if endTime, err2 := time.Parse(time.RFC3339, rawEndTime); err2 == nil {
+			tmp1 := &endTime
+			rctx.EndTime = tmp1
+		} else {
+			err = goa.MergeErrors(err, goa.InvalidParamTypeError("end_time", rawEndTime, "datetime"))
+		}
+	}
+	paramID := req.Params["id"]
+	if len(paramID) > 0 {
+		rawID := paramID[0]
+		rctx.ID = rawID
+	}
+	paramRiskServiceID := req.Params["risk_service_id"]
+	if len(paramRiskServiceID) > 0 {
+		rawRiskServiceID := paramRiskServiceID[0]
+		rctx.RiskServiceID = &rawRiskServiceID
+	}
+	paramStartTime := req.Params["start_time"]
+	if len(paramStartTime) > 0 {
+		rawStartTime := paramStartTime[0]
+		if startTime, err2 := time.Parse(time.RFC3339, rawStartTime); err2 == nil {
+			tmp2 := &startTime
+			rctx.StartTime = tmp2
+		} else {
+			err = goa.MergeErrors(err, goa.InvalidParamTypeError("start_time", rawStartTime, "datetime"))
+		}
+	}
+	paramType := req.Params["type"]
+	if len(paramType) > 0 {
+		rawType := paramType[0]
+		rctx.Type = &rawType
+	}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *ListEventContext) OK(r EventCollection) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.event+json; type=collection")
+	if r == nil {
+		r = EventCollection{}
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// BadRequest sends a HTTP response with status code 400.
+func (ctx *ListEventContext) BadRequest(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+}
+
+// NotFound sends a HTTP response with status code 404.
+func (ctx *ListEventContext) NotFound(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *ListEventContext) InternalServerError(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
+}
+
 // CancelHuddleContext provides the huddle cancel action context.
 type CancelHuddleContext struct {
 	context.Context
@@ -736,9 +822,9 @@ func NewListPatientContext(ctx context.Context, r *http.Request, service *goa.Se
 	if len(paramPage) > 0 {
 		rawPage := paramPage[0]
 		if page, err2 := strconv.Atoi(rawPage); err2 == nil {
-			tmp2 := page
-			tmp1 := &tmp2
-			rctx.Page = tmp1
+			tmp4 := page
+			tmp3 := &tmp4
+			rctx.Page = tmp3
 		} else {
 			err = goa.MergeErrors(err, goa.InvalidParamTypeError("page", rawPage, "integer"))
 		}
@@ -752,9 +838,9 @@ func NewListPatientContext(ctx context.Context, r *http.Request, service *goa.Se
 	if len(paramPerPage) > 0 {
 		rawPerPage := paramPerPage[0]
 		if perPage, err2 := strconv.Atoi(rawPerPage); err2 == nil {
-			tmp4 := perPage
-			tmp3 := &tmp4
-			rctx.PerPage = tmp3
+			tmp6 := perPage
+			tmp5 := &tmp6
+			rctx.PerPage = tmp5
 		} else {
 			err = goa.MergeErrors(err, goa.InvalidParamTypeError("per_page", rawPerPage, "integer"))
 		}
@@ -893,8 +979,8 @@ func NewListRiskAssessmentContext(ctx context.Context, r *http.Request, service 
 	if len(paramEndDate) > 0 {
 		rawEndDate := paramEndDate[0]
 		if endDate, err2 := time.Parse(time.RFC3339, rawEndDate); err2 == nil {
-			tmp5 := &endDate
-			rctx.EndDate = tmp5
+			tmp7 := &endDate
+			rctx.EndDate = tmp7
 		} else {
 			err = goa.MergeErrors(err, goa.InvalidParamTypeError("end_date", rawEndDate, "datetime"))
 		}
@@ -915,8 +1001,8 @@ func NewListRiskAssessmentContext(ctx context.Context, r *http.Request, service 
 	if len(paramStartDate) > 0 {
 		rawStartDate := paramStartDate[0]
 		if startDate, err2 := time.Parse(time.RFC3339, rawStartDate); err2 == nil {
-			tmp6 := &startDate
-			rctx.StartDate = tmp6
+			tmp8 := &startDate
+			rctx.StartDate = tmp8
 		} else {
 			err = goa.MergeErrors(err, goa.InvalidParamTypeError("start_date", rawStartDate, "datetime"))
 		}

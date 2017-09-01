@@ -63,6 +63,26 @@ type CareTeamLink struct {
 // Identifier: application/vnd.careteam+json; type=collection; view=default
 type CareTeamCollection []*CareTeam
 
+// Event media type (default view)
+//
+// Identifier: application/vnd.event+json; view=default
+type Event struct {
+	CreatedAt   *time.Time `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
+	Datetime    *time.Time `form:"datetime,omitempty" json:"datetime,omitempty" xml:"datetime,omitempty"`
+	DisplayName *string    `form:"display_name,omitempty" json:"display_name,omitempty" xml:"display_name,omitempty"`
+	EndDate     *time.Time `form:"end_date,omitempty" json:"end_date,omitempty" xml:"end_date,omitempty"`
+	ID          *string    `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	NewValue    *float64   `form:"new_value,omitempty" json:"new_value,omitempty" xml:"new_value,omitempty"`
+	OldValue    *float64   `form:"old_value,omitempty" json:"old_value,omitempty" xml:"old_value,omitempty"`
+	StartDate   *time.Time `form:"start_date,omitempty" json:"start_date,omitempty" xml:"start_date,omitempty"`
+	Type        *string    `form:"type,omitempty" json:"type,omitempty" xml:"type,omitempty"`
+}
+
+// EventCollection is the media type for an array of Event (default view)
+//
+// Identifier: application/vnd.event+json; type=collection; view=default
+type EventCollection []*Event
+
 // A single gathering of a care team at a specific time (default view)
 //
 // Identifier: application/vnd.huddle+json; view=default

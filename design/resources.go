@@ -216,6 +216,29 @@ var _ = Resource("huddle", func() {
 	})
 })
 
+var _ = Resource("event", func() {
+	DefaultMedia(EventMedia)
+	BasePath("/patients/:id/events")
+	Response(OK)
+	Action("list", func() {
+		Description("List all events")
+		Routing(GET(""))
+		Params(func() {
+			Param("risk_service_id", String)
+			Param("type", String)
+			Param("start_time", DateTime)
+			Param("end_time", DateTime)
+			//Required("risk_service_id")
+		})
+		Response(NotFound, ErrorMedia)
+		Response(BadRequest, ErrorMedia)
+		Response(InternalServerError, ErrorMedia)
+		Response(OK, func() {
+			Media(CollectionOf(EventMedia))
+		})
+	})
+})
+
 var _ = Resource("swagger", func() {
 	Description("The API Swagger specification")
 	Origin("*", func() {

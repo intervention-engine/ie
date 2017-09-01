@@ -47,6 +47,11 @@ func (sf *ServiceFactory) NewCareTeamService() storage.CareTeamService {
 	return &CareTeamService{Service: Service{S: s, C: c, Database: sf.Database}}
 }
 
+func (sf *ServiceFactory) NewEventService() storage.EventService {
+	s := sf.Session.Copy()
+	return &EventService{Service: Service{S: s, Database: sf.Database}}
+}
+
 func (sf *ServiceFactory) NewRiskAssessmentService() storage.RiskAssessmentService {
 	s := sf.Session.Copy()
 	c := s.DB(sf.Database).C(riskAssessmentCollection)
