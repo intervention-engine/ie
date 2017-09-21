@@ -24,6 +24,8 @@ var _ = Resource("patient", func() {
 	Action("list", func() {
 		Routing(GET(""))
 		Params(func() {
+			Param("care_team_id", String)
+			Param("huddle_id", String)
 			Param("sort_by", String)
 			Param("page", Integer, func() {
 				Minimum(1)

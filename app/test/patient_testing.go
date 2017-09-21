@@ -29,7 +29,7 @@ import (
 // It returns the response writer so it's possible to inspect the response headers.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func ListPatientBadRequest(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, page *int, perPage *int, sortBy *string) http.ResponseWriter {
+func ListPatientBadRequest(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, careTeamID *string, huddleID *string, page *int, perPage *int, sortBy *string) http.ResponseWriter {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -50,6 +50,14 @@ func ListPatientBadRequest(t goatest.TInterface, ctx context.Context, service *g
 	// Setup request context
 	rw := httptest.NewRecorder()
 	query := url.Values{}
+	if careTeamID != nil {
+		sliceVal := []string{*careTeamID}
+		query["care_team_id"] = sliceVal
+	}
+	if huddleID != nil {
+		sliceVal := []string{*huddleID}
+		query["huddle_id"] = sliceVal
+	}
 	if page != nil {
 		sliceVal := []string{strconv.Itoa(*page)}
 		query["page"] = sliceVal
@@ -71,6 +79,14 @@ func ListPatientBadRequest(t goatest.TInterface, ctx context.Context, service *g
 		panic("invalid test " + err.Error()) // bug
 	}
 	prms := url.Values{}
+	if careTeamID != nil {
+		sliceVal := []string{*careTeamID}
+		prms["care_team_id"] = sliceVal
+	}
+	if huddleID != nil {
+		sliceVal := []string{*huddleID}
+		prms["huddle_id"] = sliceVal
+	}
 	if page != nil {
 		sliceVal := []string{strconv.Itoa(*page)}
 		prms["page"] = sliceVal
@@ -111,7 +127,7 @@ func ListPatientBadRequest(t goatest.TInterface, ctx context.Context, service *g
 // It returns the response writer so it's possible to inspect the response headers.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func ListPatientInternalServerError(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, page *int, perPage *int, sortBy *string) http.ResponseWriter {
+func ListPatientInternalServerError(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, careTeamID *string, huddleID *string, page *int, perPage *int, sortBy *string) http.ResponseWriter {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -132,6 +148,14 @@ func ListPatientInternalServerError(t goatest.TInterface, ctx context.Context, s
 	// Setup request context
 	rw := httptest.NewRecorder()
 	query := url.Values{}
+	if careTeamID != nil {
+		sliceVal := []string{*careTeamID}
+		query["care_team_id"] = sliceVal
+	}
+	if huddleID != nil {
+		sliceVal := []string{*huddleID}
+		query["huddle_id"] = sliceVal
+	}
 	if page != nil {
 		sliceVal := []string{strconv.Itoa(*page)}
 		query["page"] = sliceVal
@@ -153,6 +177,14 @@ func ListPatientInternalServerError(t goatest.TInterface, ctx context.Context, s
 		panic("invalid test " + err.Error()) // bug
 	}
 	prms := url.Values{}
+	if careTeamID != nil {
+		sliceVal := []string{*careTeamID}
+		prms["care_team_id"] = sliceVal
+	}
+	if huddleID != nil {
+		sliceVal := []string{*huddleID}
+		prms["huddle_id"] = sliceVal
+	}
 	if page != nil {
 		sliceVal := []string{strconv.Itoa(*page)}
 		prms["page"] = sliceVal
@@ -193,7 +225,7 @@ func ListPatientInternalServerError(t goatest.TInterface, ctx context.Context, s
 // It returns the response writer so it's possible to inspect the response headers.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func ListPatientNotFound(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, page *int, perPage *int, sortBy *string) http.ResponseWriter {
+func ListPatientNotFound(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, careTeamID *string, huddleID *string, page *int, perPage *int, sortBy *string) http.ResponseWriter {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -214,6 +246,14 @@ func ListPatientNotFound(t goatest.TInterface, ctx context.Context, service *goa
 	// Setup request context
 	rw := httptest.NewRecorder()
 	query := url.Values{}
+	if careTeamID != nil {
+		sliceVal := []string{*careTeamID}
+		query["care_team_id"] = sliceVal
+	}
+	if huddleID != nil {
+		sliceVal := []string{*huddleID}
+		query["huddle_id"] = sliceVal
+	}
 	if page != nil {
 		sliceVal := []string{strconv.Itoa(*page)}
 		query["page"] = sliceVal
@@ -235,6 +275,14 @@ func ListPatientNotFound(t goatest.TInterface, ctx context.Context, service *goa
 		panic("invalid test " + err.Error()) // bug
 	}
 	prms := url.Values{}
+	if careTeamID != nil {
+		sliceVal := []string{*careTeamID}
+		prms["care_team_id"] = sliceVal
+	}
+	if huddleID != nil {
+		sliceVal := []string{*huddleID}
+		prms["huddle_id"] = sliceVal
+	}
 	if page != nil {
 		sliceVal := []string{strconv.Itoa(*page)}
 		prms["page"] = sliceVal
@@ -275,7 +323,7 @@ func ListPatientNotFound(t goatest.TInterface, ctx context.Context, service *goa
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func ListPatientOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, page *int, perPage *int, sortBy *string) (http.ResponseWriter, app.PatientCollection) {
+func ListPatientOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, careTeamID *string, huddleID *string, page *int, perPage *int, sortBy *string) (http.ResponseWriter, app.PatientCollection) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -296,6 +344,14 @@ func ListPatientOK(t goatest.TInterface, ctx context.Context, service *goa.Servi
 	// Setup request context
 	rw := httptest.NewRecorder()
 	query := url.Values{}
+	if careTeamID != nil {
+		sliceVal := []string{*careTeamID}
+		query["care_team_id"] = sliceVal
+	}
+	if huddleID != nil {
+		sliceVal := []string{*huddleID}
+		query["huddle_id"] = sliceVal
+	}
 	if page != nil {
 		sliceVal := []string{strconv.Itoa(*page)}
 		query["page"] = sliceVal
@@ -317,6 +373,14 @@ func ListPatientOK(t goatest.TInterface, ctx context.Context, service *goa.Servi
 		panic("invalid test " + err.Error()) // bug
 	}
 	prms := url.Values{}
+	if careTeamID != nil {
+		sliceVal := []string{*careTeamID}
+		prms["care_team_id"] = sliceVal
+	}
+	if huddleID != nil {
+		sliceVal := []string{*huddleID}
+		prms["huddle_id"] = sliceVal
+	}
 	if page != nil {
 		sliceVal := []string{strconv.Itoa(*page)}
 		prms["page"] = sliceVal
@@ -369,7 +433,7 @@ func ListPatientOK(t goatest.TInterface, ctx context.Context, service *goa.Servi
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func ListPatientOKList(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, page *int, perPage *int, sortBy *string) (http.ResponseWriter, app.PatientListCollection) {
+func ListPatientOKList(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, careTeamID *string, huddleID *string, page *int, perPage *int, sortBy *string) (http.ResponseWriter, app.PatientListCollection) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -390,6 +454,14 @@ func ListPatientOKList(t goatest.TInterface, ctx context.Context, service *goa.S
 	// Setup request context
 	rw := httptest.NewRecorder()
 	query := url.Values{}
+	if careTeamID != nil {
+		sliceVal := []string{*careTeamID}
+		query["care_team_id"] = sliceVal
+	}
+	if huddleID != nil {
+		sliceVal := []string{*huddleID}
+		query["huddle_id"] = sliceVal
+	}
 	if page != nil {
 		sliceVal := []string{strconv.Itoa(*page)}
 		query["page"] = sliceVal
@@ -411,6 +483,14 @@ func ListPatientOKList(t goatest.TInterface, ctx context.Context, service *goa.S
 		panic("invalid test " + err.Error()) // bug
 	}
 	prms := url.Values{}
+	if careTeamID != nil {
+		sliceVal := []string{*careTeamID}
+		prms["care_team_id"] = sliceVal
+	}
+	if huddleID != nil {
+		sliceVal := []string{*huddleID}
+		prms["huddle_id"] = sliceVal
+	}
 	if page != nil {
 		sliceVal := []string{strconv.Itoa(*page)}
 		prms["page"] = sliceVal

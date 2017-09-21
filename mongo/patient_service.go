@@ -43,12 +43,26 @@ func (s *PatientService) Patient(id string) (*app.Patient, error) {
 }
 
 // Patients gets all the patients in the db.
-func (s *PatientService) Patients() ([]*app.Patient, error) {
+func (s *PatientService) Patients(filter map[string]string) ([]*app.Patient, error) {
 	defer s.S.Close()
 	var data []models.Patient
 	err := s.C.Find(nil).All(&data)
 	if err != nil {
 		return nil, err
+	}
+	if len(filter) != 0 {
+		if id, ok := filter["care_team_id"]; ok {
+			data, err = s.filterCareTeam(id, data)
+			if err != nil {
+				return nil, err
+			}
+		}
+		if id, ok := filter["huddle_id"]; ok {
+			data, err = s.filterHuddle(id, data)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 	pp := newPatients(data)
 	err = s.addRecentRiskAssessments(pp)
@@ -56,7 +70,7 @@ func (s *PatientService) Patients() ([]*app.Patient, error) {
 }
 
 // SortBy gets patients sorted by the fields given.
-func (s *PatientService) PatientsSortBy(fields ...string) ([]*app.Patient, error) {
+func (s *PatientService) PatientsSortBy(filter map[string]string, fields ...string) ([]*app.Patient, error) {
 	defer s.S.Close()
 	var data []models.Patient
 	log.Println("fields is: ", fields)
@@ -70,9 +84,66 @@ func (s *PatientService) PatientsSortBy(fields ...string) ([]*app.Patient, error
 		log.Println(err)
 		return nil, err
 	}
+
+	if filter != nil {
+		if id, ok := filter["care_team_id"]; ok {
+			data, err = s.filterCareTeam(id, data)
+			if err != nil {
+				return nil, err
+			}
+		}
+		if id, ok := filter["huddle_id"]; ok {
+			data, err = s.filterHuddle(id, data)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	pp := newPatients(data)
 	err = s.addRecentRiskAssessments(pp)
 	return pp, err
+}
+
+func (s *PatientService) filterCareTeam(ID string, patients []models.Patient) ([]models.Patient, error) {
+	// Go find all the patients in this care team. Then iterate over patients
+	// and only keep the ones in this care team.
+	var rel []struct {
+		CareTeamID string `bson:"care_team_id"`
+		PatientID  string `bson:"patient_id"`
+	}
+	err := s.S.DB(s.Database).C("care_team_patient").Find(bson.M{"care_team_id": ID}).All(&rel)
+	if err != nil {
+		return nil, err
+	}
+	filtered := []models.Patient{}
+	for _, p := range patients {
+		for _, r := range rel {
+			if p.Id == r.PatientID {
+				filtered = append(filtered, p)
+			}
+		}
+	}
+	return filtered, nil
+}
+
+func (s *PatientService) filterHuddle(ID string, patients []models.Patient) ([]models.Patient, error) {
+	// Go find all the patients in this huddle. Then iterate over patients
+	// and only keep the ones in this huddle.
+	var huddle app.Huddle
+	err := s.S.DB(s.Database).C("huddles").FindId(ID).One(&huddle)
+	if err != nil {
+		return nil, err
+	}
+	filtered := []models.Patient{}
+	for _, p := range patients {
+		for _, hp := range huddle.Patients {
+			if p.Id == *hp.ID {
+				filtered = append(filtered, p)
+			}
+		}
+	}
+	return filtered, nil
 }
 
 func (s *PatientService) addRecentRiskAssessments(pp []*app.Patient) error {

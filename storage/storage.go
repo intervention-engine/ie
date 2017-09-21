@@ -37,8 +37,8 @@ type RiskAssessmentService interface {
 // PatientService describes the interface for storing a Patient
 type PatientService interface {
 	Patient(id string) (*app.Patient, error)
-	Patients() ([]*app.Patient, error)
-	PatientsSortBy(...string) ([]*app.Patient, error)
+	Patients(filter map[string]string) ([]*app.Patient, error)
+	PatientsSortBy(filter map[string]string, sortby ...string) ([]*app.Patient, error)
 }
 
 // HuddleService describes the interface for storing a huddle.
