@@ -51,6 +51,8 @@ func main() {
 	app.MountRiskAssessmentController(service, rac)
 	rcc := NewRiskCategoriesController(service)
 	app.MountRiskCategoriesController(service, rcc)
+	ec := NewEventController(service)
+	app.MountEventController(service, ec)
 
 	rsc := NewRiskServiceController(service)
 	app.MountRiskServiceController(service, rsc)

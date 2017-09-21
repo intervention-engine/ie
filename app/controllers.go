@@ -282,6 +282,59 @@ func unmarshalUpdateCareTeamPayload(ctx context.Context, service *goa.Service, r
 	return nil
 }
 
+// EventController is the controller interface for the Event actions.
+type EventController interface {
+	goa.Muxer
+	List(*ListEventContext) error
+}
+
+// MountEventController "mounts" a Event resource controller on the given service.
+func MountEventController(service *goa.Service, ctrl EventController) {
+	initService(service)
+	var h goa.Handler
+	service.Mux.Handle("OPTIONS", "/api/patients/:id/events", ctrl.MuxHandler("preflight", handleEventOrigin(cors.HandlePreflight()), nil))
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewListEventContext(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.List(rctx)
+	}
+	h = handleEventOrigin(h)
+	service.Mux.Handle("GET", "/api/patients/:id/events", ctrl.MuxHandler("list", h, nil))
+	service.LogInfo("mount", "ctrl", "Event", "action", "List", "route", "GET /api/patients/:id/events")
+}
+
+// handleEventOrigin applies the CORS response headers corresponding to the origin.
+func handleEventOrigin(h goa.Handler) goa.Handler {
+
+	return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		origin := req.Header.Get("Origin")
+		if origin == "" {
+			// Not a CORS request
+			return h(ctx, rw, req)
+		}
+		if cors.MatchOrigin(origin, "*") {
+			ctx = goa.WithLogContext(ctx, "origin", origin)
+			rw.Header().Set("Access-Control-Allow-Origin", origin)
+			rw.Header().Set("Access-Control-Allow-Credentials", "false")
+			if acrm := req.Header.Get("Access-Control-Request-Method"); acrm != "" {
+				// We are handling a preflight request
+				rw.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
+			}
+			return h(ctx, rw, req)
+		}
+
+		return h(ctx, rw, req)
+	}
+}
+
 // HuddleController is the controller interface for the Huddle actions.
 type HuddleController interface {
 	goa.Muxer
