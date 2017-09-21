@@ -677,8 +677,8 @@ paths:
       description: List all care teams.
       operationId: care_team#list
       produces:
-      - application/vnd.goa.error
       - application/vnd.careteam+json; type=collection
+      - application/vnd.goa.error
       responses:
         "200":
           description: OK
@@ -783,8 +783,8 @@ paths:
         required: true
         type: string
       produces:
-      - application/vnd.goa.error
       - application/vnd.careteam+json
+      - application/vnd.goa.error
       responses:
         "200":
           description: OK
@@ -1055,6 +1055,14 @@ paths:
       description: List all patients.
       operationId: patient#list
       parameters:
+      - in: query
+        name: care_team_id
+        required: false
+        type: string
+      - in: query
+        name: huddle_id
+        required: false
+        type: string
       - in: query
         minimum: 1
         name: page

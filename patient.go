@@ -60,6 +60,13 @@ func (c *PatientController) Show(ctx *app.ShowPatientContext) error {
 func (c *PatientController) List(ctx *app.ListPatientContext) error {
 	s := GetServiceFactory(ctx.Context)
 	ps := s.NewPatientService()
+	filter := make(map[string]string)
+	if ctx.CareTeamID != nil {
+		filter["care_team_id"] = *ctx.CareTeamID
+	}
+	if ctx.HuddleID != nil {
+		filter["huddle_id"] = *ctx.HuddleID
+	}
 	var pp []*app.Patient
 	var err error
 	if ctx.SortBy != nil {
@@ -70,13 +77,13 @@ func (c *PatientController) List(ctx *app.ListPatientContext) error {
 			return ctx.BadRequest()
 		}
 		log.Println("query is: ", query)
-		pp, err = ps.PatientsSortBy(query...)
+		pp, err = ps.PatientsSortBy(filter, query...)
 		if err != nil {
 			// "internal server error trying to list patients"
 			return ctx.InternalServerError()
 		}
 	} else {
-		pp, err = ps.Patients()
+		pp, err = ps.Patients(filter)
 		if err != nil {
 			// "internal server error trying to list patients"
 			return ctx.InternalServerError()

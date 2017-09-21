@@ -804,9 +804,11 @@ type ListPatientContext struct {
 	context.Context
 	*goa.ResponseData
 	*goa.RequestData
-	Page    *int
-	PerPage *int
-	SortBy  *string
+	CareTeamID *string
+	HuddleID   *string
+	Page       *int
+	PerPage    *int
+	SortBy     *string
 }
 
 // NewListPatientContext parses the incoming request URL and body, performs validations and creates the
@@ -818,6 +820,16 @@ func NewListPatientContext(ctx context.Context, r *http.Request, service *goa.Se
 	req := goa.ContextRequest(ctx)
 	req.Request = r
 	rctx := ListPatientContext{Context: ctx, ResponseData: resp, RequestData: req}
+	paramCareTeamID := req.Params["care_team_id"]
+	if len(paramCareTeamID) > 0 {
+		rawCareTeamID := paramCareTeamID[0]
+		rctx.CareTeamID = &rawCareTeamID
+	}
+	paramHuddleID := req.Params["huddle_id"]
+	if len(paramHuddleID) > 0 {
+		rawHuddleID := paramHuddleID[0]
+		rctx.HuddleID = &rawHuddleID
+	}
 	paramPage := req.Params["page"]
 	if len(paramPage) > 0 {
 		rawPage := paramPage[0]
