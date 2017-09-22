@@ -26,6 +26,7 @@ var _ = Resource("patient", func() {
 		Params(func() {
 			Param("care_team_id", String)
 			Param("huddle_id", String)
+			Param("search_term", String)
 			Param("sort_by", String)
 			Param("page", Integer, func() {
 				Minimum(1)

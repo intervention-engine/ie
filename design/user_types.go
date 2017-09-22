@@ -34,6 +34,16 @@ var Address = Type("address", func() {
 	Attribute("postal_code", String, "Postal Code")
 })
 
+var NextHuddle = Type("next_huddle", func() {
+	Attribute("huddle_id", String)
+	Attribute("huddle_date", DateTime)
+	Attribute("care_team_name", String)
+	Attribute("reason", String)
+	Attribute("reason_type", String)
+	Attribute("reviewed", Boolean)
+	Attribute("reviewed_at", DateTime)
+})
+
 var CareTeamPayload = Type("CareTeamPayload", func() {
 	Attribute("name", String, "Care team name")
 	Attribute("leader", String, "Care team leader")

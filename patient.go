@@ -32,7 +32,7 @@ func (c *PatientController) allToList(ps []*app.Patient) []*app.PatientList {
 func (c *PatientController) toList(p *app.Patient) *app.PatientList {
 	return &app.PatientList{Address: p.Address, Age: p.Age,
 		BirthDate: p.BirthDate, Gender: p.Gender, ID: p.ID, Name: p.Name,
-		RecentRiskAssessment: p.RecentRiskAssessment}
+		RecentRiskAssessment: p.RecentRiskAssessment, NextHuddle: p.NextHuddle}
 }
 
 // Show runs the show action.
@@ -67,6 +67,9 @@ func (c *PatientController) List(ctx *app.ListPatientContext) error {
 	if ctx.HuddleID != nil {
 		filter["huddle_id"] = *ctx.HuddleID
 	}
+	if ctx.SearchTerm != nil {
+		filter["search_term"] = *ctx.SearchTerm
+	}
 	var pp []*app.Patient
 	var err error
 	if ctx.SortBy != nil {
@@ -88,7 +91,6 @@ func (c *PatientController) List(ctx *app.ListPatientContext) error {
 			// "internal server error trying to list patients"
 			return ctx.InternalServerError()
 		}
-
 	}
 
 	if ctx.Page != nil {
