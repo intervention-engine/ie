@@ -29,7 +29,7 @@ import (
 // It returns the response writer so it's possible to inspect the response headers.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func ListPatientBadRequest(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, careTeamID *string, huddleID *string, page *int, perPage *int, sortBy *string) http.ResponseWriter {
+func ListPatientBadRequest(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, careTeamID *string, huddleID *string, page *int, perPage *int, searchTerm *string, sortBy *string) http.ResponseWriter {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -66,6 +66,10 @@ func ListPatientBadRequest(t goatest.TInterface, ctx context.Context, service *g
 		sliceVal := []string{strconv.Itoa(*perPage)}
 		query["per_page"] = sliceVal
 	}
+	if searchTerm != nil {
+		sliceVal := []string{*searchTerm}
+		query["search_term"] = sliceVal
+	}
 	if sortBy != nil {
 		sliceVal := []string{*sortBy}
 		query["sort_by"] = sliceVal
@@ -94,6 +98,10 @@ func ListPatientBadRequest(t goatest.TInterface, ctx context.Context, service *g
 	if perPage != nil {
 		sliceVal := []string{strconv.Itoa(*perPage)}
 		prms["per_page"] = sliceVal
+	}
+	if searchTerm != nil {
+		sliceVal := []string{*searchTerm}
+		prms["search_term"] = sliceVal
 	}
 	if sortBy != nil {
 		sliceVal := []string{*sortBy}
@@ -127,7 +135,7 @@ func ListPatientBadRequest(t goatest.TInterface, ctx context.Context, service *g
 // It returns the response writer so it's possible to inspect the response headers.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func ListPatientInternalServerError(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, careTeamID *string, huddleID *string, page *int, perPage *int, sortBy *string) http.ResponseWriter {
+func ListPatientInternalServerError(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, careTeamID *string, huddleID *string, page *int, perPage *int, searchTerm *string, sortBy *string) http.ResponseWriter {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -164,6 +172,10 @@ func ListPatientInternalServerError(t goatest.TInterface, ctx context.Context, s
 		sliceVal := []string{strconv.Itoa(*perPage)}
 		query["per_page"] = sliceVal
 	}
+	if searchTerm != nil {
+		sliceVal := []string{*searchTerm}
+		query["search_term"] = sliceVal
+	}
 	if sortBy != nil {
 		sliceVal := []string{*sortBy}
 		query["sort_by"] = sliceVal
@@ -192,6 +204,10 @@ func ListPatientInternalServerError(t goatest.TInterface, ctx context.Context, s
 	if perPage != nil {
 		sliceVal := []string{strconv.Itoa(*perPage)}
 		prms["per_page"] = sliceVal
+	}
+	if searchTerm != nil {
+		sliceVal := []string{*searchTerm}
+		prms["search_term"] = sliceVal
 	}
 	if sortBy != nil {
 		sliceVal := []string{*sortBy}
@@ -225,7 +241,7 @@ func ListPatientInternalServerError(t goatest.TInterface, ctx context.Context, s
 // It returns the response writer so it's possible to inspect the response headers.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func ListPatientNotFound(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, careTeamID *string, huddleID *string, page *int, perPage *int, sortBy *string) http.ResponseWriter {
+func ListPatientNotFound(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, careTeamID *string, huddleID *string, page *int, perPage *int, searchTerm *string, sortBy *string) http.ResponseWriter {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -262,6 +278,10 @@ func ListPatientNotFound(t goatest.TInterface, ctx context.Context, service *goa
 		sliceVal := []string{strconv.Itoa(*perPage)}
 		query["per_page"] = sliceVal
 	}
+	if searchTerm != nil {
+		sliceVal := []string{*searchTerm}
+		query["search_term"] = sliceVal
+	}
 	if sortBy != nil {
 		sliceVal := []string{*sortBy}
 		query["sort_by"] = sliceVal
@@ -290,6 +310,10 @@ func ListPatientNotFound(t goatest.TInterface, ctx context.Context, service *goa
 	if perPage != nil {
 		sliceVal := []string{strconv.Itoa(*perPage)}
 		prms["per_page"] = sliceVal
+	}
+	if searchTerm != nil {
+		sliceVal := []string{*searchTerm}
+		prms["search_term"] = sliceVal
 	}
 	if sortBy != nil {
 		sliceVal := []string{*sortBy}
@@ -323,7 +347,7 @@ func ListPatientNotFound(t goatest.TInterface, ctx context.Context, service *goa
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func ListPatientOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, careTeamID *string, huddleID *string, page *int, perPage *int, sortBy *string) (http.ResponseWriter, app.PatientCollection) {
+func ListPatientOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, careTeamID *string, huddleID *string, page *int, perPage *int, searchTerm *string, sortBy *string) (http.ResponseWriter, app.PatientCollection) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -360,6 +384,10 @@ func ListPatientOK(t goatest.TInterface, ctx context.Context, service *goa.Servi
 		sliceVal := []string{strconv.Itoa(*perPage)}
 		query["per_page"] = sliceVal
 	}
+	if searchTerm != nil {
+		sliceVal := []string{*searchTerm}
+		query["search_term"] = sliceVal
+	}
 	if sortBy != nil {
 		sliceVal := []string{*sortBy}
 		query["sort_by"] = sliceVal
@@ -388,6 +416,10 @@ func ListPatientOK(t goatest.TInterface, ctx context.Context, service *goa.Servi
 	if perPage != nil {
 		sliceVal := []string{strconv.Itoa(*perPage)}
 		prms["per_page"] = sliceVal
+	}
+	if searchTerm != nil {
+		sliceVal := []string{*searchTerm}
+		prms["search_term"] = sliceVal
 	}
 	if sortBy != nil {
 		sliceVal := []string{*sortBy}
@@ -433,7 +465,7 @@ func ListPatientOK(t goatest.TInterface, ctx context.Context, service *goa.Servi
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func ListPatientOKList(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, careTeamID *string, huddleID *string, page *int, perPage *int, sortBy *string) (http.ResponseWriter, app.PatientListCollection) {
+func ListPatientOKList(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.PatientController, careTeamID *string, huddleID *string, page *int, perPage *int, searchTerm *string, sortBy *string) (http.ResponseWriter, app.PatientListCollection) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -470,6 +502,10 @@ func ListPatientOKList(t goatest.TInterface, ctx context.Context, service *goa.S
 		sliceVal := []string{strconv.Itoa(*perPage)}
 		query["per_page"] = sliceVal
 	}
+	if searchTerm != nil {
+		sliceVal := []string{*searchTerm}
+		query["search_term"] = sliceVal
+	}
 	if sortBy != nil {
 		sliceVal := []string{*sortBy}
 		query["sort_by"] = sliceVal
@@ -498,6 +534,10 @@ func ListPatientOKList(t goatest.TInterface, ctx context.Context, service *goa.S
 	if perPage != nil {
 		sliceVal := []string{strconv.Itoa(*perPage)}
 		prms["per_page"] = sliceVal
+	}
+	if searchTerm != nil {
+		sliceVal := []string{*searchTerm}
+		prms["search_term"] = sliceVal
 	}
 	if sortBy != nil {
 		sliceVal := []string{*sortBy}

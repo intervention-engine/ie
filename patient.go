@@ -67,6 +67,9 @@ func (c *PatientController) List(ctx *app.ListPatientContext) error {
 	if ctx.HuddleID != nil {
 		filter["huddle_id"] = *ctx.HuddleID
 	}
+	if ctx.SearchTerm != nil {
+		filter["search_term"] = *ctx.SearchTerm
+	}
 	var pp []*app.Patient
 	var err error
 	if ctx.SortBy != nil {
@@ -88,7 +91,6 @@ func (c *PatientController) List(ctx *app.ListPatientContext) error {
 			// "internal server error trying to list patients"
 			return ctx.InternalServerError()
 		}
-
 	}
 
 	if ctx.Page != nil {

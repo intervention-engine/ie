@@ -768,8 +768,8 @@ paths:
         required: true
         type: string
       produces:
-      - application/vnd.careteam+json
       - application/vnd.goa.error
+      - application/vnd.careteam+json
       responses:
         "200":
           description: OK
@@ -804,8 +804,8 @@ paths:
         required: true
         type: string
       produces:
-      - application/vnd.goa.error
       - application/vnd.careteam+json
+      - application/vnd.goa.error
       responses:
         "200":
           description: OK
@@ -924,8 +924,8 @@ paths:
         schema:
           $ref: '#/definitions/ScheduleCareTeamPayload'
       produces:
-      - application/vnd.huddle+json
       - application/vnd.goa.error
+      - application/vnd.huddle+json
       responses:
         "200":
           description: OK
@@ -1045,8 +1045,8 @@ paths:
         required: true
         type: string
       produces:
-      - application/vnd.huddle+json
       - application/vnd.goa.error
+      - application/vnd.huddle+json
       responses:
         "200":
           description: OK
@@ -1094,6 +1094,10 @@ paths:
         name: per_page
         required: false
         type: integer
+      - in: query
+        name: search_term
+        required: false
+        type: string
       - in: query
         name: sort_by
         required: false

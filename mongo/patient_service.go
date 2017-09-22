@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/intervention-engine/fhir/models"
@@ -50,21 +51,27 @@ func (s *PatientService) Patients(filter map[string]string) ([]*app.Patient, err
 	if err != nil {
 		return nil, err
 	}
+	pp := newPatients(data)
 	if len(filter) != 0 {
 		if id, ok := filter["care_team_id"]; ok {
-			data, err = s.filterCareTeam(id, data)
+			pp, err = s.filterCareTeam(id, pp)
 			if err != nil {
 				return nil, err
 			}
 		}
 		if id, ok := filter["huddle_id"]; ok {
-			data, err = s.filterHuddle(id, data)
+			pp, err = s.filterHuddle(id, pp)
+			if err != nil {
+				return nil, err
+			}
+		}
+		if term, ok := filter["search_term"]; ok {
+			pp, err = s.filterName(term, pp)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
-	pp := newPatients(data)
 	pp, err = s.addNextHuddle(pp)
 	err = s.addRecentRiskAssessments(pp)
 	return pp, err
@@ -85,23 +92,27 @@ func (s *PatientService) PatientsSortBy(filter map[string]string, fields ...stri
 		log.Println(err)
 		return nil, err
 	}
-
-	if filter != nil {
+	pp := newPatients(data)
+	if len(filter) != 0 {
 		if id, ok := filter["care_team_id"]; ok {
-			data, err = s.filterCareTeam(id, data)
+			pp, err = s.filterCareTeam(id, pp)
 			if err != nil {
 				return nil, err
 			}
 		}
 		if id, ok := filter["huddle_id"]; ok {
-			data, err = s.filterHuddle(id, data)
+			pp, err = s.filterHuddle(id, pp)
+			if err != nil {
+				return nil, err
+			}
+		}
+		if term, ok := filter["search_term"]; ok {
+			pp, err = s.filterName(term, pp)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
-
-	pp := newPatients(data)
 	pp, err = s.addNextHuddle(pp)
 	if err != nil {
 		return nil, err
@@ -160,7 +171,7 @@ func (s *PatientService) addNextHuddle(pp []*app.Patient) ([]*app.Patient, error
 	return pp, nil
 }
 
-func (s *PatientService) filterCareTeam(ID string, patients []models.Patient) ([]models.Patient, error) {
+func (s *PatientService) filterCareTeam(ID string, patients []*app.Patient) ([]*app.Patient, error) {
 	// Go find all the patients in this care team. Then iterate over patients
 	// and only keep the ones in this care team.
 	var rel []struct {
@@ -171,10 +182,10 @@ func (s *PatientService) filterCareTeam(ID string, patients []models.Patient) ([
 	if err != nil {
 		return nil, err
 	}
-	filtered := []models.Patient{}
+	filtered := []*app.Patient{}
 	for _, p := range patients {
 		for _, r := range rel {
-			if p.Id == r.PatientID {
+			if p.ID == r.PatientID {
 				filtered = append(filtered, p)
 			}
 		}
@@ -182,7 +193,7 @@ func (s *PatientService) filterCareTeam(ID string, patients []models.Patient) ([
 	return filtered, nil
 }
 
-func (s *PatientService) filterHuddle(ID string, patients []models.Patient) ([]models.Patient, error) {
+func (s *PatientService) filterHuddle(ID string, patients []*app.Patient) ([]*app.Patient, error) {
 	// Go find all the patients in this huddle. Then iterate over patients
 	// and only keep the ones in this huddle.
 	var huddle app.Huddle
@@ -190,15 +201,53 @@ func (s *PatientService) filterHuddle(ID string, patients []models.Patient) ([]m
 	if err != nil {
 		return nil, err
 	}
-	filtered := []models.Patient{}
+	filtered := []*app.Patient{}
 	for _, p := range patients {
 		for _, hp := range huddle.Patients {
-			if p.Id == *hp.ID {
+			if p.ID == *hp.ID {
 				filtered = append(filtered, p)
 			}
 		}
 	}
 	return filtered, nil
+}
+
+func (s *PatientService) filterName(term string, patients []*app.Patient) ([]*app.Patient, error) {
+	// Ierate over patients and only keep the ones whose names match the term in
+	// some way.
+	filtered := []*app.Patient{}
+	for _, p := range patients {
+		if p.Name != nil {
+			if nameContains(*p.Name, term) {
+				filtered = append(filtered, p)
+			}
+		}
+	}
+	return filtered, nil
+}
+
+func nameContains(name app.Name, term string) bool {
+	if name.Family != nil {
+		if strings.Contains(*name.Family, term) {
+			return true
+		}
+	}
+	if name.Given != nil {
+		if strings.Contains(*name.Given, term) {
+			return true
+		}
+	}
+	if name.Full != nil {
+		if strings.Contains(*name.Full, term) {
+			return true
+		}
+	}
+	if name.MiddleInitial != nil {
+		if strings.Contains(*name.MiddleInitial, term) {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *PatientService) addRecentRiskAssessments(pp []*app.Patient) error {

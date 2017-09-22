@@ -808,6 +808,7 @@ type ListPatientContext struct {
 	HuddleID   *string
 	Page       *int
 	PerPage    *int
+	SearchTerm *string
 	SortBy     *string
 }
 
@@ -861,6 +862,11 @@ func NewListPatientContext(ctx context.Context, r *http.Request, service *goa.Se
 				err = goa.MergeErrors(err, goa.InvalidRangeError(`per_page`, *rctx.PerPage, 1, true))
 			}
 		}
+	}
+	paramSearchTerm := req.Params["search_term"]
+	if len(paramSearchTerm) > 0 {
+		rawSearchTerm := paramSearchTerm[0]
+		rctx.SearchTerm = &rawSearchTerm
 	}
 	paramSortBy := req.Params["sort_by"]
 	if len(paramSortBy) > 0 {
