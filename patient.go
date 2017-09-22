@@ -32,7 +32,7 @@ func (c *PatientController) allToList(ps []*app.Patient) []*app.PatientList {
 func (c *PatientController) toList(p *app.Patient) *app.PatientList {
 	return &app.PatientList{Address: p.Address, Age: p.Age,
 		BirthDate: p.BirthDate, Gender: p.Gender, ID: p.ID, Name: p.Name,
-		RecentRiskAssessment: p.RecentRiskAssessment}
+		RecentRiskAssessment: p.RecentRiskAssessment, NextHuddle: p.NextHuddle}
 }
 
 // Show runs the show action.

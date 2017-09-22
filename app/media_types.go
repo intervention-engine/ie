@@ -119,6 +119,7 @@ type Patient struct {
 	// Unique patient ID
 	ID                   string          `form:"id" json:"id" xml:"id"`
 	Name                 *Name           `form:"name" json:"name" xml:"name"`
+	NextHuddle           *NextHuddle     `form:"next_huddle,omitempty" json:"next_huddle,omitempty" xml:"next_huddle,omitempty"`
 	RecentRiskAssessment *RiskAssessment `form:"recent_risk_assessment,omitempty" json:"recent_risk_assessment,omitempty" xml:"recent_risk_assessment,omitempty"`
 }
 
@@ -167,6 +168,7 @@ type PatientList struct {
 	// Unique patient ID
 	ID                   string          `form:"id" json:"id" xml:"id"`
 	Name                 *Name           `form:"name" json:"name" xml:"name"`
+	NextHuddle           *NextHuddle     `form:"next_huddle,omitempty" json:"next_huddle,omitempty" xml:"next_huddle,omitempty"`
 	RecentRiskAssessment *RiskAssessment `form:"recent_risk_assessment,omitempty" json:"recent_risk_assessment,omitempty" xml:"recent_risk_assessment,omitempty"`
 }
 

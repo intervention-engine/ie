@@ -65,6 +65,7 @@ func (s *PatientService) Patients(filter map[string]string) ([]*app.Patient, err
 		}
 	}
 	pp := newPatients(data)
+	pp, err = s.addNextHuddle(pp)
 	err = s.addRecentRiskAssessments(pp)
 	return pp, err
 }
@@ -101,8 +102,62 @@ func (s *PatientService) PatientsSortBy(filter map[string]string, fields ...stri
 	}
 
 	pp := newPatients(data)
+	pp, err = s.addNextHuddle(pp)
+	if err != nil {
+		return nil, err
+	}
 	err = s.addRecentRiskAssessments(pp)
 	return pp, err
+}
+
+func (s *PatientService) addNextHuddle(pp []*app.Patient) ([]*app.Patient, error) {
+	// Go through every patient, execute a query for that patient and populate
+	// their next huddle field if they have one.
+	for i := range pp {
+		var nh app.Huddle
+		q := bson.M{
+			"patients.id": pp[i].ID,
+			"date": struct {
+				Gte time.Time `bson:"$gte"`
+			}{
+				Gte: time.Now(),
+			},
+		}
+		err := s.S.DB(s.Database).C("huddles").Find(q).One(&nh)
+		if err != nil {
+			if err.Error() == "not found" {
+				continue
+			}
+			return nil, err
+		}
+		var details *app.PatientHuddle
+		for _, p := range nh.Patients {
+			if *p.ID == pp[i].ID {
+				details = p
+				break
+			}
+		}
+		pp[i].NextHuddle = &app.NextHuddle{}
+		pp[i].NextHuddle.HuddleID = nh.ID
+		pp[i].NextHuddle.HuddleDate = nh.Date
+		if details != nil {
+			pp[i].NextHuddle.Reason = details.Reason
+			pp[i].NextHuddle.ReasonType = details.ReasonType
+			pp[i].NextHuddle.Reviewed = details.Reviewed
+			pp[i].NextHuddle.ReviewedAt = details.ReviewedAt
+		}
+		var ct app.CareTeam
+		err = s.S.DB(s.Database).C("care_teams").FindId(nh.CareTeamID).One(&ct)
+		if err != nil {
+			if err.Error() == "not found" {
+				continue
+			}
+			return nil, err
+		}
+		pp[i].NextHuddle.CareTeamName = ct.Name
+	}
+
+	return pp, nil
 }
 
 func (s *PatientService) filterCareTeam(ID string, patients []models.Patient) ([]models.Patient, error) {

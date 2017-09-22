@@ -248,6 +248,55 @@ type Name struct {
 	MiddleInitial *string `form:"middle_initial,omitempty" json:"middle_initial,omitempty" xml:"middle_initial,omitempty"`
 }
 
+// nextHuddle user type.
+type nextHuddle struct {
+	CareTeamName *string    `form:"care_team_name,omitempty" json:"care_team_name,omitempty" xml:"care_team_name,omitempty"`
+	HuddleDate   *time.Time `form:"huddle_date,omitempty" json:"huddle_date,omitempty" xml:"huddle_date,omitempty"`
+	HuddleID     *string    `form:"huddle_id,omitempty" json:"huddle_id,omitempty" xml:"huddle_id,omitempty"`
+	Reason       *string    `form:"reason,omitempty" json:"reason,omitempty" xml:"reason,omitempty"`
+	ReasonType   *string    `form:"reason_type,omitempty" json:"reason_type,omitempty" xml:"reason_type,omitempty"`
+	Reviewed     *bool      `form:"reviewed,omitempty" json:"reviewed,omitempty" xml:"reviewed,omitempty"`
+	ReviewedAt   *time.Time `form:"reviewed_at,omitempty" json:"reviewed_at,omitempty" xml:"reviewed_at,omitempty"`
+}
+
+// Publicize creates NextHuddle from nextHuddle
+func (ut *nextHuddle) Publicize() *NextHuddle {
+	var pub NextHuddle
+	if ut.CareTeamName != nil {
+		pub.CareTeamName = ut.CareTeamName
+	}
+	if ut.HuddleDate != nil {
+		pub.HuddleDate = ut.HuddleDate
+	}
+	if ut.HuddleID != nil {
+		pub.HuddleID = ut.HuddleID
+	}
+	if ut.Reason != nil {
+		pub.Reason = ut.Reason
+	}
+	if ut.ReasonType != nil {
+		pub.ReasonType = ut.ReasonType
+	}
+	if ut.Reviewed != nil {
+		pub.Reviewed = ut.Reviewed
+	}
+	if ut.ReviewedAt != nil {
+		pub.ReviewedAt = ut.ReviewedAt
+	}
+	return &pub
+}
+
+// NextHuddle user type.
+type NextHuddle struct {
+	CareTeamName *string    `form:"care_team_name,omitempty" json:"care_team_name,omitempty" xml:"care_team_name,omitempty"`
+	HuddleDate   *time.Time `form:"huddle_date,omitempty" json:"huddle_date,omitempty" xml:"huddle_date,omitempty"`
+	HuddleID     *string    `form:"huddle_id,omitempty" json:"huddle_id,omitempty" xml:"huddle_id,omitempty"`
+	Reason       *string    `form:"reason,omitempty" json:"reason,omitempty" xml:"reason,omitempty"`
+	ReasonType   *string    `form:"reason_type,omitempty" json:"reason_type,omitempty" xml:"reason_type,omitempty"`
+	Reviewed     *bool      `form:"reviewed,omitempty" json:"reviewed,omitempty" xml:"reviewed,omitempty"`
+	ReviewedAt   *time.Time `form:"reviewed_at,omitempty" json:"reviewed_at,omitempty" xml:"reviewed_at,omitempty"`
+}
+
 // pie user type.
 type pie struct {
 	// Individual Pie sli

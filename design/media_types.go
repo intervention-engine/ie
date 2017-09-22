@@ -77,6 +77,7 @@ var PatientMedia = MediaType("application/vnd.patient+json", func() {
 		Attribute("age", Integer, "Age of Patient")
 		Attribute("gender", String, "Gender of Patient")
 		Attribute("birth_date", DateTime, "Birth Date of Patient")
+		Attribute("next_huddle", NextHuddle)
 		Attribute("current_conditions", ArrayOf(ActivePatientData))
 		Attribute("current_medications", ArrayOf(ActivePatientData))
 		Attribute("current_allergies", ArrayOf(ActivePatientData))
@@ -90,6 +91,7 @@ var PatientMedia = MediaType("application/vnd.patient+json", func() {
 		Attribute("age")
 		Attribute("gender")
 		Attribute("birth_date")
+		Attribute("next_huddle")
 		Attribute("current_conditions")
 		Attribute("current_medications")
 		Attribute("current_allergies")
@@ -102,6 +104,7 @@ var PatientMedia = MediaType("application/vnd.patient+json", func() {
 		Attribute("age")
 		Attribute("gender")
 		Attribute("birth_date")
+		Attribute("next_huddle")
 	})
 	View("link", func() {
 		Attribute("id")
