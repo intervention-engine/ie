@@ -525,11 +525,11 @@ definitions:
     type: array
   ScheduleCareTeamPayload:
     example:
-      date: Maxime consectetur.
+      huddle_id: Maxime consectetur.
       patient_id: Blanditiis qui fuga est accusamus autem.
     properties:
-      date:
-        description: Date in YYYY-MM-dd format to schedule huddle
+      huddle_id:
+        description: Unique huddle ID
         example: Maxime consectetur.
         type: string
       patient_id:
@@ -538,7 +538,7 @@ definitions:
         type: string
     required:
     - patient_id
-    - date
+    - huddle_id
     title: ScheduleCareTeamPayload
     type: object
   active_element:
@@ -732,8 +732,8 @@ paths:
         schema:
           $ref: '#/definitions/CreateCareTeamPayload'
       produces:
-      - application/vnd.goa.error
       - application/vnd.careteam+json
+      - application/vnd.goa.error
       responses:
         "200":
           description: OK
@@ -768,8 +768,8 @@ paths:
         required: true
         type: string
       produces:
-      - application/vnd.goa.error
       - application/vnd.careteam+json
+      - application/vnd.goa.error
       responses:
         "200":
           description: OK
@@ -804,8 +804,8 @@ paths:
         required: true
         type: string
       produces:
-      - application/vnd.careteam+json
       - application/vnd.goa.error
+      - application/vnd.careteam+json
       responses:
         "200":
           description: OK
@@ -842,8 +842,8 @@ paths:
         schema:
           $ref: '#/definitions/CareTeamPayload'
       produces:
-      - application/vnd.goa.error
       - application/vnd.careteam+json
+      - application/vnd.goa.error
       responses:
         "200":
           description: OK
@@ -929,10 +929,6 @@ paths:
       responses:
         "200":
           description: OK
-          schema:
-            $ref: '#/definitions/Huddle'
-        "201":
-          description: Created
           schema:
             $ref: '#/definitions/Huddle'
         "400":
@@ -1253,8 +1249,8 @@ paths:
         required: true
         type: string
       produces:
-      - application/vnd.goa.error
       - applicaiton/vnd.riskassessment+json; type=collection
+      - application/vnd.goa.error
       responses:
         "200":
           description: OK

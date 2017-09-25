@@ -44,7 +44,7 @@ type PatientService interface {
 // HuddleService describes the interface for storing a huddle.
 type HuddleService interface {
 	HuddlesFilterBy(query HuddleFilterQuery) ([]*app.Huddle, error)
-	ScheduleHuddle(careTeamID string, patientID string, date time.Time) (*app.Huddle, bool, error)
+	ScheduleHuddle(careTeamID string, patientID string, huddleID string) (*app.Huddle, error)
 	DeletePatient(huddleID string, patientID string) (*app.Huddle, error)
 }
 

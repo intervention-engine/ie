@@ -188,30 +188,15 @@ func (c *CareTeamController) Huddles(ctx *app.HuddlesCareTeamContext) error {
 func (c *CareTeamController) Schedule(ctx *app.ScheduleCareTeamContext) error {
 	s := GetServiceFactory(ctx.Context)
 	hs := s.NewHuddleService()
-	loc, err := time.LoadLocation("Local")
+	h, err := hs.ScheduleHuddle(ctx.ID, ctx.Payload.PatientID, ctx.Payload.HuddleID)
 	if err != nil {
-		return ctx.InternalServerError(goa.ErrInternal("could not load local time zone", "error", err))
-	}
-	dateTime, err := time.ParseInLocation("2006-01-02", ctx.Payload.Date, loc)
-	if err != nil {
-		return ctx.BadRequest(goa.ErrBadRequest("could not parse date, make sure in YYYY-MM-dd format", "error", err))
-	}
-	now := time.Now()
-	if dateTime.Before(now) {
-		return ctx.BadRequest(goa.ErrBadRequest("date given is in the past, cannot schedule huddle"))
-	}
-	h, created, err := hs.ScheduleHuddle(ctx.ID, ctx.Payload.PatientID, dateTime)
-	if err != nil {
-		if (err.Error() == "bad patient id") || (err.Error() == "bad care team id") {
+		if (err.Error() == "bad patient id") || (err.Error() == "bad care team id") || (err.Error() == "bad huddle id") {
 			return ctx.BadRequest(goa.ErrBadRequest(err))
 		}
-		if (err.Error() == "patient not found") || (err.Error() == "care team not found") || (err.Error() == "membership does not exist") {
+		if (err.Error() == "patient not found") || (err.Error() == "care team not found") || (err.Error() == "huddle not found") || (err.Error() == "membership does not exist") {
 			return ctx.NotFound(err)
 		}
 		return ctx.InternalServerError(goa.ErrInternal("error scheduling patient", "error", err))
-	}
-	if created {
-		return ctx.Created(h)
 	}
 	return ctx.OK(h)
 }

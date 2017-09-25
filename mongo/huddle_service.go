@@ -55,14 +55,14 @@ func (s *HuddleService) HuddlesFilterBy(query storage.HuddleFilterQuery) ([]*app
 	return hh, nil
 }
 
-func (s *HuddleService) ScheduleHuddle(careTeamID string, patientID string, date time.Time) (*app.Huddle, bool, error) {
+func (s *HuddleService) ScheduleHuddle(careTeamID string, patientID string, huddleID string) (*app.Huddle, error) {
 	defer s.S.Close()
 	exist, err := s.validateCareTeamMembership(careTeamID, patientID)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 	if !exist {
-		return nil, false, errors.New("membership does not exist")
+		return nil, errors.New("membership does not exist")
 	}
 	var h Huddle
 	reason := ""
@@ -74,34 +74,20 @@ func (s *HuddleService) ScheduleHuddle(careTeamID string, patientID string, date
 		ReasonType: &reasonType,
 		Reviewed:   &reviewed,
 	}
-	// check to see if we need to make the huddle for that date
-	err = s.C.Find(bson.M{"careteamid": careTeamID, "date": date}).One(&h)
-	if (err != nil) && (err.Error() == "not found") {
-		id := bson.NewObjectId().Hex()
-		h = Huddle{
-			ID: id,
-			Huddle: app.Huddle{
-				ID:         &id,
-				CareTeamID: &careTeamID,
-				Date:       &date,
-				Patients:   []*app.PatientHuddle{p},
-			},
+	err = s.C.FindId(huddleID).One(&h)
+	if err != nil {
+		if err.Error() == "not found" {
+			return nil, errors.New("huddle not found")
 		}
-		err = s.C.Insert(&h)
-		if err != nil {
-			return nil, false, err
-		}
-		return &h.Huddle, true, nil
-	} else if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 	// found huddle, just need to add patient to it
 	h.Patients = append(h.Patients, p)
 	err = s.C.UpdateId(h.ID, &h)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
-	return &h.Huddle, false, nil
+	return &h.Huddle, nil
 }
 
 // DeletePatient removes the patient from a huddle.
