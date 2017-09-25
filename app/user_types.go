@@ -88,8 +88,8 @@ type PatientHuddle struct {
 
 // schedulePatientPayload user type.
 type schedulePatientPayload struct {
-	// Date in YYYY-MM-dd format to schedule huddle
-	Date *string `form:"date,omitempty" json:"date,omitempty" xml:"date,omitempty"`
+	// Unique huddle ID
+	HuddleID *string `form:"huddle_id,omitempty" json:"huddle_id,omitempty" xml:"huddle_id,omitempty"`
 	// Unique patient ID
 	PatientID *string `form:"patient_id,omitempty" json:"patient_id,omitempty" xml:"patient_id,omitempty"`
 }
@@ -99,8 +99,8 @@ func (ut *schedulePatientPayload) Validate() (err error) {
 	if ut.PatientID == nil {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "patient_id"))
 	}
-	if ut.Date == nil {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "date"))
+	if ut.HuddleID == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "huddle_id"))
 	}
 	return
 }
@@ -108,8 +108,8 @@ func (ut *schedulePatientPayload) Validate() (err error) {
 // Publicize creates SchedulePatientPayload from schedulePatientPayload
 func (ut *schedulePatientPayload) Publicize() *SchedulePatientPayload {
 	var pub SchedulePatientPayload
-	if ut.Date != nil {
-		pub.Date = *ut.Date
+	if ut.HuddleID != nil {
+		pub.HuddleID = *ut.HuddleID
 	}
 	if ut.PatientID != nil {
 		pub.PatientID = *ut.PatientID
@@ -119,8 +119,8 @@ func (ut *schedulePatientPayload) Publicize() *SchedulePatientPayload {
 
 // SchedulePatientPayload user type.
 type SchedulePatientPayload struct {
-	// Date in YYYY-MM-dd format to schedule huddle
-	Date string `form:"date" json:"date" xml:"date"`
+	// Unique huddle ID
+	HuddleID string `form:"huddle_id" json:"huddle_id" xml:"huddle_id"`
 	// Unique patient ID
 	PatientID string `form:"patient_id" json:"patient_id" xml:"patient_id"`
 }
@@ -130,8 +130,8 @@ func (ut *SchedulePatientPayload) Validate() (err error) {
 	if ut.PatientID == "" {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "patient_id"))
 	}
-	if ut.Date == "" {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "date"))
+	if ut.HuddleID == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "huddle_id"))
 	}
 	return
 }

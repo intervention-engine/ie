@@ -457,8 +457,8 @@ func NewScheduleCareTeamContext(ctx context.Context, r *http.Request, service *g
 
 // scheduleCareTeamPayload is the care_team schedule action payload.
 type scheduleCareTeamPayload struct {
-	// Date in YYYY-MM-dd format to schedule huddle
-	Date *string `form:"date,omitempty" json:"date,omitempty" xml:"date,omitempty"`
+	// Unique huddle ID
+	HuddleID *string `form:"huddle_id,omitempty" json:"huddle_id,omitempty" xml:"huddle_id,omitempty"`
 	// Unique patient ID
 	PatientID *string `form:"patient_id,omitempty" json:"patient_id,omitempty" xml:"patient_id,omitempty"`
 }
@@ -468,8 +468,8 @@ func (payload *scheduleCareTeamPayload) Validate() (err error) {
 	if payload.PatientID == nil {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "patient_id"))
 	}
-	if payload.Date == nil {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "date"))
+	if payload.HuddleID == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "huddle_id"))
 	}
 	return
 }
@@ -477,8 +477,8 @@ func (payload *scheduleCareTeamPayload) Validate() (err error) {
 // Publicize creates ScheduleCareTeamPayload from scheduleCareTeamPayload
 func (payload *scheduleCareTeamPayload) Publicize() *ScheduleCareTeamPayload {
 	var pub ScheduleCareTeamPayload
-	if payload.Date != nil {
-		pub.Date = *payload.Date
+	if payload.HuddleID != nil {
+		pub.HuddleID = *payload.HuddleID
 	}
 	if payload.PatientID != nil {
 		pub.PatientID = *payload.PatientID
@@ -488,8 +488,8 @@ func (payload *scheduleCareTeamPayload) Publicize() *ScheduleCareTeamPayload {
 
 // ScheduleCareTeamPayload is the care_team schedule action payload.
 type ScheduleCareTeamPayload struct {
-	// Date in YYYY-MM-dd format to schedule huddle
-	Date string `form:"date" json:"date" xml:"date"`
+	// Unique huddle ID
+	HuddleID string `form:"huddle_id" json:"huddle_id" xml:"huddle_id"`
 	// Unique patient ID
 	PatientID string `form:"patient_id" json:"patient_id" xml:"patient_id"`
 }
@@ -499,8 +499,8 @@ func (payload *ScheduleCareTeamPayload) Validate() (err error) {
 	if payload.PatientID == "" {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "patient_id"))
 	}
-	if payload.Date == "" {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "date"))
+	if payload.HuddleID == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`raw`, "huddle_id"))
 	}
 	return
 }
@@ -509,12 +509,6 @@ func (payload *ScheduleCareTeamPayload) Validate() (err error) {
 func (ctx *ScheduleCareTeamContext) OK(r *Huddle) error {
 	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.huddle+json")
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
-}
-
-// Created sends a HTTP response with status code 201.
-func (ctx *ScheduleCareTeamContext) Created(r *Huddle) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.huddle+json")
-	return ctx.ResponseData.Service.Send(ctx.Context, 201, r)
 }
 
 // BadRequest sends a HTTP response with status code 400.

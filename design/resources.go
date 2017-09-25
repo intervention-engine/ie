@@ -177,11 +177,10 @@ var _ = Resource("care_team", func() {
 	Action("schedule", func() {
 		Routing(POST("/:id/huddles"))
 		Payload(SchedulePatientPayload, func() {
-			Required("patient_id", "date")
+			Required("patient_id", "huddle_id")
 		})
 		Description("Schedule a patient for a huddle with this care team.")
 		Response(OK, HuddleMedia)
-		Response(Created, HuddleMedia)
 		Response(NotFound, ErrorMedia)
 		Response(BadRequest, ErrorMedia)
 		Response(InternalServerError, ErrorMedia)
