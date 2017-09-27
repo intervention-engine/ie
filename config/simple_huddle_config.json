@@ -4,7 +4,7 @@
   "days": [1],
   "lookAhead": 4,
   "riskConfig": {
-    "riskMethod": {"system": "http://interventionengine.org/risk-assessments", "code": "Simple"},
+    "riskMethod": {"system": "http://interventionengine.org/risk-assessments", "code": "MultiFactor"},
     "frequencyConfigs": [
       {
         "minScore": 6,

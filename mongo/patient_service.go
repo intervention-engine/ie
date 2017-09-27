@@ -192,7 +192,7 @@ func (s *PatientService) addNextHuddleToPatients(pp []*app.Patient) ([]*app.Pati
 			}
 			return nil, err
 		}
-		var details *app.PatientHuddle
+		var details *app.HuddlePatient
 		for _, p := range nh.Patients {
 			if *p.ID == pp[i].ID {
 				details = p

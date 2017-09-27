@@ -11,7 +11,7 @@ import (
 )
 
 func readConfigs(paths []string) []Config {
-	configs := make([]Config, len(paths))
+	configs := make([]Config, 0)
 	for _, path := range paths {
 		data, err := ioutil.ReadFile(path)
 		if err != nil {

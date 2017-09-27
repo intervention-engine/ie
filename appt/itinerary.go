@@ -1,6 +1,7 @@
 package appt
 
 import (
+	"log"
 	"sort"
 
 	"github.com/intervention-engine/ie/app"
@@ -54,22 +55,24 @@ func (itnMap itineraryMap) updatePatientsLastHuddle(huddle *app.Huddle, config C
 }
 
 func (itnMap itineraryMap) populateWithRiskScores(service storage.SchedService, config Config) error {
-	riskQuery, ok := buildRiskQuery(config)
+	riskQuery, ok := buildRiskQuery(config.Risk)
+	log.Println("riskQuery: ", riskQuery)
 	if !ok {
 		return nil
 	}
 	results, err := service.RiskAssessmentsFilterBy(riskQuery)
+	log.Println("risk assessment results: ", results)
 	if err != nil {
 		return err
 	}
 	for _, result := range results {
 		score := result.Value
-		key := *result.RiskServiceID
+		key := result.PatientID
 		itn, ok := itnMap[key]
 		if !ok {
 			itn = itinerary{ID: key}
 		}
-		itn.Score = score
+		itn.Score = &score
 		itnMap[key] = itn
 	}
 
@@ -142,28 +145,28 @@ func (it *itinerary) UpdateHuddleTargets(config Config) {
 	it.FurthestAllowedHuddle = &furthest
 }
 
-// TODO: risk assessments are stored outside FHIR now.
 // Find all of the patients in the scoring ranges used to schedule huddles
-func buildRiskQuery(config Config) (storage.RiskFilterQuery, bool) {
-	if config.Risk == nil || len(config.Risk.Frequencies) == 0 {
-		return nil, false
+func buildRiskQuery(risk *ScheduleByRisk) (storage.RiskFilterQuery, bool) {
+	query := storage.RiskFilterQuery{}
+	if risk == nil || len(risk.Frequencies) == 0 {
+		return query, false
 	}
-	riskQuery := storage.RiskFilterQuery{}
-
-	if len(config.Risk.Frequencies) == 1 {
-		riskQuery["value"] = map[string]float64{
-			">": config.Risk.Frequencies[0].MinScore,
-			"<": config.Risk.Frequencies[0].MaxScore,
+	if len(risk.Frequencies) == 1 {
+		query.Value = map[string]interface{}{
+			">": risk.Frequencies[0].MinScore,
+			"<": risk.Frequencies[0].MaxScore,
 		}
 	} else {
-		ranges := make([]map[string]float64, len(config.Risk.Frequencies))
-		for i, frqCfg := range config.Risk.Frequencies {
-			ranges[i] = map[string]float64{
+		ranges := make([]map[string]interface{}, len(risk.Frequencies))
+		for i, frqCfg := range risk.Frequencies {
+			ranges[i] = map[string]interface{}{
 				">": frqCfg.MinScore,
 				"<": frqCfg.MaxScore,
 			}
 		}
-		riskQuery["values"] = ranges
+		query.Values = ranges
 	}
-	return riskQuery, true
+	query.System = risk.RiskMethod.System
+	query.Code = risk.RiskMethod.Code
+	return query, true
 }

@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 	"context"
+	"errors"
 
 	"github.com/intervention-engine/ie/app"
 	"github.com/intervention-engine/ie/storage"
@@ -63,8 +64,11 @@ func triggerScheduler(service storage.SchedService, config Config, interval time
 func ManualSchedule(service storage.SchedService, files []string) ([]*app.Huddle, error) {
 	defer service.Close()
 	configs := readConfigs(files)
+	log.Println("configs: ", configs)
 	var scheduled []*app.Huddle
 	for _, config := range configs {
+		log.Println("Processing config: ", config.Name)
+		log.Println(config)
 		s, err := NewScheduler(service, config)
 		if err != nil {
 			return nil, err
@@ -86,6 +90,8 @@ func (s *Scheduler) Schedule() ([]*app.Huddle, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Println("Planned ", len(hh), " huddles:")
+	log.Println(hh)
 	err = s.service.CreateHuddles(hh)
 	if err != nil {
 		return nil, err
@@ -109,12 +115,15 @@ func (s *Scheduler) planHuddles() ([]*app.Huddle, error) {
 	checkRollOversAndEvents := true
 	currentDate := today()
 	targetHuddleSize := s.config.getTargetHuddleSize(s.itineraries)
+	log.Println("target huddle size: ", targetHuddleSize)
 	careTeamID, err := s.service.FindCareTeamID(s.config.CareTeamName)
 	if err != nil {
 		return nil, errors.New(err.Error() + "\ncould not find care team with name: " + s.config.CareTeamName)
 	}
 	for len(hh) < s.config.LookAhead {
 		if !s.config.IsHuddleDay(currentDate) {
+			log.Println(currentDate, " is not a huddle day, continuing.")
+			currentDate = currentDate.AddDate(0,0,1)
 			continue
 		}
 		huddle, err := s.service.FindCareTeamHuddleOnDate(careTeamID, currentDate)
@@ -151,7 +160,7 @@ func (s *Scheduler) planHuddles() ([]*app.Huddle, error) {
 			if s.config.RollOverDelayInDays > 0 {
 				// Find the patients that need to roll over (i.e., the ones not reviewed in the huddle x days ago)
 				expiredDate := today().AddDate(0, 0, -1*s.config.RollOverDelayInDays)
-				expiredHuddle, err := s.service.FindCareTeamHuddleOnDate(s.config.CareTeamID, expiredDate)
+				expiredHuddle, err := s.service.FindCareTeamHuddleOnDate(careTeamID, expiredDate)
 				if err != nil && err.Error() != "not found" {
 					log.Printf("Error searching on previous huddle (%s) to detect rollover patients\n", expiredDate.Format("Jan 2"))
 					log.Println(err.Error())

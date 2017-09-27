@@ -35,6 +35,18 @@ func (s *SchedService) CreateHuddles(huddles []*app.Huddle) error {
 	return batchErr
 }
 
+func (s *SchedService) FindCareTeamID(name string) (string, error) {
+	var ct app.CareTeam
+	err := s.S.DB(s.Database).C("care_teams").Find(bson.M{"name": name}).One(&ct)
+	if err != nil {
+		return "", err
+	}
+	if ct.Name != nil {
+		return *ct.Name, nil
+	}
+	return "", nil
+}
+
 func (s *SchedService) FindCareTeamHuddleOnDate(careTeamID string, date time.Time) (*app.Huddle, error) {
 	mh := Huddle{}
 	query := bson.M{
@@ -72,13 +84,76 @@ func (s *SchedService) FindCareTeamHuddlesBefore(careTeamID string, date time.Ti
 	return hh, nil
 }
 
-func (s *SchedService) RiskAssessmentsFilterBy(query storage.RiskFilterQuery) ([]*app.RiskAssessment, error) {
+func (s *SchedService) RiskAssessmentsFilterBy(query storage.RiskFilterQuery) ([]*storage.RiskAssessment, error) {
 	mrr := []*models.RiskAssessment{}
-	err := s.S.DB(s.Database).C(riskAssessmentCollection).Find(query).All(&mrr)
+	q := parseRiskQuery(query)
+	err := s.S.DB(s.Database).C(riskAssessmentCollection).Find(q).All(&mrr)
 	if err != nil {
 		return nil, err
 	}
-	return newAssessments(mrr), nil
+	return newStorageAssessments(mrr), nil
+}
+
+// Find all of the patients in the scoring ranges used to schedule huddles
+func parseRiskQuery(query storage.RiskFilterQuery) bson.M {
+	q := bson.M{
+		"method.coding": bson.M{
+					"$elemMatch": bson.M{
+						"system": query.System,
+						"code":   query.Code,
+					},
+				},
+				//"meta.tag": bson.M{
+				//	"$elemMatch": bson.M{
+				//		"system": "http://interventionengine.org/tags/",
+				//		"code":   "MOST_RECENT",
+				//	},
+				//},
+		"subject.external": false,
+	}
+	if len(query.Values) > 0 {
+		ranges := make([]map[string]interface{}, len(query.Values))
+		for i, value := range query.Values {
+			ranges[i] = bson.M{
+				"prediction.probabilityDecimal": bson.M{
+					"$gte": value[">"],
+					"$lte": value["<"],
+				},
+			}
+		}
+		q["$or"] = ranges
+		log.Println("mongo query for risk assessments: ", q)
+		return q
+	} else {
+		q["prediction.probabilityDecimal"] = map[string]interface{}{
+			"$gte": query.Value[">"],
+			"$lte": query.Value["<"],
+		}
+	}
+	log.Println("mongo query for risk assessments: ", q)
+	return q
+}
+
+func newStorageAssessments(r []*models.RiskAssessment) []*storage.RiskAssessment {
+	ra := make([]*storage.RiskAssessment, len(r))
+
+	for i := 0; i < len(r); i++ {
+		ra[i] = newStorageAssessment(r[i])
+	}
+
+	return ra
+}
+
+func newStorageAssessment(r *models.RiskAssessment) *storage.RiskAssessment {
+	if r == nil {
+		return nil
+	}
+	ra := &storage.RiskAssessment{}
+	if (r.Prediction != nil) && (len(r.Prediction) > 0) {
+		ra.Value = *r.Prediction[0].ProbabilityDecimal
+	}
+	ra.PatientID = r.Subject.ReferencedID
+	return ra
 }
 
 func (s *SchedService) FindEncounters(typeCodes []string, earliestDate, latestDate time.Time) ([]storage.EncounterForSched, error) {

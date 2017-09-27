@@ -52,9 +52,10 @@ type HuddleService interface {
 
 type SchedService interface {
 	CreateHuddles(huddles []*app.Huddle) error
+	FindCareTeamID(name string) (string, error)
 	FindCareTeamHuddleOnDate(careTeamID string, date time.Time) (*app.Huddle, error)
 	FindCareTeamHuddlesBefore(careTeamID string, date time.Time) ([]*app.Huddle, error)
-	RiskAssessmentsFilterBy(query RiskFilterQuery) ([]*app.RiskAssessment, error)
+	RiskAssessmentsFilterBy(query RiskFilterQuery) ([]*RiskAssessment, error)
 	FindEncounters(typeCodes []string, earliestDate, latestDate time.Time) ([]EncounterForSched, error)
 	Close()
 }
@@ -93,11 +94,21 @@ type EventFilterQuery struct {
 	End           time.Time
 }
 
-type RiskFilterQuery map[string]interface{}
+type RiskFilterQuery struct {
+	System string
+	Code string
+	Value map[string]interface{}
+	Values []map[string]interface{}
+}
 
 type EncounterForSched struct {
 	PatientID string
 	Type      []models.CodeableConcept
 	Period    *models.Period
 	Huddles   []app.Huddle
+}
+
+type RiskAssessment struct {
+	PatientID string
+	Value float64
 }
