@@ -39,8 +39,59 @@ func (s *PatientService) Patient(id string) (*app.Patient, error) {
 		return nil, err
 	}
 	p.RecentRiskAssessment = newAssessment(&recentRisk)
-
+	p, err = s.addNextHuddleToPatient(p)
+	if err != nil {
+		return nil, err
+	}
 	return p, nil
+}
+
+func (s *PatientService) addNextHuddleToPatient(patient *app.Patient) (*app.Patient, error) {
+	// Go through every patient, execute a query for that patient and populate
+	// their next huddle field if they have one.
+	var nh app.Huddle
+	q := bson.M{
+		"patients.id": patient.ID,
+		"date": struct {
+			Gte time.Time `bson:"$gte"`
+		}{
+			Gte: time.Now(),
+		},
+	}
+	err := s.S.DB(s.Database).C("huddles").Find(q).One(&nh)
+	if err != nil {
+		if err.Error() == "not found" {
+			return patient, nil
+		}
+		return nil, err
+	}
+	var details *app.PatientHuddle
+	for _, p := range nh.Patients {
+		if *p.ID == patient.ID {
+			details = p
+			break
+		}
+	}
+	patient.NextHuddle = &app.NextHuddle{}
+	patient.NextHuddle.HuddleID = nh.ID
+	patient.NextHuddle.HuddleDate = nh.Date
+	if details != nil {
+		patient.NextHuddle.Reason = details.Reason
+		patient.NextHuddle.ReasonType = details.ReasonType
+		patient.NextHuddle.Reviewed = details.Reviewed
+		patient.NextHuddle.ReviewedAt = details.ReviewedAt
+	}
+	var ct app.CareTeam
+	err = s.S.DB(s.Database).C("care_teams").FindId(nh.CareTeamID).One(&ct)
+	if err != nil {
+		if err.Error() == "not found" {
+			return patient, nil
+		}
+		return nil, err
+	}
+	patient.NextHuddle.CareTeamName = ct.Name
+
+	return patient, nil
 }
 
 // Patients gets all the patients in the db.
@@ -72,7 +123,7 @@ func (s *PatientService) Patients(filter map[string]string) ([]*app.Patient, err
 			}
 		}
 	}
-	pp, err = s.addNextHuddle(pp)
+	pp, err = s.addNextHuddleToPatients(pp)
 	err = s.addRecentRiskAssessments(pp)
 	return pp, err
 }
@@ -113,7 +164,7 @@ func (s *PatientService) PatientsSortBy(filter map[string]string, fields ...stri
 			}
 		}
 	}
-	pp, err = s.addNextHuddle(pp)
+	pp, err = s.addNextHuddleToPatients(pp)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +172,7 @@ func (s *PatientService) PatientsSortBy(filter map[string]string, fields ...stri
 	return pp, err
 }
 
-func (s *PatientService) addNextHuddle(pp []*app.Patient) ([]*app.Patient, error) {
+func (s *PatientService) addNextHuddleToPatients(pp []*app.Patient) ([]*app.Patient, error) {
 	// Go through every patient, execute a query for that patient and populate
 	// their next huddle field if they have one.
 	for i := range pp {
