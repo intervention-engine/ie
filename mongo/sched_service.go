@@ -41,8 +41,8 @@ func (s *SchedService) FindCareTeamID(name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if ct.Name != nil {
-		return *ct.Name, nil
+	if ct.ID != nil {
+		return *ct.ID, nil
 	}
 	return "", nil
 }
@@ -62,17 +62,22 @@ func (s *SchedService) FindCareTeamHuddleOnDate(careTeamID string, date time.Tim
 	return h, nil
 }
 
-func (s *SchedService) FindCareTeamHuddlesBefore(careTeamID string, date time.Time) ([]*app.Huddle, error) {
+func (s *SchedService) FindCareTeamHuddlesBefore(careTeamName string, date time.Time) ([]*app.Huddle, error) {
+	id, err := s.FindCareTeamID(careTeamName)
+	log.Println("careteamID for FindCareTeamHuddlesBefore: ", id)
+	if err != nil {
+		return nil, err
+	}
 	mhh := []Huddle{}
 	query := bson.M{
-		"name": careTeamID,
+		"careteamid": id,
 		"date": struct {
 			Lt  time.Time `bson:"$lt"`
 		}{
 			Lt: date,
 		},
 	}
-	err := s.C.Find(query).All(&mhh)
+	err = s.C.Find(query).All(&mhh)
 	if err != nil {
 		return nil, err
 	}

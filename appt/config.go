@@ -84,14 +84,20 @@ func (c *Config) getTargetHuddleSize(itineraries itineraryMap) int {
 	frequencyCount := make(map[int]int)
 	for _, itn := range itineraries {
 		if itn.Score != nil {
+			log.Println("itenerary score is: ", *itn.Score)
 			if freq := c.FindRiskScoreFrequenciesByScore(*itn.Score); freq != nil {
+				log.Println("got a freq of: ", freq)
 				frequencyCount[freq.IdealFreq] = frequencyCount[freq.IdealFreq] + 1
 			}
 		}
 	}
+	log.Println("frequencyCount is: ", frequencyCount)
 	var patientsPerHuddle float64
 	for frequency, count := range frequencyCount {
+		log.Println("count is: ", count)
+		log.Println("frequency is: ", frequency)
 		patientsPerHuddle += (float64(count) / float64(frequency))
+		log.Println("patientsPerHuddle is now: ", patientsPerHuddle)
 	}
 	return int(math.Ceil(patientsPerHuddle))
 }
@@ -118,9 +124,9 @@ type ScheduleByRisk struct {
 type RiskScoreFrequency struct {
 	MinScore  float64
 	MaxScore  float64
-	IdealFreq int
-	MinFreq   int
-	MaxFreq   int
+	IdealFreq int `json:"idealFrequency"`
+	MinFreq   int `json:"minFrequency"`
+	MaxFreq   int `json:"maxFrequency"`
 }
 
 // ScheduleByEvent represents how recent events should influence huddle population

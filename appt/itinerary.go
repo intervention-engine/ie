@@ -85,6 +85,8 @@ func (itnMap itineraryMap) populateWithHuddleInfo(service storage.SchedService, 
 	if err != nil {
 		return err
 	}
+	log.Println("care team huddles before ", today())
+	log.Println(hh)
 	// Iterate through them, setting the last huddle as appropriate
 	i := -1 // Start with -1 because we will record last huddle relative to now (so -1 is one huddle ago)
 	for _, result := range hh {
