@@ -25,11 +25,25 @@ func (s *SchedService) Close() {
 func (s *SchedService) CreateHuddles(huddles []*app.Huddle) error {
 	// Store the huddles in the database
 	var batchErr error
-	for i := range huddles {
-		_, err := s.C.UpsertId(huddles[i].ID, huddles[i])
-		if err != nil {
-			log.Printf("Error storing huddle: %s\n", err)
-			batchErr = err
+	for _, huddle := range huddles {
+		if huddle.ID == nil {
+			// We are creating a new huddle.
+			id := bson.NewObjectId().Hex()
+			huddle.ID = &id
+			h := Huddle{ID: id, Huddle: *huddle}
+			err := s.C.Insert(h)
+			if err != nil {
+				log.Printf("Error trying to create new huddle: %s\n", err)
+				batchErr = err
+			}
+		} else {
+			// We are updating a huddle already scheduled.
+			h := Huddle{ID: *huddle.ID, Huddle: *huddle}
+			_, err := s.C.UpsertId(h.ID, &h)
+			if err != nil {
+				log.Printf("Error storing huddle: %s\n", err)
+				batchErr = err
+			}
 		}
 	}
 	return batchErr

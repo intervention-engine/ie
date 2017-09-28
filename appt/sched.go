@@ -150,8 +150,12 @@ func (s *Scheduler) planHuddles() ([]*app.Huddle, error) {
 		huddle.Patients = nil
 		// Add back the manually added and rolled over patients
 		for _, patient := range origPatients {
-			if *patient.Reason == "MANUAL_ADDITION" || *patient.Reason == "ROLLOVER" {
-				addPatient(huddle, *patient.ID, *patient.Reason, *patient.ReasonType)
+			if (patient.Reason != nil) && (*patient.Reason == "MANUAL_ADDITION" || *patient.Reason == "ROLLOVER") {
+				reasonType := ""
+				if patient.ReasonType != nil {
+					reasonType = *patient.ReasonType
+				}
+				addPatient(huddle, *patient.ID, *patient.Reason, reasonType)
 			}
 		}
 
@@ -165,11 +169,11 @@ func (s *Scheduler) planHuddles() ([]*app.Huddle, error) {
 					log.Printf("Error searching on previous huddle (%s) to detect rollover patients\n", expiredDate.Format("Jan 2"))
 					log.Println(err.Error())
 				}
-				if expiredHuddle != nil && err == nil {
+				if err == nil && expiredHuddle != nil {
 					addPatientsBasedOnRollOvers(huddle, expiredHuddle)
 				}
 			}
-
+			// TODO: pick up here
 			// Add members to the huddle who had a recent encounter that triggers huddle discussion
 			if s.config.Event != nil && len(s.config.Event.EncounterConfigs) > 0 {
 				// Loop through the event configs, looking for patients with matching encounters
@@ -210,7 +214,7 @@ func (s *Scheduler) planHuddles() ([]*app.Huddle, error) {
 }
 
 func inProgress(huddle *app.Huddle) bool {
-	if huddle.Date != nil && *huddle.Date == today() {
+	if huddle.Date != nil && isToday(*huddle.Date) {
 		for _, patient := range huddle.Patients {
 			if patient.Reviewed != nil && *patient.Reviewed {
 				return true
@@ -220,11 +224,17 @@ func inProgress(huddle *app.Huddle) bool {
 	return false
 }
 
+// TODO: will have to let in what today is for testing
+func isToday(date time.Time) bool {
+	today := time.Now().In(time.Local)
+	return (date.Day() == today.Day() && date.Month() == today.Month() && date.Year() == today.Year())
+}
+
 func addPatient(huddle *app.Huddle, patientID, reason, reasonType string) {
 	// First look to see if the patient is already in the huddle and act accordingly.
 	existing := findPatient(huddle, patientID)
 	if existing != nil {
-		if *existing.Reason == "ROLLOVER" {
+		if existing.Reason != nil && *existing.Reason == "ROLLOVER" {
 			// We allow overwrites of rollovers, so remove the existing entry and continue
 			removePatient(huddle, patientID)
 		} else {
@@ -234,7 +244,7 @@ func addPatient(huddle *app.Huddle, patientID, reason, reasonType string) {
 	}
 
 	// The patient is not yet in the group, so add him/her
-	huddle.Patients = append(huddle.Patients, &app.HuddlePatient{Reason: &reason, ID: &patientID, ReasonType: &reasonType})
+	huddle.Patients = append(huddle.Patients, &app.HuddlePatient{ID: &patientID, Reason: &reason, ReasonType: &reasonType})
 }
 
 func findPatient(huddle *app.Huddle, patientID string) *app.HuddlePatient {
